@@ -159,7 +159,19 @@ function UnitRow({ units, setup, actorUid, target, onPick }: { units: UnitState[
           <Bar value={u.hp} max={u.maxHp} kind="hp" label={`${fmt(u.hp, 0)} / ${fmt(u.maxHp, 0)}`} />
           {u.maxToughness > 0 && <Bar value={u.toughness} max={u.maxToughness} kind="tough" label={u.broken ? "擊破中" : `韌性 ${fmt(u.toughness, 0)}`} />}
           {u.maxEnergy > 0 && <Bar value={u.energy} max={u.maxEnergy} kind="energy" label={`能量 ${fmt(u.energy, 0)}`} />}
+          {(() => {
+            const shield = u.statuses.reduce((a, s) => a + (s.shield ?? 0), 0);
+            return shield > 0 ? <Bar value={shield} max={u.maxHp} kind="shield" label={`護盾 ${fmt(shield, 0)}`} /> : null;
+          })()}
           {u.weaknesses.length > 0 && <div className="weak">弱點：{u.weaknesses.map(elementLabel).join(" ")}</div>}
+          {(u.phase > 1 || Object.keys(u.counters).length > 0 || u.nextSkill || u.summonedBy) && (
+            <div className="uc-extra small">
+              {u.phase > 1 && <span className="tag">第 {u.phase} 階段</span>}
+              {u.summonedBy && <span className="tag">召喚物</span>}
+              {Object.entries(u.counters).map(([k, v]) => <span key={k} className="tag mono">{k} {fmt(v, 0)}</span>)}
+              {u.nextSkill && <span className="tag warn">下次：{setup.units.find((d) => d.id === u.defId)?.skills.find((s) => s.id === u.nextSkill)?.name ?? u.nextSkill}</span>}
+            </div>
+          )}
           <div className="uc-status">
             {u.statuses.map((s) => {
               const def = setup.statuses.find((d) => d.id === s.statusId);
@@ -189,7 +201,7 @@ function EventLog({ state, setup, newFrom, details }: { state: BattleState; setu
   return (
     <div className="event-log" ref={ref}>
       {state.events.map((e, i) => {
-        const d = describeEvent(e, state, setup.statuses, details);
+        const d = describeEvent(e, state, setup.statuses, details, setup.units);
         if (!d) return null;
         return <div key={i} className={`ev ${d.tone ?? ""} ${i >= newFrom ? "new" : ""}`}>{d.text}</div>;
       })}

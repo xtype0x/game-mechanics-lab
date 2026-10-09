@@ -13,6 +13,7 @@ export const ELEMENT_LABELS: Record<string, string> = {
   wind: "風",
   light: "光",
   shadow: "暗",
+  physical: "物理",
 };
 
 export const DEFAULT_BATTLE_RULES: BattleRules = {
@@ -30,9 +31,9 @@ export const DEFAULT_BATTLE_RULES: BattleRules = {
 };
 
 export const DEFAULT_STATUSES: StatusDef[] = [
-  { id: "freeze", name: "冰封", kind: "debuff", duration: 1, maxStacks: 1, modifiers: [], skipTurn: true, description: "無法行動一回合。" },
+  { id: "freeze", name: "冰封", kind: "debuff", category: "freeze", duration: 1, maxStacks: 1, modifiers: [], skipTurn: true, description: "無法行動一回合。" },
   { id: "exposed", name: "破綻", kind: "debuff", duration: 2, maxStacks: 1, modifiers: [{ target: "stat:vulnerability", op: "add", value: 0.2 }], description: "受到的傷害提高 20%。" },
-  { id: "shock", name: "感電", kind: "debuff", duration: 3, maxStacks: 1, modifiers: [], dot: { multiplier: 0.8, element: "thunder" }, description: "每回合開始時受到攻擊力 80% 的雷屬性傷害。" },
+  { id: "shock", name: "感電", kind: "debuff", category: "shock", duration: 3, maxStacks: 1, modifiers: [], dot: { multiplier: 0.8, element: "thunder" }, description: "每回合開始時受到攻擊力 80% 的雷屬性傷害。" },
   { id: "armorBreak", name: "碎甲", kind: "debuff", duration: 2, maxStacks: 1, modifiers: [{ target: "stat:def", op: "pct", value: -0.3 }], description: "防禦力降低 30%。" },
   { id: "haste", name: "疾風", kind: "buff", duration: 2, maxStacks: 1, modifiers: [{ target: "stat:spd", op: "pct", value: 0.1 }, { target: "stat:dmgBonus", op: "add", value: 0.25 }], description: "速度 +10%、增傷 +25%。" },
   { id: "rage", name: "狂怒", kind: "buff", duration: 3, maxStacks: 2, modifiers: [{ target: "stat:dmgBonus", op: "add", value: 0.3 }], description: "增傷 +30%，可疊 2 層。" },

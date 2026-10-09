@@ -29,6 +29,7 @@ import {
   evaluate,
   objectScope,
   parseExpr,
+  PROJECT_TEMPLATES,
   type Scenario,
 } from "../src";
 
@@ -234,7 +235,24 @@ function battleVectors() {
       expected: { result: end.result, cycle: end.cycle, turns: end.turns, time: end.time, sp: end.sp, units: end.units, events: end.events },
     };
   });
-  return { rulesVersion: RULES_VERSION, timeline, battles };
+  // Extension mechanisms (battle.md §13): the boss-mechanics template covers phases, summons, shields,
+  // revive, dispel, toughness lock, releases, taunt, forced actions, counters, SP drain and detonation.
+  const ext = PROJECT_TEMPLATES.find((t) => t.id === "boss-mechanics")!.create("ext");
+  const extBattles = [
+    { id: "ext/boss-seed-11", seed: 11 },
+    { id: "ext/boss-seed-ext", seed: "ext", healBonus: 0.15 },
+  ].map(({ id, seed, healBonus }: { id: string; seed: number | string; healBonus?: number }) => {
+    const p = structuredClone(ext);
+    if (healBonus) p.battle.units.find((u) => u.id === "akari")!.stats.healBonus = healBonus;
+    const setup = battleSetupOf(p);
+    const end = autoPlay(setup, createBattle(setup, seed), p.battle.policy);
+    return {
+      id,
+      input: { damageConfig: p.damage.config, battle: p.battle, seed },
+      expected: { result: end.result, cycle: end.cycle, turns: end.turns, time: end.time, sp: end.sp, units: end.units, events: end.events },
+    };
+  });
+  return { rulesVersion: RULES_VERSION, timeline, battles: [...battles, ...extBattles] };
 }
 
 const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors };

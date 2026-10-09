@@ -24,6 +24,10 @@ import { BreakCurves, EnergyCurves } from "./tools/battle/BattleCurves";
 import { CharacterSkills, CharacterStats } from "./tools/battle/CharacterEditor";
 import { EncounterEditor } from "./tools/battle/EncounterEditor";
 import { StatusEditor } from "./tools/battle/StatusEditor";
+import { DependencyMap } from "./tools/DependencyMap";
+import { QuickSim } from "./tools/QuickSim";
+import { ReferenceImport } from "./tools/ReferenceImport";
+import { NavProvider, type Focus } from "./nav";
 import { Demo } from "./demo/Demo";
 import { onReplay, type ReplayRequest } from "./demo/link";
 import { canExportDemo, downloadDemo } from "./demo/exportDemo";
@@ -45,7 +49,12 @@ const IMPLEMENTED: Record<string, ComponentType<{ project: Project; update: Upda
   "enemy.ai": AiEditor,
   "enemy.encounter": EncounterEditor,
   "sim.ab": AbCompare,
+  "content.deps": DependencyMap,
+  "content.import": ReferenceImport,
 };
+
+/** Tools that already run their own simulations, so the quick-sim strip would only duplicate them. */
+const NO_QUICKSIM = new Set(["sim.batch", "sim.step", "sim.ab"]);
 
 const STATUS_TONE: Record<ToolStatus, "ok" | "warn" | "info" | "muted"> = { available: "ok", experimental: "warn", researching: "info", planned: "muted" };
 const STATUS_RANK: Record<ToolStatus, number> = { available: 0, experimental: 1, researching: 2, planned: 3 };
@@ -65,6 +74,16 @@ export function App() {
   const [toolId, setToolId] = useState("damage.breakdown");
   const [navOpen, setNavOpen] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [focus, setFocus] = useState<Focus | null>(null);
+  const nav = useMemo(() => ({
+    focus,
+    go: (id: string, f?: Omit<Focus, "toolId" | "seq">) => {
+      setToolId(id);
+      setShowDetail(false);
+      setFocus((prev) => ({ ...f, toolId: id, seq: (prev?.seq ?? 0) + 1 }));
+      document.querySelector(".main")?.scrollTo({ top: 0 });
+    },
+  }), [focus]);
   const [demo, setDemo] = useState(() => location.hash === "#demo");
   const openDemo = (on: boolean) => {
     setDemo(on);
@@ -81,6 +100,7 @@ export function App() {
   const compat = toolCompat(tool, project);
 
   return (
+    <NavProvider value={nav}>
     <div className={`app ${navOpen ? "nav-open" : ""}`}>
       <header className="topbar">
         <button className="btn icon nav-toggle" aria-label="機制庫" onClick={() => setNavOpen((o) => !o)}>☰</button>
@@ -102,9 +122,11 @@ export function App() {
       <main className="main">
         {Impl && showDetail && <div className="detail-strip"><ToolDetail tool={tool} compact /></div>}
         {Impl && !compat.ok && <div className="compat-strip">⚠ {compat.reason}</div>}
-        {Impl ? <Impl project={project} update={update} /> : <ToolDetail tool={tool} />}
+        {Impl ? <Impl key={toolId} project={project} update={update} /> : <ToolDetail tool={tool} />}
+        {Impl && !NO_QUICKSIM.has(toolId) && tool.category !== "damage" && <QuickSim project={project} />}
       </main>
     </div>
+    </NavProvider>
   );
 }
 

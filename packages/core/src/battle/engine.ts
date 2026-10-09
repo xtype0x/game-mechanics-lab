@@ -5,7 +5,7 @@
  * from the three RNG streams stored in the state, so (setup, seed, actions) fully determines a battle.
  */
 import { computeHit, critChanceOf, resolveStats, type DamageRules, type Scenario } from "../damage";
-import { evalBool, evalNumber, objectScope } from "../expr";
+import { evalBool, evalNumber, objectScope, type Scope } from "../expr";
 import { applyRounding, resolveValue, type Modifier } from "../modifier";
 import { Rng } from "../rng";
 import type {
@@ -13,14 +13,17 @@ import type {
   BattleEvent,
   BattleRules,
   BattleState,
+  DamageScale,
   EncounterDef,
   Effect,
+  PhaseDef,
   SkillDef,
   StatusDef,
   StatusInstance,
   TargetMode,
   UnitDef,
   UnitState,
+  UntargetedEffect,
 } from "./types";
 
 export interface BattleSetup {
@@ -39,35 +42,41 @@ const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 // Setup
 // ---------------------------------------------------------------------------
 
+function makeUnit(setup: BattleSetup, defId: string, team: "ally" | "enemy", slot: number, uid: string): UnitState {
+  const def = setup.units.find((u) => u.id === defId);
+  if (!def) throw new BattleError(`找不到角色「${defId}」`);
+  if (def.team !== team) throw new BattleError(`「${def.name}」不是${team === "ally" ? "我方" : "敵方"}單位`);
+  const hp = def.stats.hp ?? 1;
+  return {
+    uid,
+    defId,
+    name: def.name,
+    team,
+    slot,
+    element: def.element,
+    base: { ...def.stats },
+    weaknesses: [...def.weaknesses],
+    hp,
+    maxHp: hp,
+    energy: def.stats.startEnergy ?? 0,
+    maxEnergy: def.stats.maxEnergy ?? 0,
+    toughness: def.stats.toughness ?? 0,
+    maxToughness: def.stats.toughness ?? 0,
+    broken: false,
+    alive: true,
+    av: 0,
+    statuses: [],
+    passiveUses: {},
+    phase: 1,
+    counters: {},
+  };
+}
+
+const uidPrefix = (team: "ally" | "enemy") => (team === "ally" ? "A" : "E");
+
 export function createBattle(setup: BattleSetup, seed: number | string): BattleState {
   const units: UnitState[] = [];
-  const add = (defId: string, team: "ally" | "enemy", slot: number) => {
-    const def = setup.units.find((u) => u.id === defId);
-    if (!def) throw new BattleError(`找不到角色「${defId}」`);
-    if (def.team !== team) throw new BattleError(`「${def.name}」不是${team === "ally" ? "我方" : "敵方"}單位`);
-    const hp = def.stats.hp ?? 1;
-    units.push({
-      uid: `${team === "ally" ? "A" : "E"}${slot + 1}`,
-      defId,
-      name: def.name,
-      team,
-      slot,
-      element: def.element,
-      base: { ...def.stats },
-      weaknesses: [...def.weaknesses],
-      hp,
-      maxHp: hp,
-      energy: def.stats.startEnergy ?? 0,
-      maxEnergy: def.stats.maxEnergy ?? 0,
-      toughness: def.stats.toughness ?? 0,
-      maxToughness: def.stats.toughness ?? 0,
-      broken: false,
-      alive: true,
-      av: 0,
-      statuses: [],
-      passiveUses: {},
-    });
-  };
+  const add = (defId: string, team: "ally" | "enemy", slot: number) => units.push(makeUnit(setup, defId, team, slot, `${uidPrefix(team)}${slot + 1}`));
   setup.encounter.allies.forEach((id, i) => add(id, "ally", i));
   setup.encounter.enemies.forEach((id, i) => add(id, "enemy", i));
   if (!units.some((u) => u.team === "ally") || !units.some((u) => u.team === "enemy")) throw new BattleError("雙方都至少需要一名單位");
@@ -150,10 +159,12 @@ function scenarioFor(
   defender: UnitState,
   skill: { name: string; type: Scenario["skill"]["type"]; element: string; multiplier: number; hits: number[] },
 ): Scenario {
+  // Per-element resistance replaces the defender's base "res" (spec §13.1).
+  const elementRes = defOf(setup, defender).elementRes?.[skill.element];
   return {
     name: "",
     attacker: attacker.base,
-    defender: defender.base,
+    defender: elementRes === undefined ? defender.base : { ...defender.base, res: elementRes },
     skill: { ...skill },
     flags: { broken: defender.broken, weakness: defender.weaknesses.includes(skill.element) },
     modifiers: [...attacker.mods, ...statusMods(setup, defender, "defender")],
@@ -257,9 +268,11 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
 
 function endTurn(setup: BattleSetup, state: BattleState, u: UnitState) {
   preservingDistance(setup, u, () => {
-    for (const s of u.statuses) s.turnsLeft--;
-    const expired = u.statuses.filter((s) => s.turnsLeft <= 0);
-    u.statuses = u.statuses.filter((s) => s.turnsLeft > 0);
+    // Permanent statuses (duration 0) never tick or expire (spec §13.2).
+    const timed = (s: StatusInstance) => statusDef(setup, s.statusId).duration > 0;
+    for (const s of u.statuses) if (timed(s)) s.turnsLeft--;
+    const expired = u.statuses.filter((s) => timed(s) && s.turnsLeft <= 0);
+    u.statuses = u.statuses.filter((s) => !timed(s) || s.turnsLeft > 0);
     for (const s of expired) state.events.push({ t: "status", src: s.sourceUid, dst: u.uid, statusId: s.statusId, result: "expired" });
   });
   u.av = fullAv(setup, u);
@@ -269,16 +282,20 @@ function tickDots(setup: BattleSetup, state: BattleState, u: UnitState) {
   for (const inst of [...u.statuses]) {
     const def = statusDef(setup, inst.statusId);
     if (!def.dot || !u.alive) continue;
-    const sc = scenarioFor(setup, { base: inst.snapshot ?? {}, mods: [] }, u, {
-      name: def.name,
-      type: "dot",
-      element: def.dot.element,
-      multiplier: def.dot.multiplier * inst.stacks,
-      hits: [1],
-    });
-    const hit = computeHit(setup.damage, sc, resolveStats(setup.damage, sc), 0, false);
-    dealDamage(setup, state, inst.sourceUid, u, hit.damage, false, "dot");
+    dealDamage(setup, state, inst.sourceUid, u, dotDamage(setup, u, inst, def, 1), false, "dot");
   }
+}
+
+/** One DoT tick of `inst` on its holder; `ratio` scales the multiplier (1 for a normal tick, spec §13.10). */
+function dotDamage(setup: BattleSetup, u: UnitState, inst: StatusInstance, def: StatusDef, ratio: number): number {
+  const sc = scenarioFor(setup, { base: inst.snapshot ?? {}, mods: [] }, u, {
+    name: def.name,
+    type: "dot",
+    element: def.dot!.element,
+    multiplier: def.dot!.multiplier * inst.stacks * ratio,
+    hits: [1],
+  });
+  return computeHit(setup.damage, sc, resolveStats(setup.damage, sc), 0, false).damage;
 }
 
 // ---------------------------------------------------------------------------
@@ -363,12 +380,21 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
 }
 
 /** Scope for AI rules and passive conditions. "allies"/"foes" are relative to u's team. */
-function unitScope(state: BattleState, u: UnitState) {
+function unitScope(state: BattleState, u: UnitState): Scope {
   const foeTeam = u.team === "ally" ? "enemy" : "ally";
-  return objectScope({
-    self: { hpPct: u.hp / u.maxHp, broken: u.broken, energy: u.energy, toughnessPct: u.maxToughness ? u.toughness / u.maxToughness : 0 },
+  const base = objectScope({
+    self: {
+      hpPct: u.hp / u.maxHp, broken: u.broken, energy: u.energy, toughnessPct: u.maxToughness ? u.toughness / u.maxToughness : 0,
+      phase: u.phase, shield: u.statuses.reduce((a, s) => a + (s.shield ?? 0), 0),
+    },
     battle: { turn: state.turns, cycle: state.cycle, allies: alive(state, u.team).length, foes: alive(state, foeTeam).length },
   });
+  // Dynamic keys (spec §13.11): unknown counters and absent statuses read as 0.
+  return (path) => {
+    if (path.startsWith("self.counter.")) return u.counters[path.slice(13)] ?? 0;
+    if (path.startsWith("self.status.")) return u.statuses.find((s) => s.statusId === path.slice(12))?.stacks ?? 0;
+    return base(path);
+  };
 }
 
 function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { skill: SkillDef; targetUid?: string } {
@@ -377,7 +403,10 @@ function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { sk
   const scope = unitScope(state, u);
   const rules = (def.ai ?? []).filter((r) => r.weight > 0 && (!r.when || evalBool(r.when, scope)) && def.skills.some((s) => s.id === r.skillId));
   let skill = def.skills[0]!;
-  if (rules.length) {
+  const queued = u.nextSkill !== undefined ? def.skills.find((s) => s.id === u.nextSkill) : undefined;
+  u.nextSkill = undefined;
+  if (queued) skill = queued; // Forced action: no AI roll (spec §13.8).
+  else if (rules.length) {
     const total = rules.reduce((a, r) => a + r.weight, 0);
     let roll = rng.next() * total;
     let picked = rules[rules.length - 1]!;
@@ -388,9 +417,25 @@ function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { sk
     skill = def.skills.find((s) => s.id === picked.skillId)!;
   }
   const targets = candidateTargets(state, u, skill);
-  const targetUid = targets.length ? targets[rng.int(targets.length)] : undefined;
+  const targetUid = targets.length ? pickAiTarget(setup, state, rng, targets, skill.targeting === "enemy") : undefined;
   state.rng.ai = rng.snapshot();
   return { skill, targetUid };
+}
+
+/** Uniform pick, or taunt-weighted for hostile skills when taunt differs between candidates (spec §13.3). */
+function pickAiTarget(setup: BattleSetup, state: BattleState, rng: Rng, targets: string[], hostile: boolean): string {
+  const weights = hostile ? targets.map((uid) => Math.max(0, unitStat(setup, unit(state, uid), "taunt"))) : [];
+  if (!hostile || weights.every((w) => w === weights[0])) return targets[rng.int(targets.length)]!;
+  const total = weights.reduce((a, w) => a + w, 0);
+  let roll = rng.next() * total;
+  let picked: string | undefined;
+  for (let i = 0; i < targets.length; i++) {
+    if (weights[i]! <= 0) continue;
+    picked = targets[i]!; // Falls through to the last positive weight if rounding leaves roll ≥ every weight.
+    if (roll < weights[i]!) break;
+    roll -= weights[i]!;
+  }
+  return picked!;
 }
 
 // ---------------------------------------------------------------------------
@@ -422,6 +467,9 @@ function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
           else if (p.on === "allyBreak" && e.t === "break" && teamOf(e.src) === u.team) { match = true; targetUid = e.dst; }
           else if (p.on === "selfHit" && e.t === "damage" && e.kind === "hit" && e.dst === u.uid && teamOf(e.src) !== u.team) { match = true; targetUid = e.src; }
           else if (p.on === "enemyKilled" && e.t === "death" && teamOf(e.by) === u.team && teamOf(e.uid) !== u.team) { match = true; }
+          else if (p.on === "foeAction" && e.t === "action" && teamOf(e.uid) !== u.team && (!p.skillTypes || p.skillTypes.includes(e.skillType))) { match = true; targetUid = e.uid; }
+          else if (p.on === "phaseChange" && e.t === "phase" && e.uid === u.uid) { match = true; }
+          else if (p.on === "counterChange" && e.t === "counter" && e.uid === u.uid) { match = true; }
           if (!match) continue;
           const used = u.passiveUses[p.id] ?? 0;
           if (p.limitPerTurn > 0 && used >= p.limitPerTurn) continue;
@@ -489,6 +537,10 @@ function execute(setup: BattleSetup, state: BattleState, actor: UnitState, skill
   const hitByThisAction = new Set<UnitState>();
   const element = skill.element ?? actor.element;
   for (const eff of skill.effects) {
+    if (eff.kind === "summon" || eff.kind === "dismiss" || eff.kind === "sp") {
+      applyUntargeted(setup, state, actor, eff);
+      continue;
+    }
     const { main, adjacent } = resolveTargets(state, actor, eff.target, chosen);
     const all: [UnitState, boolean][] = [...main.map((u) => [u, false] as [UnitState, boolean]), ...adjacent.map((u) => [u, true] as [UnitState, boolean])];
     for (const [target, isAdj] of all) {
@@ -514,7 +566,7 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
       const toughness = isAdj ? (eff.adjToughness ?? 0) : eff.toughness;
       const crng = Rng.fromState(state.rng.crit);
       for (let i = 0; i < hits.length && target.alive; i++) {
-        const sc = scenarioFor(setup, attackerOf(setup, actor), target, { name: skill.name, type: skill.type, element, multiplier, hits });
+        const sc = scenarioFor(setup, scaledAttacker(setup, actor, eff.scale), target, { name: skill.name, type: skill.type, element, multiplier, hits });
         const stats = resolveStats(setup.damage, sc);
         const p = critChanceOf(setup.damage, sc, stats);
         // One crit draw per hit, always consumed (spec battle.md §5).
@@ -528,7 +580,9 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
     }
     case "heal": {
       const base = eff.scale === "atk" ? unitStat(setup, actor, "atk") : target.maxHp;
-      const amount = applyRounding(base * eff.multiplier + eff.flat, setup.rules.rounding);
+      // Heal bonuses (spec §5.4): both default to 0, leaving the amount unchanged.
+      const factor = (1 + unitStat(setup, actor, "healBonus")) * (1 + unitStat(setup, target, "healTaken"));
+      const amount = applyRounding((base * eff.multiplier + eff.flat) * factor, setup.rules.rounding);
       const before = target.hp;
       target.hp = Math.min(target.maxHp, target.hp + amount);
       state.events.push({ t: "heal", src: actor.uid, dst: target.uid, amount: target.hp - before });
@@ -546,23 +600,178 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
     case "energy":
       setEnergy(state, target, target.energy + eff.amount);
       break;
+    case "dispel": {
+      const matching = target.statuses.filter((s) => {
+        const d = statusDef(setup, s.statusId);
+        return d.kind === eff.statusKind && d.dispellable !== false;
+      });
+      // Most recent first (spec §13.7).
+      const removed = (eff.count > 0 ? matching.slice(-eff.count) : matching).reverse();
+      if (!removed.length) break;
+      preservingDistance(setup, target, () => {
+        target.statuses = target.statuses.filter((s) => !removed.includes(s));
+        for (const s of removed) state.events.push({ t: "status", src: actor.uid, dst: target.uid, statusId: s.statusId, result: "dispelled" });
+      });
+      break;
+    }
+    case "detonate":
+      for (const inst of [...target.statuses]) {
+        const def = statusDef(setup, inst.statusId);
+        if (!def.dot || !target.alive || (eff.statusId !== undefined && inst.statusId !== eff.statusId)) continue;
+        dealDamage(setup, state, inst.sourceUid, target, dotDamage(setup, target, inst, def, eff.ratio), false, "dot");
+      }
+      break;
+    case "queueSkill":
+      if (defOf(setup, target).skills.some((s) => s.id === eff.skillId)) {
+        target.nextSkill = eff.skillId;
+        state.events.push({ t: "queue", uid: target.uid, skillId: eff.skillId });
+      }
+      break;
+    case "counter": {
+      const before = target.counters[eff.key] ?? 0;
+      const after = eff.op === "add" ? before + eff.value : eff.value;
+      if (after !== before) {
+        target.counters[eff.key] = after;
+        state.events.push({ t: "counter", uid: target.uid, key: eff.key, before, after });
+      }
+      break;
+    }
+    case "summon":
+    case "dismiss":
+    case "sp":
+      break; // Resolved once per action by applyUntargeted.
+  }
+}
+
+/** Attacker for a damage effect. Non-ATK scaling swaps in the stat and drops ATK modifiers (spec §13.4). */
+function scaledAttacker(setup: BattleSetup, actor: UnitState, scale: DamageScale | undefined) {
+  const a = attackerOf(setup, actor);
+  if (!scale || scale === "atk") return a;
+  return {
+    base: { ...actor.base, atk: scaleValue(setup, actor, scale) },
+    mods: a.mods.filter((m) => m.target !== "stat:attacker.atk"),
+  };
+}
+
+function scaleValue(setup: BattleSetup, u: UnitState, scale: DamageScale): number {
+  return scale === "hp" ? u.maxHp : unitStat(setup, u, scale);
+}
+
+function applyUntargeted(setup: BattleSetup, state: BattleState, actor: UnitState, eff: UntargetedEffect) {
+  switch (eff.kind) {
+    case "sp": {
+      const before = state.sp;
+      state.sp = Math.min(setup.rules.spMax, Math.max(0, state.sp + eff.amount));
+      state.events.push({ t: "sp", before, after: state.sp });
+      break;
+    }
+    case "summon": {
+      const limit = setup.rules.maxFieldUnits ?? DEFAULT_MAX_FIELD_UNITS;
+      for (let i = 0; i < eff.count; i++) {
+        if (alive(state, actor.team).length >= limit) break;
+        const team = state.units.filter((u) => u.team === actor.team);
+        const u = makeUnit(setup, eff.unitId, actor.team, Math.max(...team.map((x) => x.slot)) + 1, `${uidPrefix(actor.team)}${team.length + 1}`);
+        u.summonedBy = actor.uid;
+        u.av = fullAv(setup, u);
+        state.units.push(u);
+        state.events.push({ t: "summon", uid: u.uid, defId: u.defId, by: actor.uid });
+      }
+      break;
+    }
+    case "dismiss": {
+      const victims = eff.unitId === undefined ? [actor] : alive(state, actor.team).filter((u) => u.defId === eff.unitId);
+      for (const v of victims) if (v.alive) dismiss(setup, state, v, actor.uid);
+      break;
+    }
+  }
+}
+
+export const DEFAULT_MAX_FIELD_UNITS = 5;
+
+/** Removes a unit without a kill: no death event, no kill energy, no enemyKilled trigger. */
+function dismiss(setup: BattleSetup, state: BattleState, u: UnitState, by: string) {
+  u.alive = false;
+  u.statuses = [];
+  state.events.push({ t: "dismiss", uid: u.uid, by });
+  afterRemoval(setup, state, u);
+}
+
+/** A unit left the field (death or dismissal): release statuses it applied and dismiss its bound summons. */
+function afterRemoval(setup: BattleSetup, state: BattleState, u: UnitState) {
+  releaseFrom(setup, state, u.uid, ["sourceDeath", "sourceBreak"]);
+  for (const s of alive(state)) if (s.summonedBy === u.uid && defOf(setup, s).boundToSummoner) dismiss(setup, state, s, u.uid);
+}
+
+function releaseFrom(setup: BattleSetup, state: BattleState, srcUid: string, kinds: NonNullable<StatusDef["release"]>[]) {
+  for (const v of alive(state).sort((a, b) => (a.team === b.team ? a.slot - b.slot : a.team === "ally" ? -1 : 1))) {
+    const gone = v.statuses.filter((s) => s.sourceUid === srcUid && kinds.includes(statusDef(setup, s.statusId).release!));
+    if (!gone.length) continue;
+    preservingDistance(setup, v, () => {
+      v.statuses = v.statuses.filter((s) => !gone.includes(s));
+      for (const s of gone) state.events.push({ t: "status", src: srcUid, dst: v.uid, statusId: s.statusId, result: "released" });
+    });
   }
 }
 
 function dealDamage(setup: BattleSetup, state: BattleState, srcUid: string, target: UnitState, amount: number, crit: boolean, kind: "hit" | "break" | "dot", skillId?: string) {
-  target.hp = Math.max(0, target.hp - amount);
-  state.events.push({ t: "damage", src: srcUid, dst: target.uid, amount, crit, kind, hpAfter: target.hp, skillId });
+  // Shields absorb first, in status-list order (spec §13.5).
+  let rest = amount;
+  let absorbed = 0;
+  for (const s of target.statuses) {
+    if (!(s.shield! > 0) || rest <= 0) continue;
+    const a = Math.min(s.shield!, rest);
+    s.shield! -= a;
+    rest -= a;
+    absorbed += a;
+  }
+  target.hp = Math.max(0, target.hp - rest);
+  const ev: BattleEvent = { t: "damage", src: srcUid, dst: target.uid, amount, crit, kind, hpAfter: target.hp, skillId };
+  if (absorbed > 0) ev.absorbed = absorbed;
+  state.events.push(ev);
   if (target.hp <= 0 && target.alive) {
+    const revive = target.statuses.find((s) => statusDef(setup, s.statusId).revive);
+    if (revive) {
+      preservingDistance(setup, target, () => { target.statuses = target.statuses.filter((s) => s !== revive); });
+      target.hp = Math.max(1, applyRounding(target.maxHp * statusDef(setup, revive.statusId).revive!.hpPct, setup.rules.rounding));
+      state.events.push({ t: "revive", uid: target.uid, statusId: revive.statusId, hp: target.hp });
+      return;
+    }
+    const phases = defOf(setup, target).phases ?? [];
+    if (target.phase <= phases.length) {
+      enterPhase(setup, state, target, phases[target.phase - 1]!);
+      return;
+    }
     target.alive = false;
     target.statuses = [];
     state.events.push({ t: "death", uid: target.uid, by: srcUid });
     const killer = state.units.find((u) => u.uid === srcUid);
     if (killer?.alive && killer.team !== target.team) setEnergy(state, killer, killer.energy + setup.rules.energyOnKill);
+    afterRemoval(setup, state, target);
   }
+}
+
+function enterPhase(setup: BattleSetup, state: BattleState, u: UnitState, ph: PhaseDef) {
+  u.phase += 1;
+  state.events.push({ t: "phase", uid: u.uid, phase: u.phase, name: ph.name });
+  preservingDistance(setup, u, () => {
+    if (ph.stats) u.base = { ...u.base, ...ph.stats };
+    if (ph.weaknesses) u.weaknesses = [...ph.weaknesses];
+    if (ph.clearDebuffs) {
+      const gone = u.statuses.filter((s) => statusDef(setup, s.statusId).kind === "debuff");
+      u.statuses = u.statuses.filter((s) => !gone.includes(s));
+      for (const s of gone) state.events.push({ t: "status", src: u.uid, dst: u.uid, statusId: s.statusId, result: "dispelled" });
+    }
+  });
+  u.maxHp = u.base.hp ?? u.maxHp;
+  u.hp = u.maxHp;
+  u.maxToughness = u.base.toughness ?? u.maxToughness;
+  u.toughness = u.maxToughness;
+  u.broken = false;
 }
 
 function reduceToughness(setup: BattleSetup, state: BattleState, actor: UnitState, target: UnitState, element: string, amount: number) {
   if (amount <= 0 || target.broken || target.maxToughness <= 0 || !target.weaknesses.includes(element)) return;
+  if (target.statuses.some((s) => statusDef(setup, s.statusId).toughnessLock)) return;
   const before = target.toughness;
   target.toughness = Math.max(0, target.toughness - amount);
   state.events.push({ t: "toughness", dst: target.uid, before, after: target.toughness });
@@ -583,6 +792,8 @@ function reduceToughness(setup: BattleSetup, state: BattleState, actor: UnitStat
     const before = target.av;
     target.av += fullAv(setup, target) * setup.rules.breakDelay;
     state.events.push({ t: "advance", uid: target.uid, before, after: target.av });
+    // Captures held by the broken unit end (spec §13.7).
+    releaseFrom(setup, state, target.uid, ["sourceBreak"]);
   }
 }
 
@@ -591,6 +802,9 @@ function applyStatus(setup: BattleSetup, state: BattleState, actor: UnitState, t
   let p = chance;
   if (def.kind === "debuff" && target.team !== actor.team) {
     p = chance * (1 + unitStat(setup, actor, "effectHit")) * (1 - unitStat(setup, target, "effectRes"));
+    // Category resistance (spec §13.1) only multiplies in when the target declares one.
+    const catRes = def.category === undefined ? undefined : defOf(setup, target).statusRes?.[def.category];
+    if (catRes !== undefined) p = p * (1 - catRes);
   }
   if (p < 1) {
     const srng = Rng.fromState(state.rng.status);
@@ -606,6 +820,7 @@ function applyStatus(setup: BattleSetup, state: BattleState, actor: UnitState, t
     const sc = scenarioFor(setup, attackerOf(setup, actor), target, { name: def.name, type: "dot", element: def.dot.element, multiplier: 0, hits: [1] });
     snapshot = Object.fromEntries(Object.entries(resolveStats(setup.damage, sc).attacker).map(([k, v]) => [k, v.value]));
   }
+  const shield = def.shield ? applyRounding(scaleValue(setup, actor, def.shield.scale) * def.shield.multiplier + def.shield.flat, setup.rules.rounding) : undefined;
   preservingDistance(setup, target, () => {
     const existing = target.statuses.find((s) => s.statusId === statusId);
     if (existing) {
@@ -613,10 +828,12 @@ function applyStatus(setup: BattleSetup, state: BattleState, actor: UnitState, t
       existing.turnsLeft = def.duration;
       existing.sourceUid = actor.uid;
       if (snapshot) existing.snapshot = snapshot;
+      if (shield !== undefined) existing.shield = Math.max(existing.shield ?? 0, shield);
       state.events.push({ t: "status", src: actor.uid, dst: target.uid, statusId, result: "refreshed" });
     } else {
       const inst: StatusInstance = { statusId, sourceUid: actor.uid, stacks: 1, turnsLeft: def.duration };
       if (snapshot) inst.snapshot = snapshot;
+      if (shield !== undefined) inst.shield = shield;
       target.statuses.push(inst);
       state.events.push({ t: "status", src: actor.uid, dst: target.uid, statusId, result: "applied" });
     }

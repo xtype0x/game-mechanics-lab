@@ -9,7 +9,7 @@ export interface ToolEntry {
   id: string;
   name: string;
   summary: string;
-  category: "damage" | "gacha" | "action" | "status" | "character" | "enemy" | "growth" | "simulation";
+  category: "damage" | "gacha" | "action" | "status" | "character" | "enemy" | "growth" | "simulation" | "content";
   tags: string[];
   timeModel: TimeModel;
   status: ToolStatus;
@@ -26,6 +26,7 @@ export const CATEGORY_LABELS: Record<ToolEntry["category"], string> = {
   enemy: "敵人與關卡",
   growth: "成長與經濟",
   simulation: "模擬與分析",
+  content: "資料與相依",
 };
 
 export const STATUS_LABELS: Record<ToolStatus, string> = {
@@ -60,6 +61,8 @@ export const TOOLS: ToolEntry[] = [
   { id: "sim.step", name: "單場逐步執行與重播", summary: "一步步執行戰鬥，查看每個事件與完整狀態。", category: "simulation", tags: ["模擬", "重播", "除錯"], timeModel: "turn-based", status: "available", milestone: "M3" },
   { id: "sim.batch", name: "批量戰鬥模擬", summary: "跑 N 場統計勝率、回合數與傷害來源。", category: "simulation", tags: ["模擬", "統計"], timeModel: "turn-based", status: "available", milestone: "M3" },
   { id: "sim.ab", name: "A/B 方案比較", summary: "任意兩份專案快照的結果差異。", category: "simulation", tags: ["比較", "A/B"], timeModel: "static", status: "available", milestone: "M4" },
+  { id: "content.deps", name: "內容相依關係總覽", summary: "技能、狀態、召喚、條件與戰鬥之間的引用關係；找出失效與未使用的內容，點名稱直接前往編輯。", category: "content", tags: ["相依", "引用", "整理"], timeModel: "static", status: "available", milestone: "擴充", aliases: ["dependency", "references"] },
+  { id: "content.import", name: "參考資料匯入", summary: "開啟自己蒐集的參考資料包，把敵人與角色數值轉成可編輯的草稿，並標示來源與換算假設。", category: "content", tags: ["匯入", "研究", "數值"], timeModel: "static", status: "experimental", milestone: "擴充", aliases: ["import", "reference"] },
 ];
 
 /** Detail-page text: what each tool reads/edits and what it produces. */
@@ -77,5 +80,7 @@ export const TOOL_DETAILS: Record<string, { inputs: string; outputs: string }> =
   "character.skills": { inputs: "技能、效果、被動", outputs: "技能摘要與驗證結果" },
   "enemy.ai": { inputs: "敵人的行動規則（技能、權重、條件）", outputs: "各情境下的技能機率" },
   "enemy.encounter": { inputs: "敵人站位、戰鬥規則", outputs: "弱點覆蓋、快速試跑勝率" },
+  "content.deps": { inputs: "專案中的角色、技能、狀態、被動、AI 與戰鬥", outputs: "引用清單、失效引用、未使用的內容、編輯器連結" },
+  "content.import": { inputs: "參考資料包（JSON）、等級、屬性對照、韌性換算", outputs: "角色／敵人草稿、轉換警告、互動機制的支援對照" },
   "sim.ab": { inputs: "兩份快照或目前專案", outputs: "勝率與傷害差異、設定差異清單" },
 };

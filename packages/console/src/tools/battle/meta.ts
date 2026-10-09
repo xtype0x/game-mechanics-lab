@@ -1,4 +1,4 @@
-import type { Effect, PassiveDef, SkillDef, SkillType, TargetMode } from "@ggt/core";
+import type { DamageScale, Effect, PassiveDef, SkillDef, SkillType, TargetMode } from "@ggt/core";
 
 export interface StatMeta {
   key: string;
@@ -18,6 +18,7 @@ export const STAT_GROUPS: { title: string; stats: StatMeta[] }[] = [
       { key: "res", label: "抗性", percent: true },
       { key: "dmgReduction", label: "減傷", percent: true },
       { key: "effectRes", label: "效果抵抗", percent: true },
+      { key: "healTaken", label: "受治療加成", percent: true, hint: "負值為治療降低" },
       { key: "toughness", label: "韌性", enemyOnly: true, hint: "0 表示沒有韌性條、不會被擊破" },
     ],
   },
@@ -32,6 +33,7 @@ export const STAT_GROUPS: { title: string; stats: StatMeta[] }[] = [
       { key: "resPen", label: "抗性穿透", percent: true },
       { key: "breakEffect", label: "擊破特攻", percent: true },
       { key: "effectHit", label: "效果命中", percent: true },
+      { key: "healBonus", label: "治療加成", percent: true },
     ],
   },
   {
@@ -39,6 +41,7 @@ export const STAT_GROUPS: { title: string; stats: StatMeta[] }[] = [
     stats: [
       { key: "spd", label: "速度" },
       { key: "level", label: "等級" },
+      { key: "taunt", label: "嘲諷值", allyOnly: true, hint: "敵人選目標時的權重；全隊相同（或都沒填）時為平均隨機" },
       { key: "maxEnergy", label: "能量上限", allyOnly: true },
       { key: "startEnergy", label: "初始能量", allyOnly: true },
     ],
@@ -75,6 +78,26 @@ export const EFFECT_KINDS: { value: Effect["kind"]; label: string }[] = [
   { value: "status", label: "施加狀態" },
   { value: "advance", label: "行動提前" },
   { value: "energy", label: "回復能量" },
+  { value: "dispel", label: "驅散" },
+  { value: "detonate", label: "引爆持續傷害" },
+  { value: "summon", label: "召喚" },
+  { value: "dismiss", label: "移除單位" },
+  { value: "queueSkill", label: "指定下次行動" },
+  { value: "counter", label: "計數器" },
+  { value: "sp", label: "技能點" },
+];
+
+/** Effect kinds grouped for the "add effect" buttons. */
+export const EFFECT_GROUPS: { label: string; kinds: Effect["kind"][] }[] = [
+  { label: "基本", kinds: ["damage", "heal", "status", "advance", "energy"] },
+  { label: "狀態操作", kinds: ["dispel", "detonate"] },
+  { label: "戰場與流程", kinds: ["summon", "dismiss", "queueSkill", "counter", "sp"] },
+];
+
+export const DAMAGE_SCALES: { value: DamageScale; label: string }[] = [
+  { value: "atk", label: "攻擊力" },
+  { value: "def", label: "防禦力" },
+  { value: "hp", label: "生命上限" },
 ];
 
 export const TRIGGERS: { value: PassiveDef["on"]; label: string }[] = [
@@ -82,10 +105,20 @@ export const TRIGGERS: { value: PassiveDef["on"]; label: string }[] = [
   { value: "allyBreak", label: "隊友（含自己）擊破敵人時" },
   { value: "selfHit", label: "自己受到攻擊時" },
   { value: "enemyKilled", label: "隊友（含自己）擊倒敵人時" },
+  { value: "foeAction", label: "對手行動後（可篩選技能類型）" },
+  { value: "phaseChange", label: "自己進入新階段時" },
+  { value: "counterChange", label: "自己的計數器變化時" },
 ];
 
-export function defaultEffect(kind: Effect["kind"], statusId: string): Effect {
+export function defaultEffect(kind: Effect["kind"], statusId: string, ctx: { unitId?: string; skillId?: string } = {}): Effect {
   switch (kind) {
+    case "dispel": return { kind, target: "enemy", statusKind: "buff", count: 1 };
+    case "detonate": return { kind, target: "enemy", ratio: 1 };
+    case "summon": return { kind, unitId: ctx.unitId ?? "", count: 1 };
+    case "dismiss": return { kind };
+    case "queueSkill": return { kind, target: "self", skillId: ctx.skillId ?? "" };
+    case "counter": return { kind, target: "self", key: "charge", op: "add", value: 1 };
+    case "sp": return { kind, amount: -1 };
     case "damage": return { kind, target: "enemy", multiplier: 1, toughness: 10 };
     case "heal": return { kind, target: "ally", scale: "atk", multiplier: 0.5, flat: 0 };
     case "status": return { kind, target: "enemy", statusId, chance: 1 };
@@ -94,7 +127,7 @@ export function defaultEffect(kind: Effect["kind"], statusId: string): Effect {
   }
 }
 
-export const AI_VARS = "self.hpPct（血量比例 0~1）、self.broken、self.toughnessPct、battle.turn（總回合數）、battle.cycle（輪數）、battle.allies（己方存活數）、battle.foes（對手存活數）";
+export const AI_VARS = "self.hpPct（血量比例 0~1）、self.broken、self.toughnessPct、self.phase（階段，從 1 起）、self.shield（剩餘護盾）、self.counter.名稱（計數器）、self.status.狀態ID（層數）、battle.turn（總回合數）、battle.cycle（輪數）、battle.allies（己方存活數）、battle.foes（對手存活數）";
 
 /** Next free id like "skill3" given existing ids. */
 export function nextId(prefix: string, taken: string[]): string {

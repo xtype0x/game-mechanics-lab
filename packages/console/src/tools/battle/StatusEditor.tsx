@@ -1,8 +1,11 @@
-import { computeHit, resolveStats, type ModOp, type Project, type Scenario, type StatusDef } from "@ggt/core";
+import { computeHit, contentReferences, referencesTo, resolveStats, type DamageScale, type DepRef, type ModOp, type Project, type Scenario, type StatusDef } from "@ggt/core";
+import { GoLink, useFocus } from "../../nav";
+import { refLabel } from "./SkillEditor";
+import { DAMAGE_SCALES } from "./meta";
 import { useMemo, useState } from "react";
 import type { Updater } from "../../useProject";
 import { Badge, ErrorBox, Field, NumberField, Section, fmt } from "../../ui";
-import { ELEMENT_OPTIONS } from "./elements";
+import { useElementOptions } from "./elements";
 import { elementLabel, useBattleSetup } from "./common";
 
 const OPS: { value: ModOp; label: string }[] = [
@@ -24,13 +27,15 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
   const st = statuses[idx];
   const { setup } = useBattleSetup(project);
 
+  const refs = useMemo(() => contentReferences(project.battle), [project.battle]);
   const usage = useMemo(() => {
-    const m = new Map<string, string[]>();
-    for (const u of project.battle.units) for (const sk of u.skills) for (const e of sk.effects) {
-      if (e.kind === "status") m.set(e.statusId, [...(m.get(e.statusId) ?? []), `${u.name}・${sk.name}`]);
-    }
+    const m = new Map<string, DepRef[]>();
+    for (const st of statuses) m.set(st.id, referencesTo(refs, { kind: "status", id: st.id }));
     return m;
-  }, [project.battle.units]);
+  }, [refs, statuses]);
+  const elements = useElementOptions(project.battle.units);
+  const categories = [...new Set(statuses.map((x) => x.category).filter((c): c is string => !!c))];
+  useFocus(["status.effects"], (f) => { if (f.statusId && statuses.some((x) => x.id === f.statusId)) setSelected(f.statusId); });
 
   const statKeys = useMemo(() => {
     const keys = new Set<string>(Object.keys(STAT_LABELS));
@@ -63,7 +68,7 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
               <button key={s.id} className={`status-item ${s.id === selected ? "on" : ""}`} onClick={() => setSelected(s.id)}>
                 <strong>{s.name}</strong>
                 <Badge tone={s.kind === "buff" ? "ok" : "warn"}>{s.kind === "buff" ? "增益" : "減益"}</Badge>
-                <span className="muted small">{s.duration} 回合{s.maxStacks > 1 ? `・最多 ${s.maxStacks} 層` : ""}{s.dot ? "・持續傷害" : ""}{s.skipTurn ? "・無法行動" : ""}</span>
+                <span className="muted small">{s.duration === 0 ? "永久" : `${s.duration} 回合`}{s.maxStacks > 1 ? `・最多 ${s.maxStacks} 層` : ""}{s.dot ? "・持續傷害" : ""}{s.skipTurn ? "・無法行動" : ""}{s.shield ? "・護盾" : ""}{s.revive ? "・復活" : ""}{s.toughnessLock ? "・鎖韌性" : ""}{s.category ? `・${s.category}` : ""}</span>
               </button>
             ))}
           </div>
@@ -73,7 +78,7 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
           <Section
             title={`編輯：${st.name}`}
             actions={
-              <button className="btn small ghost" disabled={usage.has(st.id)} title={usage.has(st.id) ? "有技能正在使用，無法刪除" : ""}
+              <button className="btn small ghost" disabled={(usage.get(st.id)?.length ?? 0) > 0} title={usage.get(st.id)?.length ? "有技能或條件正在使用，無法刪除" : ""}
                 onClick={() => { if (confirm(`刪除「${st.name}」？`)) { update((p) => { p.battle.statuses.splice(idx, 1); }); setSelected(statuses.find((x) => x.id !== st.id)?.id ?? ""); } }}>
                 刪除
               </button>
@@ -87,19 +92,52 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
                   <option value="debuff">減益（受效果命中／抵抗影響）</option>
                 </select>
               </Field>
-              <Field label="持續回合" hint="在持有者每次回合結束時減 1"><NumberField value={st.duration} min={1} onChange={(v) => v >= 1 && edit((s) => { s.duration = Math.round(v); })} /></Field>
+              <Field label="持續回合" hint="持有者每次回合結束時減 1；0 為永久"><NumberField value={st.duration} min={0} onChange={(v) => v >= 0 && edit((s) => { s.duration = Math.round(v); })} /></Field>
               <Field label="最大層數"><NumberField value={st.maxStacks} min={1} onChange={(v) => v >= 1 && edit((s) => { s.maxStacks = Math.round(v); })} /></Field>
             </div>
             <div className="grid-fields" style={{ marginTop: 10 }}>
               <label className="check"><input type="checkbox" checked={!!st.skipTurn} onChange={(e) => edit((s) => { if (e.target.checked) s.skipTurn = true; else delete s.skipTurn; })} />持有者無法行動（控制）</label>
               <label className="check"><input type="checkbox" checked={!!st.dot} onChange={(e) => edit((s) => { if (e.target.checked) s.dot = { multiplier: 0.5, element: "fire" }; else delete s.dot; })} />持續傷害</label>
+              <label className="check"><input type="checkbox" checked={!!st.shield} onChange={(e) => edit((s) => { if (e.target.checked) s.shield = { scale: "def", multiplier: 0.5, flat: 0 }; else delete s.shield; })} />護盾</label>
+              <label className="check"><input type="checkbox" checked={!!st.revive} onChange={(e) => edit((s) => { if (e.target.checked) s.revive = { hpPct: 0.3 }; else delete s.revive; })} />致命傷時復活（消耗此狀態）</label>
+              <label className="check"><input type="checkbox" checked={!!st.toughnessLock} onChange={(e) => edit((s) => { if (e.target.checked) s.toughnessLock = true; else delete s.toughnessLock; })} />韌性無法被削減</label>
+              <label className="check"><input type="checkbox" checked={st.dispellable !== false} onChange={(e) => edit((s) => { if (e.target.checked) delete s.dispellable; else s.dispellable = false; })} />可被驅散</label>
             </div>
+            <div className="grid-fields" style={{ marginTop: 10 }}>
+              <Field label="分類" hint="對應角色的「狀態抵抗」；留空則不受分類抵抗影響">
+                <input list="status-categories" className="mono" value={st.category ?? ""} placeholder="例如 freeze、control" onChange={(e) => edit((s) => { const v = e.target.value.trim(); if (v) s.category = v; else delete s.category; })} />
+                <datalist id="status-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+              </Field>
+              <Field label="自動解除" hint="施加者倒下或被擊破時解除（束縛、捕獲類）">
+                <select value={st.release ?? ""} onChange={(e) => edit((s) => { if (e.target.value) s.release = e.target.value as NonNullable<StatusDef["release"]>; else delete s.release; })}>
+                  <option value="">不自動解除</option>
+                  <option value="sourceDeath">施加者倒下或被移除時</option>
+                  <option value="sourceBreak">施加者被擊破、倒下或被移除時</option>
+                </select>
+              </Field>
+            </div>
+            {st.shield && (
+              <div className="grid-fields" style={{ marginTop: 10 }}>
+                <Field label="護盾依據（施加者）">
+                  <select value={st.shield.scale} onChange={(e) => edit((s) => { s.shield!.scale = e.target.value as DamageScale; })}>
+                    {DAMAGE_SCALES.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
+                  </select>
+                </Field>
+                <Field label="比例"><NumberField percent value={st.shield.multiplier} onChange={(v) => edit((s) => { s.shield!.multiplier = v; })} /></Field>
+                <Field label="固定值"><NumberField value={st.shield.flat} onChange={(v) => edit((s) => { s.shield!.flat = v; })} /></Field>
+              </div>
+            )}
+            {st.revive && (
+              <div className="grid-fields" style={{ marginTop: 10 }}>
+                <Field label="復活後生命比例"><NumberField percent value={st.revive.hpPct} min={0.01} max={1} onChange={(v) => edit((s) => { s.revive!.hpPct = Math.min(1, Math.max(0.01, v)); })} /></Field>
+              </div>
+            )}
             {st.dot && (
               <div className="grid-fields" style={{ marginTop: 10 }}>
                 <Field label="每層傷害倍率" hint="以施加者施加當下的攻擊數值計算"><NumberField percent value={st.dot.multiplier} onChange={(v) => edit((s) => { s.dot!.multiplier = v; })} /></Field>
                 <Field label="屬性">
                   <select value={st.dot.element} onChange={(e) => edit((s) => { s.dot!.element = e.target.value; })}>
-                    {ELEMENT_OPTIONS.map((el) => <option key={el} value={el}>{elementLabel(el)}</option>)}
+                    {elements.map((el) => <option key={el} value={el}>{elementLabel(el)}</option>)}
                   </select>
                 </Field>
               </div>
@@ -148,7 +186,7 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
   );
 }
 
-function Preview({ project, st, usage }: { project: Project; st: StatusDef; usage: string[] }) {
+function Preview({ project, st, usage }: { project: Project; st: StatusDef; usage: DepRef[] }) {
   const { setup, error } = useBattleSetup(project);
   const allies = project.battle.units.filter((u) => u.team === "ally");
   const enemies = project.battle.units.filter((u) => u.team === "enemy");
@@ -174,15 +212,21 @@ function Preview({ project, st, usage }: { project: Project; st: StatusDef; usag
       <Section title="效果摘要">
         <ul className="summary-list">
           <li>{st.kind === "buff" ? "增益：施加必定成功。" : "減益：成功率 = 基礎機率 ×（1 + 施加者效果命中）×（1 − 目標效果抵抗）。"}</li>
-          <li>持續 {st.duration} 個持有者回合（每次持有者回合結束 −1）；重複施加會刷新回合{st.maxStacks > 1 ? `並疊加，最多 ${st.maxStacks} 層` : ""}。</li>
+          <li>{st.duration === 0 ? "永久持續（不會到期，可被驅散、自動解除或隨持有者倒下清除）" : `持續 ${st.duration} 個持有者回合（每次持有者回合結束 −1）`}；重複施加會刷新{st.maxStacks > 1 ? `並疊加，最多 ${st.maxStacks} 層` : ""}。</li>
+          {st.category && <li>分類「{st.category}」：目標的同名狀態抵抗會再降低成功率。</li>}
+          {st.shield && <li>護盾：施加者{DAMAGE_SCALES.find((x) => x.value === st.shield!.scale)?.label} × {fmt(st.shield.multiplier * 100, 1)}% + {fmt(st.shield.flat, 0)}，先於生命值吸收傷害；重複施加取較大值。</li>}
+          {st.revive && <li>受到致命傷害時改為回復 {fmt(st.revive.hpPct * 100, 0)}% 生命，並移除此狀態。</li>}
+          {st.toughnessLock && <li>持有者的韌性無法被削減。</li>}
+          {st.release && <li>{st.release === "sourceDeath" ? "施加者倒下或被移除時解除。" : "施加者被擊破、倒下或被移除時解除。"}</li>}
+          {st.dispellable === false && <li>不會被驅散效果移除。</li>}
           {st.skipTurn && <li>持有者在回合開始時跳過行動。</li>}
           {st.dot && <li>持有者回合開始時受到持續傷害：施加者攻擊數值 × {fmt(st.dot.multiplier * 100, 0)}% × 層數，{elementLabel(st.dot.element)}屬性、不會暴擊。</li>}
           {st.modifiers.map((m, i) => <li key={i}>{m.target.startsWith("step:") ? `乘區「${m.target.slice(5)}」` : `數值「${STAT_LABELS[m.target.slice(5)] ?? m.target.slice(5)}」`} {OPS.find((o) => o.value === m.op)?.label} {fmt(m.value, 4)}（每層）{m.role === "incoming" ? "，於受到傷害時" : ""}</li>)}
-          {st.modifiers.length === 0 && !st.dot && !st.skipTurn && <li className="muted">目前沒有任何效果。</li>}
+          {st.modifiers.length === 0 && !st.dot && !st.skipTurn && !st.shield && !st.revive && !st.toughnessLock && <li className="muted">目前沒有任何效果。</li>}
         </ul>
       </Section>
-      <Section title={`使用此狀態的技能（${usage.length}）`}>
-        {usage.length ? <ul className="summary-list">{usage.map((u) => <li key={u}>{u}</li>)}</ul> : <p className="muted small">沒有技能使用。到 M4 的技能編輯器即可指定。</p>}
+      <Section title={`使用此狀態的地方（${usage.length}）`}>
+        {usage.length ? <ul className="summary-list">{usage.map((r, k) => <li key={k}><GoLink node={r.from}>{refLabel(r, project.battle.units)}</GoLink></li>)}</ul> : <p className="muted small">沒有技能或條件使用。可在「技能與目標規則編輯器」加入「施加狀態」效果。</p>}
       </Section>
       {st.dot && (
         <Section title="持續傷害試算（每次跳傷）">

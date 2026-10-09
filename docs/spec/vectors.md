@@ -7,7 +7,7 @@
 | rng.json | `cases`：每組 (seed, stream) 的前 16 個 uint32。`derived`：在同一個產生器上依序呼叫 next／chance／int 的結果 |
 | expr.json | `cases`：文字、JSON 樹、在 `variables` 下的值。`errors`：求值必須失敗的 JSON 樹 |
 | damage.json | `components`、`templates`：內建定義。`cases`：輸入（config、scenario）與預期輸出。`compat`：組合設定與預期狀態、錯誤數、警告數 |
-| battle.json | `timeline`：速度 → 行動順序預測。`battles`：完整輸入（damageConfig、battle、seed）與自動戰鬥（§7.3 策略）結束時的狀態與完整事件紀錄 |
+| battle.json | `timeline`：速度 → 行動順序預測。`battles`：完整輸入（damageConfig、battle、seed）與自動戰鬥（§7.3 策略）結束時的狀態與完整事件紀錄。`ext/` 開頭的案例涵蓋 battle.md §13 的所有擴充事件 |
 
 ### damage.json `cases[].expected`
 | 欄位 | 意義 |

@@ -1,17 +1,19 @@
 # 回合戰鬥規格
 
+規則版本 0.6.0（§13 擴充機制）。
+
 戰鬥直接使用專案的傷害規則（damage.md）計算每段命中。所有狀態都是純 JSON；給定（設定, 種子, 行動序列）結果完全確定。
 
 ## 1. 設定
-- `rules`：`avBase`、`firstCycleAv`、`cycleAv`、`spStart`、`spMax`、`energyOnHitTaken`、`energyOnKill`、`breakDelay`、`breakDamage`（表示式）、`maxCycles`、`rounding`。
-- `units`：單位定義（`id`、`name`、`team`、`element`、`stats`、`weaknesses`、`skills`、`ai`）。
+- `rules`：`avBase`、`firstCycleAv`、`cycleAv`、`spStart`、`spMax`、`energyOnHitTaken`、`energyOnKill`、`breakDelay`、`breakDamage`（表示式）、`maxCycles`、`rounding`、`maxFieldUnits`（選填，預設 5，§13.5）。
+- `units`：單位定義（`id`、`name`、`team`、`element`、`stats`、`weaknesses`、`skills`、`ai`、`passives`；擴充欄位 `elementRes`、`statusRes`、`phases`、`boundToSummoner` 見 §13；`source` 只供介面顯示，引擎不讀）。
 - `statuses`：狀態定義。
 - `encounter`：`allies`、`enemies` 兩個單位 ID 陣列（可重複）。
 - `damage`：由專案 `damage.config` 經 damage.md §3 組合出的傷害規則。
 
 ## 2. 建立戰鬥
 1. 依 `allies` 再 `enemies` 的順序建立單位：`uid` = `A<i+1>`／`E<i+1>`，`slot` = i。
-2. `hp = maxHp = stats.hp ?? 1`；`energy = stats.startEnergy ?? 0`；`maxEnergy = stats.maxEnergy ?? 0`；`toughness = maxToughness = stats.toughness ?? 0`；`broken = false`；`statuses = []`。
+2. `hp = maxHp = stats.hp ?? 1`；`energy = stats.startEnergy ?? 0`；`maxEnergy = stats.maxEnergy ?? 0`；`toughness = maxToughness = stats.toughness ?? 0`；`broken = false`；`statuses = []`；`passiveUses = {}`；`phase = 1`；`counters = {}`。
 3. `sp = spStart`，`time = 0`，`cycle = 1`，`turns = 0`，事件 `[{cycle:1, time:0}]`。
 4. 亂數流：`Rng(seed, "battle.crit")`、`Rng(seed, "battle.status")`、`Rng(seed, "battle.ai")`。
 5. 每個單位 `av = fullAv(u)`，然後執行主迴圈（§4）。
@@ -41,6 +43,7 @@
 
 攻擊方 X 打防守方 Y 時，damage.md 的情境為：
 - `attacker = X.stats`、`defender = Y.stats`。
+- 若 Y 的定義有 `elementRes[element]`，`defender` 改用 `{...Y.stats, res: elementRes[element]}`（§13.1）。
 - `flags = { broken: Y.broken, weakness: Y.weaknesses 包含 element }`。
 - `modifiers = X 的攻擊方修正 ++ Y 的防守方修正`。
 
@@ -70,8 +73,8 @@
 
 ### 4.1 回合結束
 在保距離規則內：
-1. 所有狀態 `turnsLeft −= 1`；
-2. 移除 `turnsLeft ≤ 0` 者，依列表順序加入 `expired` 事件。
+1. 所有 `duration > 0` 的狀態 `turnsLeft −= 1`（`duration == 0` 為永久，§13.2，不扣也不到期）；
+2. 移除 `duration > 0` 且 `turnsLeft ≤ 0` 者，依列表順序加入 `expired` 事件。
 
 最後 `av = fullAv(u)`。
 
@@ -79,7 +82,7 @@
 1. 加入 `action` 事件。
 2. 行動者為我方且 `spDelta ≠ 0`：`sp = clamp(sp + spDelta, 0, spMax)`，加入 `sp` 事件。
 3. 大招：`energy = 0`。接著 `energy = energy + energyGain`。能量一律限制在 [0, maxEnergy]；有變化才加入 `energy` 事件。
-4. 依序處理每個效果：先決定目標（§5.1），依「主目標，再相鄰目標」的順序，對每個存活目標套用效果。傷害效果套用到對手（套用前存活即可，即使被打死）後，將其記入本行動的「被擊中集合」（保持插入順序）。
+4. 依序處理每個效果。`summon`／`dismiss`／`sp` 沒有目標，每個效果只執行一次（§13.5、§13.9）。其他效果先決定目標（§5.1），依「主目標，再相鄰目標」的順序，對每個存活目標套用效果。傷害效果套用到對手（套用前存活即可，即使被打死）後，將其記入本行動的「被擊中集合」（保持插入順序）。
 5. 所有效果結束後，被擊中集合中存活的我方單位各加 `energyOnHitTaken` 能量。
 
 ### 5.1 目標
@@ -111,7 +114,8 @@
    - 削韌量 ≤ 0；
    - 目標已擊破；
    - `maxToughness ≤ 0`；
-   - 元素不在目標弱點中。
+   - 元素不在目標弱點中；
+   - 目標有任何 `toughnessLock` 狀態（§13.2）。
 2. `toughness = max(0, toughness − 量)`，加入 `toughness` 事件。仍大於 0 則結束。
 3. 歸零時：`broken = true`，加入 `break` 事件。
 4. 擊破傷害：以 `{type:"skill", multiplier:0, hits:[1], element}` 建立情境（此時 `broken` 已為 true），解出最終統計值。
@@ -119,34 +123,40 @@
      - `attacker = {...行動者.stats, ...攻擊方最終值, breakEffect: unitStat(行動者, "breakEffect")}`
      - `defender = {...目標.stats, ...防守方最終值, maxToughness}`
    - 傷害量 = `rounding(max(0, breakDamage))`，以 `kind:"break"` 造成傷害。
-5. 若目標仍存活：`av += fullAv(目標) × breakDelay`，加入 `advance` 事件。
+5. 若目標仍存活：`av += fullAv(目標) × breakDelay`，加入 `advance` 事件；接著解除目標施加的 `release == "sourceBreak"` 狀態（§13.7）。
 
 ### 5.4 治療、能量、推進
-- **治療**：`base = scale == "atk" ? unitStat(行動者, "atk") : 目標.maxHp`；`量 = rounding(base × multiplier + flat)`；`hp = min(maxHp, hp + 量)`；事件記實際回復量。
+- **治療**：`base = scale == "atk" ? unitStat(行動者, "atk") : 目標.maxHp`；`量 = rounding((base × multiplier + flat) × (1 + unitStat(行動者, "healBonus")) × (1 + unitStat(目標, "healTaken")))`（兩個統計值未宣告時為 0）；`hp = min(maxHp, hp + 量)`；事件記實際回復量。
 - **推進**：`av = max(0, av − fullAv(目標) × amount)`。
 - **能量**：`energy + amount`，限制在 [0, maxEnergy]。
 
 ### 5.5 狀態施加
-1. 計算機率 `p = chance`。若狀態為減益，且目標與行動者不同隊：`p = chance × (1 + unitStat(行動者, "effectHit")) × (1 − unitStat(目標, "effectRes"))`。
+1. 計算機率 `p = chance`。若狀態為減益，且目標與行動者不同隊：`p = chance × (1 + unitStat(行動者, "effectHit")) × (1 − unitStat(目標, "effectRes"))`；若狀態有 `category` 且目標定義的 `statusRes` 有該鍵 r，再 `p = p × (1 − r)`（沒有該鍵時不乘，§13.1）。
 2. `p < 1` 時抽一次 `statusRng.chance(p)`；失敗則加入 `resisted` 事件並結束。`p ≥ 1` 時不抽。
-3. 有 `dot` 時：以 `{type:"dot", multiplier:0, element: dot.element}` 對目標建立情境，記錄攻擊方最終統計值為 `snapshot`（只包含傷害規則**宣告**的 attacker 統計值）。
+3. 有 `dot` 時：以 `{type:"dot", multiplier:0, element: dot.element}` 對目標建立情境，記錄攻擊方最終統計值為 `snapshot`（只包含傷害規則**宣告**的 attacker 統計值）。有 `shield` 時：`shield = rounding(scaleValue(行動者, shield.scale) × multiplier + flat)`（§13.4）。
 4. 在保距離規則內處理：
-   - 已有同 ID 實例：`stacks = min(maxStacks, stacks + 1)`、`turnsLeft = duration`、`sourceUid = 行動者`、有 snapshot 時取代，加入 `refreshed` 事件。
-   - 否則：加入 `{stacks:1, turnsLeft: duration}`，加入 `applied` 事件。
+   - 已有同 ID 實例：`stacks = min(maxStacks, stacks + 1)`、`turnsLeft = duration`、`sourceUid = 行動者`、有 snapshot 時取代、有 shield 時 `shield = max(原剩餘, 新值)`，加入 `refreshed` 事件。
+   - 否則：加入 `{stacks:1, turnsLeft: duration}`（有 snapshot／shield 時一併記錄），加入 `applied` 事件。
 
 ### 5.6 造成傷害
-1. `hp = max(0, hp − 量)`，加入 `damage` 事件。
-2. 若 `hp ≤ 0` 且目標原本存活：
-   - `alive = false`，清除所有狀態，加入 `death` 事件；
-   - 擊殺者存活且與目標異隊時，擊殺者獲得 `energyOnKill` 能量。
+1. **護盾**：`rest = 量`；依狀態列表順序，對 `shield > 0` 的實例：`a = min(shield, rest)`，`shield −= a`、`rest −= a`、`absorbed += a`。
+2. `hp = max(0, hp − rest)`，加入 `damage` 事件（`amount` 為原本的量；`absorbed > 0` 時加上 `absorbed` 欄位）。
+3. 若 `hp ≤ 0` 且目標原本存活，依序檢查：
+   1. **復活**：狀態列表中第一個定義有 `revive` 的實例。若有：在保距離規則內移除它，`hp = max(1, rounding(maxHp × hpPct))`，加入 `revive` 事件，結束。
+   2. **階段**：定義的 `phases` 長度 ≥ `phase` 時進入下一階段（§13.6），結束。
+   3. **死亡**：`alive = false`，清除所有狀態，加入 `death` 事件；擊殺者存活且與目標異隊時，擊殺者獲得 `energyOnKill` 能量；然後執行離場處理（§13.7）。
 
 ## 6. 敵人 AI
 1. 建立 scope：
-   - `self.{hpPct, broken, energy, toughnessPct}`
+   - `self.{hpPct, broken, energy, toughnessPct, phase, shield}`（shield 為所有實例剩餘護盾總和）
+   - `self.counter.<key>`（沒有時為 0）、`self.status.<statusId>`（層數，沒有時為 0）
    - `battle.{turn, cycle, allies（存活敵方數）, foes（存活我方數）}`
-2. 候選規則 = `weight > 0`、`when` 成立（或省略）、且技能存在者。
+2. 若 `nextSkill` 有值：先清除它；若該技能存在，直接使用它，**不**抽 AI 規則亂數（跳到步驟 4）。
+   候選規則 = `weight > 0`、`when` 成立（或省略）、且技能存在者。
 3. 有候選時：`roll = aiRng.next() × 總權重`，依序找第一個 `roll < weight` 的規則，否則 `roll −= weight`。都沒有命中時取最後一個。沒有候選時取第一個技能，不抽亂數。
-4. 技能 `targeting ≠ "none"` 時：`targeting == "enemy"` 從存活對手、`"ally"` 從存活友方（皆依 slot 排序）以 `aiRng.int(數量)` 選出一個；候選為空時不抽。
+4. 技能 `targeting ≠ "none"` 時：`targeting == "enemy"` 從存活對手、`"ally"` 從存活友方（皆依 slot 排序）選出一個；候選為空時不抽。
+   - `"ally"`，或所有候選的 `w = max(0, unitStat(候選, "taunt"))` 都相等：`aiRng.int(數量)`。
+   - 否則（嘲諷加權，§13.3）：`roll = aiRng.next() × Σw`；依序略過 `w = 0` 者，第一個 `roll < w` 的候選中選，否則 `roll −= w`；都沒中時取最後一個 `w > 0` 者。
 5. `self.toughnessPct` 在 `maxToughness = 0` 時為 0。`battle.allies` 是與 self **同隊**的存活數，`battle.foes` 是對手存活數（AI 與 §12 被動條件共用此 scope）。
 
 ## 7. 決策與自動策略
@@ -197,19 +207,27 @@
 | skip | uid, reason（狀態名稱） | 控制狀態跳過行動 |
 | action | uid, skillId, skillName, skillType, targetUid（有指定時）, time | 每次執行技能（含追加攻擊） |
 | trigger | uid, passiveId, passiveName, targetUid（有時） | 被動即將執行追加攻擊（緊接在其 action 之前） |
-| damage | src, dst, amount, crit, kind（hit／break／dot）, hpAfter, skillId（僅 hit） | 每次造成傷害（含 0） |
+| damage | src, dst, amount, crit, kind（hit／break／dot）, hpAfter, skillId（僅 hit）, absorbed（僅護盾吸收 > 0 時） | 每次造成傷害（含 0） |
 | toughness | dst, before, after | 削韌實際發生時 |
 | break | src, dst | 擊破 |
 | heal | src, dst, amount（實際回復量，可為 0） | 每次治療效果 |
-| status | src, dst, statusId, result（applied／refreshed／resisted／expired） | 施加結果；到期時 src 為實例的 sourceUid |
+| status | src, dst, statusId, result（applied／refreshed／resisted／expired／dispelled／released） | 施加結果；到期時 src 為實例的 sourceUid；dispelled 的 src 為驅散者（階段清除減益時為本人）；released 的 src 為離場或被擊破的施加者 |
 | energy | uid, before, after | 能量**有變化**時（大招會有歸零與獲得兩筆） |
-| sp | before, after | 我方行動且 spDelta ≠ 0 時（即使夾限後數值不變） |
+| sp | before, after | 我方行動且 spDelta ≠ 0 時，或 `sp` 效果（即使夾限後數值不變） |
 | advance | uid, before, after | 推進效果或擊破延後（一律記錄） |
 | death | uid, by | 單位倒下；其狀態直接清除，不產生 expired |
+| revive | uid, statusId, hp | 復活狀態抵銷致命傷（§5.6） |
+| phase | uid, phase（進入後的階段，從 2 起）, name | 進入下一階段（§13.6） |
+| summon | uid, defId, by | 召喚出新單位（§13.5） |
+| dismiss | uid, by | 單位被移除（非擊殺；§13.5） |
+| counter | uid, key, before, after | 計數器**有變化**時（§13.9） |
+| queue | uid, skillId | 指定下一次行動（§13.8） |
 | end | result, time | 戰鬥結束；timeout 時 time 為未推進前的時間 |
 
 ## 11. 單位狀態（向量 `units`）
-`uid, defId, name, team, slot, element, base（= stats 複本）, weaknesses, hp, maxHp, energy, maxEnergy, toughness, maxToughness, broken, alive, av, statuses[{statusId, sourceUid, stacks, turnsLeft, snapshot?}], passiveUses{passiveId: 次數}`
+`uid, defId, name, team, slot, element, base（= stats 複本）, weaknesses, hp, maxHp, energy, maxEnergy, toughness, maxToughness, broken, alive, av, statuses[{statusId, sourceUid, stacks, turnsLeft, snapshot?, shield?}], passiveUses{passiveId: 次數}, phase, counters{key: 值}, nextSkill?, summonedBy?`
+
+召喚出的單位接在 `units` 陣列尾端；`units` 從不移除單位（倒下或移除只設 `alive = false`）。
 
 ## 12. 被動與追加攻擊
 單位定義可有 `passives: [{id, name, on, skillId, when?, limitPerTurn}]`。被動在**每個頂層行動**（我方一般行動、大招、敵方行動）執行完畢後處理；持續傷害與回合開始的事件不觸發被動。
@@ -223,6 +241,11 @@
 | allyBreak | `break`，src 與持有者同隊 | 被擊破者（dst） |
 | selfHit | `damage`，kind 為 hit，dst 是持有者，src 與持有者異隊（**每個 damage 事件各比對一次**） | 攻擊者（src） |
 | enemyKilled | `death`，by 與持有者同隊、死者與持有者異隊 | 無（使用 §5.1 預設） |
+| foeAction | `action`，行動者與持有者異隊，且（有 `skillTypes` 時）skillType 在其中 | 該行動者（uid） |
+| phaseChange | `phase`，uid 是持有者 | 無 |
+| counterChange | `counter`，uid 是持有者 | 無 |
+
+`dismiss` 不是 `death`，不會觸發 enemyKilled。
 
 `allyUltimate` 的大招若沒有指定目標，chosen 為無。
 
@@ -242,3 +265,59 @@
 **「每回合」的意義**：`passiveUses` 只在持有者**自己的**回合開始時清空，也就是「兩次自己行動之間」最多觸發 limitPerTurn 次。
 
 追加攻擊照常套用技能的 spDelta（我方）與 energyGain。
+
+## 13. 擴充機制（規則 v0.6）
+
+以下欄位全部選填；省略時行為與 v0.5 完全相同（既有向量的事件逐筆不變）。這些是本工具的通用機制，不是任何特定遊戲的規則。
+
+### 13.1 抗性
+- **屬性抗性** `UnitDef.elementRes: {element: 值}`：該元素的傷害情境中，防守方基礎 `res` 改為此值（§3.4）。包含持續傷害、引爆與擊破傷害情境。只有在傷害規則宣告了 `defender.res` 時才有作用。
+- **狀態抵抗** `UnitDef.statusRes: {category: 值}` 配合 `StatusDef.category`：只影響異隊施加的減益機率（§5.5 第 1 步）。
+
+### 13.2 狀態旗標
+| 欄位 | 規則 |
+|---|---|
+| `duration: 0` | 永久：施加時 `turnsLeft = 0`，回合結束不扣、不到期（§4.1）。仍可被驅散、解除或隨死亡清除 |
+| `toughnessLock` | 持有者無法被削韌（§5.3） |
+| `dispellable: false` | 不受驅散效果影響（預設可驅散） |
+| `shield` | 見 §13.4、§5.5、§5.6 |
+| `revive: {hpPct}` | 見 §5.6；0 < hpPct ≤ 1 |
+| `release` | 見 §13.7 |
+
+### 13.3 嘲諷
+統計值 `taunt`（以 unitStat 取得，可被狀態修正）只影響敵人 AI 選擇**對手**目標（§6 第 4 步）。全部相等（包含都沒有設定）時與 v0.5 相同，亂數用量不變。
+
+### 13.4 數值依據 `scaleValue(u, scale)`
+`scale == "hp"` 時為 `u.maxHp`；`"atk"`／`"def"` 時為 `unitStat(u, scale)`。
+- **傷害效果** `scale`：省略或 `"atk"` 時照舊。否則每段命中的攻擊方為 `base = {...行動者.stats, atk: scaleValue(行動者, scale)}`，修正值為攻擊方修正**去掉**目標為 `stat:attacker.atk` 的項目（傷害公式仍讀 `attacker.atk`）。
+- **護盾** `StatusDef.shield = {scale, multiplier, flat}`：以施加者計算（§5.5）。
+
+### 13.5 召喚與移除
+- **summon** `{unitId, count}`：重複 count 次：若行動者隊伍存活數 ≥ `maxFieldUnits ?? 5` 則停止；否則以 §2 第 2 步建立單位，`team` = 行動者隊伍（定義必須同隊，否則為錯誤），`uid = 前綴 + (該隊在 units 中的總數 + 1)`（含已倒下者），`slot = 該隊最大 slot + 1`，`summonedBy = 行動者 uid`，`av = fullAv`，接在 `units` 尾端，加入 `summon` 事件。新單位立即可被同一技能後續的效果選為目標。
+- **dismiss** `{unitId?}`：有 unitId 時，行動者隊伍中所有存活且 defId 相同者（依 units 順序）；沒有時為行動者自己。每個：`alive = false`、清除狀態、加入 `dismiss` 事件（by = 行動者），然後離場處理（§13.7）。不給擊殺能量、不觸發 enemyKilled。
+- 隊伍全數倒下或被移除時照常結束戰鬥（§4 步驟 1）。
+
+### 13.6 階段
+`UnitDef.phases: [{name, stats?, weaknesses?, clearDebuffs?}]`，第 k 個元素是第 k + 1 階段。致命傷害且 `phase ≤ phases.length` 時（§5.6）：
+1. `phase += 1`，加入 `phase` 事件。
+2. 在保距離規則內：`base = {...base, ...stats}`；有 `weaknesses` 時取代；`clearDebuffs` 時移除全部減益，依列表順序加入 `dispelled` 事件（src = dst = 本人）。
+3. `maxHp = base.hp ?? maxHp`、`hp = maxHp`；`maxToughness = base.toughness ?? maxToughness`、`toughness = maxToughness`、`broken = false`。
+多出的傷害不轉移。同一段命中之後的段數照常打在新階段上。
+
+### 13.7 驅散、解除與離場處理
+- **dispel** `{statusKind, count}`：目標狀態中 `kind == statusKind` 且可驅散者，取列表中**最後** count 個（count ≤ 0 為全部），從最後一個往前，在保距離規則內移除並各加入 `dispelled` 事件（src = 行動者）。
+- **解除** `StatusDef.release`：`"sourceDeath"` 在施加者（實例的 sourceUid）離場時解除；`"sourceBreak"` 在施加者被擊破（§5.3 第 5 步）或離場時解除。對每個存活單位（我方依 slot、再敵方依 slot），在保距離規則內移除符合者，依列表順序加入 `released` 事件（src = 施加者）。
+- **離場處理**（死亡或移除後）：先解除該單位施加的 sourceDeath／sourceBreak 狀態；然後對每個存活單位（units 順序）中 `summonedBy` 是它、且定義有 `boundToSummoner` 者執行移除（by = 它，可遞迴）。
+
+### 13.8 指定下一次行動
+**queueSkill** `{target, skillId}`：目標的定義有此技能時設 `nextSkill = skillId` 並加入 `queue` 事件，否則無效果。只有敵人 AI 會讀取（§6 第 2 步）；與 `advance`（amount 1）搭配即為「立刻插隊行動」。
+
+### 13.9 計數器與技能點
+- **counter** `{target, key, op: "add"|"set", value}`：`before = counters[key] ?? 0`；`after = add ? before + value : value`；不同時寫入並加入 `counter` 事件。
+- **sp** `{amount}`：`sp = clamp(sp + amount, 0, spMax)`，一律加入 `sp` 事件。不論行動者隊伍，都作用於我方共用技能點。
+
+### 13.10 引爆持續傷害
+**detonate** `{target, ratio, statusId?}`：依目標狀態列表（迭代開始時的副本）順序，對每個有 `dot`（且 statusId 相符，若有指定）的實例、目標仍存活時，以 §4 步驟 7 的方式計算一跳，但倍率為 `dot.multiplier × stacks × ratio`，以 `kind:"dot"`、來源為實例的 sourceUid 造成傷害。不改變狀態的回合數或層數。
+
+### 13.11 條件可用的變數
+AI 與被動條件可用：§6 的固定變數、`self.phase`、`self.shield`、`self.counter.<識別字>`、`self.status.<狀態 ID>`（狀態必須存在，否則驗證錯誤）。

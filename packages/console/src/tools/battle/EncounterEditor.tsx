@@ -5,6 +5,7 @@ import { ErrorBox, Field, NumberField, Section, fmt, pct } from "../../ui";
 import { ExprField } from "../common";
 import { IssueList, elementLabel, useBattleSetup } from "./common";
 import { nextId } from "./meta";
+import { useFocus } from "../../nav";
 
 const QUICK_RUNS = 100;
 
@@ -12,6 +13,7 @@ export function EncounterEditor({ project, update }: { project: Project; update:
   const list = project.battle.encounters;
   const [selected, setSelected] = useState(list[0]?.id ?? "");
   const enc = list.find((e) => e.id === selected);
+  useFocus(["enemy.encounter"], (f) => { if (f.encounterId && list.some((e) => e.id === f.encounterId)) setSelected(f.encounterId); });
   const enemies = project.battle.units.filter((u) => u.team === "enemy");
   const [addId, setAddId] = useState(enemies[0]?.id ?? "");
   const { issues } = useBattleSetup(project);

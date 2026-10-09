@@ -132,23 +132,32 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
   // ---------------------------------------------------------------------------
   // Layout
   // ---------------------------------------------------------------------------
+  // Units on stage: everything with a view, except summons that have left (originals stay as fallen).
+  const onStage = battle.units.filter((u) => view[u.uid] && (view[u.uid]!.alive || !u.summonedBy));
+  const stageKey = onStage.map((u) => u.uid).join();
   const layout = useMemo(() => {
-    const enemies = battle.units.filter((u) => u.team === "enemy");
+    const enemies = onStage.filter((u) => u.team === "enemy").sort((a, b) => a.slot - b.slot);
     const pos: Record<string, { x: number; y: number; w: number; h: number }> = {};
-    for (const u of battle.units) {
+    for (const u of onStage) {
       const def = defOf(u.defId);
       if (u.team === "ally") {
         const p = ALLY_POS[u.slot] ?? ALLY_POS[0]!;
         pos[u.uid] = { ...p, w: ALLY_W, h: (ALLY_W * 170) / 120 };
       } else {
-        const p = (ENEMY_POS[Math.min(5, enemies.length)] ?? ENEMY_POS[5]!)[u.slot] ?? { x: 1000, y: 560 };
-        const w = ENEMY_W * spriteScale(def);
+        // Summons can push the line past five: extra units squeeze in between.
+        const i = enemies.indexOf(u);
+        const row = ENEMY_POS[Math.min(5, enemies.length)] ?? ENEMY_POS[5]!;
+        const p = row[i] ?? { x: 640 + ((i % 2 ? 1 : -1) * (120 + 40 * i)), y: 600 + (i % 3) * 20 };
+        const w = ENEMY_W * spriteScale(def) * (enemies.length > 5 ? 0.85 : 1);
         pos[u.uid] = { ...p, w, h: (w * 170) / 160 };
       }
     }
     return pos;
-  }, [battle.units, defOf]);
-  const center = (uid: string) => { const p = layout[uid]!; return { x: p.x, y: p.y - p.h * 0.5 }; };
+  }, [stageKey, defOf]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Playback callbacks outlive renders; read the latest layout through a ref.
+  const layoutRef = useRef(layout);
+  layoutRef.current = layout;
+  const center = (uid: string) => { const p = layoutRef.current[uid] ?? { x: 900, y: 560, w: 0, h: 120 }; return { x: p.x, y: p.y - p.h * 0.5 }; };
 
   // ---------------------------------------------------------------------------
   // Playback
@@ -317,6 +326,42 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
           setU(e.uid, { alive: false, hp: 0, statuses: [] });
           await sleep(420);
           break;
+        case "summon": {
+          const u = unitOf(e.uid);
+          setView((v) => ({ ...v, [e.uid]: { hp: u.maxHp, toughness: u.maxToughness, broken: false, alive: true, statuses: [], energy: 0 } }));
+          await sleep(60);
+          burst("heal", e.uid, 0.9);
+          addFloat(e.uid, "登場", "info");
+          await sleep(380);
+          break;
+        }
+        case "dismiss":
+          setU(e.uid, { alive: false, statuses: [] });
+          addFloat(e.uid, "離場", "info");
+          await sleep(300);
+          break;
+        case "revive":
+          setU(e.uid, { hp: e.hp });
+          burst("heal", e.uid, 1.2);
+          addFloat(e.uid, "復活", "heal");
+          await sleep(420);
+          break;
+        case "phase": {
+          const u = unitOf(e.uid);
+          setU(e.uid, { hp: u.maxHp, toughness: u.maxToughness, broken: false });
+          burst("ult", e.uid, 1.1);
+          if (!skipRef.current) {
+            setBanner({ text: `PHASE ${e.phase}`, sub: `${u.name}・${e.name}`, kind: "break" });
+            await sleep(750);
+            setBanner(null);
+          }
+          break;
+        }
+        case "queue":
+          addFloat(e.uid, "蓄力", "status");
+          break;
+        case "counter":
+          break;
         case "end":
           break;
       }
@@ -429,9 +474,10 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
     <div className={`battle theme-${theme} ${rm ? "reduced" : ""}`} style={{ "--spd": speed } as CSSProperties}>
       <Backdrop theme={theme} />
 
-      {battle.units.map((u) => {
-        const p = layout[u.uid]!;
-        const v = view[u.uid]!;
+      {onStage.map((u) => {
+        const p = layout[u.uid];
+        const v = view[u.uid];
+        if (!p || !v) return null;
         const def = defOf(u.defId);
         const isTarget = u.uid === currentTarget;
         const choosable = (pendingAlly && u.team === "ally" && v.alive) || (idle && u.team === "enemy" && v.alive);
@@ -501,7 +547,8 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
       {/* bottom-left: party */}
       <div className="hud-party">
         {allies.map((u) => {
-          const v = view[u.uid]!;
+          const v = view[u.uid];
+          if (!v) return null;
           const def = defOf(u.defId);
           const ult = def.skills.find((s) => s.type === "ultimate");
           const cost = ult ? (ult.energyCost ?? u.maxEnergy) : 0;
@@ -580,8 +627,9 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
   );
 }
 
+/** Pre-battle look. Summons (present in a replay's final state) appear only when their event plays. */
 function freshView(s: BattleState, setup: BattleSetup): Record<string, UnitView> {
-  return Object.fromEntries(s.units.map((u) => [u.uid, {
+  return Object.fromEntries(s.units.filter((u) => !u.summonedBy).map((u) => [u.uid, {
     hp: u.maxHp, toughness: u.maxToughness, broken: false, alive: true, statuses: [],
     energy: Math.min(u.maxEnergy, setup.units.find((d) => d.id === u.defId)?.stats.startEnergy ?? 0),
   }]));

@@ -10,3 +10,6 @@ export * from "./battle/engine";
 export * from "./battle/sim";
 export * from "./library/battle-content";
 export * from "./battle/validate";
+export * from "./battle/deps";
+export * from "./library/reference";
+export * from "./library/showcase-content";

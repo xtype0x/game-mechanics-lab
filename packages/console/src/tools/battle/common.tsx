@@ -1,4 +1,4 @@
-import { ELEMENT_LABELS, battleSetupOf, validateBattle, type BattleEvent, type BattleIssue, type BattleState, type Project, type StatusDef } from "@ggt/core";
+import { ELEMENT_LABELS, battleSetupOf, validateBattle, type BattleEvent, type BattleIssue, type BattleState, type Project, type StatusDef, type UnitDef } from "@ggt/core";
 import { useMemo } from "react";
 import type { Updater } from "../../useProject";
 import { fmt } from "../../ui";
@@ -95,7 +95,7 @@ export function SeedField({ project, update }: { project: Project; update: Updat
 const KIND_LABEL = { hit: "", break: "擊破傷害", dot: "持續傷害" } as const;
 
 /** Human-readable line for an event, or null for events hidden unless "details" is on. */
-export function describeEvent(e: BattleEvent, state: BattleState, statuses: StatusDef[], details: boolean): { text: string; tone?: string } | null {
+export function describeEvent(e: BattleEvent, state: BattleState, statuses: StatusDef[], details: boolean, units: UnitDef[] = []): { text: string; tone?: string } | null {
   const name = (uid: string) => state.units.find((u) => u.uid === uid)?.name ?? uid;
   const sname = (id: string) => statuses.find((s) => s.id === id)?.name ?? id;
   switch (e.t) {
@@ -103,13 +103,13 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
     case "turn": return details ? { text: `▶ ${name(e.uid)} 的回合（${fmt(e.time, 1)}）`, tone: "muted" } : null;
     case "action": return { text: `${name(e.uid)} 使用「${e.skillName}」${e.targetUid ? ` → ${name(e.targetUid)}` : ""}`, tone: e.skillType === "ultimate" ? "ult" : e.skillType === "followup" ? "followup" : "action" };
     case "trigger": return { text: `⚡ ${name(e.uid)} 的被動「${e.passiveName}」觸發`, tone: "trigger" };
-    case "damage": return { text: `　${name(e.src)} 對 ${name(e.dst)} 造成 ${fmt(e.amount, 0)}${KIND_LABEL[e.kind] ? ` ${KIND_LABEL[e.kind]}` : " 傷害"}${e.crit ? "（暴擊）" : ""}，剩 ${fmt(e.hpAfter, 0)}`, tone: e.kind === "break" ? "break" : e.crit ? "crit" : undefined };
+    case "damage": return { text: `　${name(e.src)} 對 ${name(e.dst)} 造成 ${fmt(e.amount, 0)}${KIND_LABEL[e.kind] ? ` ${KIND_LABEL[e.kind]}` : " 傷害"}${e.crit ? "（暴擊）" : ""}${e.absorbed ? `（護盾吸收 ${fmt(e.absorbed, 0)}）` : ""}，剩 ${fmt(e.hpAfter, 0)}`, tone: e.kind === "break" ? "break" : e.crit ? "crit" : undefined };
     case "toughness": return details ? { text: `　${name(e.dst)} 韌性 ${fmt(e.before, 1)} → ${fmt(e.after, 1)}`, tone: "muted" } : null;
     case "break": return { text: `　💥 ${name(e.dst)} 被擊破！`, tone: "break" };
     case "recover": return { text: `　${name(e.uid)} 韌性恢復`, tone: "muted" };
     case "heal": return { text: `　${name(e.src)} 為 ${name(e.dst)} 回復 ${fmt(e.amount, 0)}`, tone: "heal" };
     case "status": {
-      const label = { applied: "獲得", refreshed: "刷新", resisted: "抵抗了", expired: "結束" }[e.result];
+      const label = { applied: "獲得", refreshed: "刷新", resisted: "抵抗了", expired: "結束", dispelled: "被驅散", released: "解除了" }[e.result];
       if (e.result === "expired" && !details) return null;
       return { text: `　${name(e.dst)} ${label}「${sname(e.statusId)}」`, tone: e.result === "resisted" ? "muted" : "status" };
     }
@@ -118,6 +118,12 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
     case "advance": return details ? { text: `　${name(e.uid)} 行動值 ${fmt(e.before, 1)} → ${fmt(e.after, 1)}`, tone: "muted" } : null;
     case "skip": return { text: `${name(e.uid)} 因「${e.reason}」無法行動`, tone: "status" };
     case "death": return { text: `　✝ ${name(e.uid)} 倒下`, tone: "death" };
+    case "revive": return { text: `　✚ ${name(e.uid)} 因「${sname(e.statusId)}」復活（生命 ${fmt(e.hp, 0)}）`, tone: "heal" };
+    case "phase": return { text: `　◆ ${name(e.uid)} 進入第 ${e.phase} 階段「${e.name}」`, tone: "break" };
+    case "summon": return { text: `　＋ ${name(e.by)} 召喚了 ${name(e.uid)}`, tone: "trigger" };
+    case "dismiss": return { text: `　－ ${name(e.uid)} 離場${e.by !== e.uid ? `（${name(e.by)}）` : ""}`, tone: "death" };
+    case "counter": return details ? { text: `　${name(e.uid)} 的 ${e.key}：${fmt(e.before, 0)} → ${fmt(e.after, 0)}`, tone: "muted" } : null;
+    case "queue": return { text: `　${name(e.uid)} 下一次行動將使用「${units.find((d) => d.id === state.units.find((u) => u.uid === e.uid)?.defId)?.skills.find((s) => s.id === e.skillId)?.name ?? e.skillId}」`, tone: "status" };
     case "end": return { text: `══ 戰鬥結束：${{ win: "勝利", lose: "失敗", timeout: "超時" }[e.result]} ══`, tone: "end" };
   }
 }

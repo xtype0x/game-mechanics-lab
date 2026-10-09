@@ -28,11 +28,34 @@ export type Effect =
       hits?: number[];
       toughness: number;
       adjToughness?: number;
+      /** Stat the multiplier scales with (§13.4). Default "atk". */
+      scale?: DamageScale;
     }
   | { kind: "heal"; target: TargetMode; scale: "atk" | "maxHp"; multiplier: number; flat: number }
   | { kind: "status"; target: TargetMode; statusId: string; chance: number }
   | { kind: "advance"; target: TargetMode; amount: number }
-  | { kind: "energy"; target: TargetMode; amount: number };
+  | { kind: "energy"; target: TargetMode; amount: number }
+  // --- Extension effects (docs/spec/battle.md §13) ---
+  /** Removes the most recent `count` dispellable statuses of one kind (0 = all). */
+  | { kind: "dispel"; target: TargetMode; statusKind: "buff" | "debuff"; count: number }
+  /** Immediately deals the target's DoT ticks × ratio (optionally only one status). */
+  | { kind: "detonate"; target: TargetMode; ratio: number; statusId?: string }
+  /** Sets the target's next enemy-AI action. Ignored for targets without that skill. */
+  | { kind: "queueSkill"; target: TargetMode; skillId: string }
+  /** Changes a named per-unit counter. */
+  | { kind: "counter"; target: TargetMode; key: string; op: "add" | "set"; value: number }
+  /** Adds units of `unitId` to the actor's team. */
+  | { kind: "summon"; unitId: string; count: number }
+  /** Removes units without a kill: all alive units of `unitId` on the actor's team, or the actor itself. */
+  | { kind: "dismiss"; unitId?: string }
+  /** Changes the shared skill points (the ally pool) by amount. */
+  | { kind: "sp"; amount: number };
+
+export type DamageScale = "atk" | "def" | "hp";
+
+/** Effects that resolve once per action instead of per target. */
+export type UntargetedEffect = Extract<Effect, { kind: "summon" | "dismiss" | "sp" }>;
+export const UNTARGETED_EFFECTS: readonly Effect["kind"][] = ["summon", "dismiss", "sp"];
 
 export interface SkillDef {
   id: string;
@@ -65,7 +88,7 @@ export interface StatusDef {
   id: string;
   name: string;
   kind: "buff" | "debuff";
-  /** Holder turns. Decremented at the end of each of the holder's turns. */
+  /** Holder turns. Decremented at the end of each of the holder's turns. 0 = permanent (§13.2). */
   duration: number;
   maxStacks: number;
   modifiers: StatusModifier[];
@@ -73,7 +96,38 @@ export interface StatusDef {
   dot?: { multiplier: number; element: string };
   /** Holder skips its action while affected. */
   skipTurn?: boolean;
+  // --- Extension fields (docs/spec/battle.md §13) ---
+  /** Resistance group for UnitDef.statusRes (e.g. "freeze", "control"). */
+  category?: string;
+  /** Absorbs damage. Amount = caster's scale stat × multiplier + flat, rounded. */
+  shield?: { scale: DamageScale; multiplier: number; flat: number };
+  /** Consumed instead of dying: HP becomes max(1, rounding(maxHp × hpPct)). */
+  revive?: { hpPct: number };
+  /** Holder's toughness cannot be reduced. */
+  toughnessLock?: boolean;
+  /** Removed when the unit that applied it dies ("sourceDeath") or is broken or dies ("sourceBreak"). */
+  release?: "sourceDeath" | "sourceBreak";
+  /** false = immune to dispel effects. Default true. */
+  dispellable?: boolean;
   description?: string;
+}
+
+/** An extra HP bar: entered instead of dying (§13.6). */
+export interface PhaseDef {
+  name: string;
+  /** Stats replaced on entering (hp sets the new max HP; spd, toughness, atk, …). */
+  stats?: Record<string, number>;
+  /** Replaces the weakness list when given. */
+  weaknesses?: string[];
+  /** Remove all debuffs on entering. */
+  clearDebuffs?: boolean;
+}
+
+/** Where imported content came from (informational; never read by the engine). */
+export interface ContentSource {
+  kind: string;
+  key: string;
+  note?: string;
 }
 
 export interface AiRule {
@@ -88,12 +142,17 @@ export type TriggerEvent =
   | "allyUltimate" // a unit on the holder's team (including the holder) used an ultimate
   | "allyBreak" // a unit on the holder's team broke an opponent's toughness
   | "selfHit" // the holder took hit damage from an opponent's action
-  | "enemyKilled"; // a unit on the holder's team killed an opponent
+  | "enemyKilled" // a unit on the holder's team killed an opponent
+  | "foeAction" // an opponent acted (filtered by skillTypes)
+  | "phaseChange" // the holder entered a new phase
+  | "counterChange"; // one of the holder's counters changed
 
 export interface PassiveDef {
   id: string;
   name: string;
   on: TriggerEvent;
+  /** foeAction only: skill types that count. Missing = all. */
+  skillTypes?: SkillType[];
   /** Skill of this unit to cast as a follow-up. */
   skillId: string;
   /** Extra condition over the AI scope (self.*, battle.*). */
@@ -122,6 +181,16 @@ export interface UnitDef {
   /** Enemy behaviour. Allies controlled by the simulator use the ally policy instead. */
   ai?: AiRule[];
   passives?: PassiveDef[];
+  // --- Extension fields (docs/spec/battle.md §13) ---
+  /** Per-element damage resistance; replaces stat `res` when hit by that element. */
+  elementRes?: Record<string, number>;
+  /** Per-category debuff resistance (StatusDef.category). */
+  statusRes?: Record<string, number>;
+  /** Extra HP bars, entered in order. */
+  phases?: PhaseDef[];
+  /** Summons only: dismissed when the unit that summoned it dies or is dismissed. */
+  boundToSummoner?: boolean;
+  source?: ContentSource;
   role?: string;
   description?: string;
 }
@@ -142,6 +211,8 @@ export interface BattleRules {
   /** Battle ends as a timeout after this many cycles. */
   maxCycles: number;
   rounding: RoundingMode;
+  /** Summons fail while the team already has this many living units. Default 5. */
+  maxFieldUnits?: number;
 }
 
 export interface EncounterDef {
@@ -169,6 +240,8 @@ export interface StatusInstance {
   turnsLeft: number;
   /** Source's resolved attacker stats at application time (for DoT). */
   snapshot?: Record<string, number>;
+  /** Remaining shield (StatusDef.shield). */
+  shield?: number;
 }
 
 export interface UnitState {
@@ -193,6 +266,14 @@ export interface UnitState {
   statuses: StatusInstance[];
   /** Passive activations since the holder's last turn start. */
   passiveUses: Record<string, number>;
+  /** 1-based HP phase (§13.6). */
+  phase: number;
+  /** Named counters (§13.9); missing keys read as 0. */
+  counters: Record<string, number>;
+  /** Skill forced for this unit's next enemy-AI action (§13.8). */
+  nextSkill?: string;
+  /** uid of the unit that summoned this one. */
+  summonedBy?: string;
 }
 
 export type BattleEvent =
@@ -202,15 +283,21 @@ export type BattleEvent =
   | { t: "skip"; uid: string; reason: string }
   | { t: "action"; uid: string; skillId: string; skillName: string; skillType: SkillType; targetUid?: string; time: number }
   | { t: "trigger"; uid: string; passiveId: string; passiveName: string; targetUid?: string }
-  | { t: "damage"; src: string; dst: string; amount: number; crit: boolean; kind: "hit" | "break" | "dot"; hpAfter: number; skillId?: string }
+  | { t: "damage"; src: string; dst: string; amount: number; crit: boolean; kind: "hit" | "break" | "dot"; hpAfter: number; skillId?: string; absorbed?: number }
   | { t: "toughness"; dst: string; before: number; after: number }
   | { t: "break"; src: string; dst: string }
   | { t: "heal"; src: string; dst: string; amount: number }
-  | { t: "status"; src: string; dst: string; statusId: string; result: "applied" | "resisted" | "refreshed" | "expired" }
+  | { t: "status"; src: string; dst: string; statusId: string; result: "applied" | "resisted" | "refreshed" | "expired" | "dispelled" | "released" }
   | { t: "energy"; uid: string; before: number; after: number }
   | { t: "sp"; before: number; after: number }
   | { t: "advance"; uid: string; before: number; after: number }
   | { t: "death"; uid: string; by: string }
+  | { t: "revive"; uid: string; statusId: string; hp: number }
+  | { t: "phase"; uid: string; phase: number; name: string }
+  | { t: "summon"; uid: string; defId: string; by: string }
+  | { t: "dismiss"; uid: string; by: string }
+  | { t: "counter"; uid: string; key: string; before: number; after: number }
+  | { t: "queue"; uid: string; skillId: string }
   | { t: "end"; result: BattleResult; time: number };
 
 export type BattleResult = "win" | "lose" | "timeout";
