@@ -108,7 +108,20 @@ export const TRIGGERS: { value: PassiveDef["on"]; label: string }[] = [
   { value: "foeAction", label: "對手行動後（可篩選技能類型）" },
   { value: "phaseChange", label: "自己進入新階段時" },
   { value: "counterChange", label: "自己的計數器變化時" },
+  { value: "allyHit", label: "隊友（含自己）每次命中敵人時" },
 ];
+
+/** Who target.* refers to in a passive condition, per trigger (spec §14.1). */
+export const TRIGGER_SUBJECT: Record<PassiveDef["on"], string> = {
+  allyUltimate: "大招的目標",
+  allyBreak: "被擊破的敵人",
+  selfHit: "攻擊自己的人",
+  enemyKilled: "倒下的敵人",
+  foeAction: "行動的對手",
+  phaseChange: "無",
+  counterChange: "無",
+  allyHit: "被命中的敵人",
+};
 
 export function defaultEffect(kind: Effect["kind"], statusId: string, ctx: { unitId?: string; skillId?: string } = {}): Effect {
   switch (kind) {
@@ -127,7 +140,10 @@ export function defaultEffect(kind: Effect["kind"], statusId: string, ctx: { uni
   }
 }
 
-export const AI_VARS = "self.hpPct（血量比例 0~1）、self.broken、self.toughnessPct、self.phase（階段，從 1 起）、self.shield（剩餘護盾）、self.counter.名稱（計數器）、self.status.狀態ID（層數）、battle.turn（總回合數）、battle.cycle（輪數）、battle.allies（己方存活數）、battle.foes（對手存活數）";
+export const AI_VARS = "self.hpPct（血量比例 0~1）、self.broken、self.toughnessPct、self.phase（階段，從 1 起）、self.shield（剩餘護盾）、self.counter.名稱（計數器）、self.status.狀態ID（層數）、battle.turn（總回合數）、battle.cycle（輪數）、battle.allies（己方存活數）、battle.foes（對手存活數）、self.av（距離下次行動的行動值）、self.rank（前面還有幾個單位要行動）、battle.count.角色ID（場上該角色的數量，含事件）";
+
+/** Extra variables in passive conditions only (spec §14.1). */
+export const TARGET_VARS = "target.exists（有沒有觸發對象）、target.isFoe（是否為對手）、target.hpPct、target.broken、target.phase、target.shield、target.av、target.rank、target.counter.名稱、target.status.狀態ID（層數）";
 
 /** Next free id like "skill3" given existing ids. */
 export function nextId(prefix: string, taken: string[]): string {

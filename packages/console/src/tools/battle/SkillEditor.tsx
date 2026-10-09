@@ -5,7 +5,7 @@ import { Badge, Field, NumberField, Section } from "../../ui";
 import { ExprField } from "../common";
 import { elementLabel } from "./common";
 import { useElementOptions } from "./elements";
-import { AI_VARS, DAMAGE_SCALES, EFFECT_GROUPS, EFFECT_KINDS, SKILL_TYPES, TARGETING, TARGET_MODES, TRIGGERS, defaultEffect, nextId } from "./meta";
+import { AI_VARS, DAMAGE_SCALES, EFFECT_GROUPS, EFFECT_KINDS, SKILL_TYPES, TARGETING, TARGET_MODES, TARGET_VARS, TRIGGERS, TRIGGER_SUBJECT, defaultEffect, nextId } from "./meta";
 
 type Edit = (fn: (u: UnitDef) => void) => void;
 
@@ -355,8 +355,8 @@ export function PassiveList({ unit, edit, issues }: { unit: UnitDef; edit: Edit;
                 </div>
               </Field>
             )}
-            <Field label={`額外條件（選填）。可用：${AI_VARS}`}>
-              <ExprField allowEmpty value={p.when} placeholder="例如 self.counter.charge >= 3" onChange={(e) => editP(i, (x) => { if (e) x.when = e; else delete x.when; })} />
+            <Field label={`額外條件（選填）。可用：${AI_VARS}；觸發對象（${TRIGGER_SUBJECT[p.on]}）：${TARGET_VARS}`}>
+              <ExprField allowEmpty value={p.when} placeholder="例如 self.counter.charge >= 3、target.status.mark > 0" onChange={(e) => editP(i, (x) => { if (e) x.when = e; else delete x.when; })} />
             </Field>
             <div className="row-gap">
               <input className="grow" placeholder="說明" value={p.description ?? ""} onChange={(e) => editP(i, (x) => { x.description = e.target.value; })} />

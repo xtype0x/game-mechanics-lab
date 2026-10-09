@@ -206,6 +206,9 @@ function BasicAndStats({ unit, units, statusCategories, edit, damageStatKeys }: 
         {unit.team === "enemy" && (
           <label className="check"><input type="checkbox" checked={!!unit.boundToSummoner} onChange={(e) => edit((u) => { if (e.target.checked) u.boundToSummoner = true; else delete u.boundToSummoner; })} />被召喚時，召喚者倒下或被移除就一起消失</label>
         )}
+        <label className="check" title="例如倒數計時、場地效果：照速度在行動條上行動、一律用 AI 規則，不能被選為目標，不計入勝負與場上人數上限">
+          <input type="checkbox" checked={!!unit.timelineEvent} onChange={(e) => edit((u) => { if (e.target.checked) u.timelineEvent = true; else delete u.timelineEvent; })} />行動條事件：會行動，但不能被攻擊、不計入勝負
+        </label>
         <Field label="說明"><textarea rows={unit.description && unit.description.length > 80 ? 4 : 2} value={unit.description ?? ""} onChange={(e) => edit((u) => { u.description = e.target.value; })} /></Field>
       </Section>
       {STAT_GROUPS.map((g) => {

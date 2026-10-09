@@ -7,11 +7,11 @@ import { DAMAGE_COMPONENTS } from "./library/damage-components";
 import { composeRules, type DamageConfig, type Scenario } from "./damage";
 import { validateExpr } from "./expr";
 import { configFromTemplate, defaultScenario } from "./library/damage-components";
-import { SHOWCASE_ALLIES, SHOWCASE_ENCOUNTER, SHOWCASE_ENEMIES, SHOWCASE_STATUSES } from "./library/showcase-content";
+import { SHOWCASE_ALLIES, SHOWCASE_ENCOUNTER, SHOWCASE_ENEMIES, SHOWCASE_STATUSES, SHOWCASE_V07_ALLIES, SHOWCASE_V07_ENCOUNTER, SHOWCASE_V07_ENEMIES, SHOWCASE_V07_STATUSES } from "./library/showcase-content";
 import { DEFAULT_BATTLE_RULES, DEFAULT_ENCOUNTER, DEFAULT_ENCOUNTERS, DEFAULT_POLICY_CONFIG, DEFAULT_STATUSES, DEFAULT_UNITS } from "./library/battle-content";
 
 export const SCHEMA_VERSION = 3;
-export const RULES_VERSION = "0.6.0";
+export const RULES_VERSION = "0.7.0";
 
 export interface BattleConfig {
   rules: BattleRules;
@@ -102,17 +102,17 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
   {
     id: "boss-mechanics",
     name: "首領機制型（擴充機制）",
-    description: "弱點擊破型加上階段、召喚、護盾、復活、驅散、護韌、嘲諷、插隊行動與自訂計數器的示範首領戰。",
+    description: "弱點擊破型加上階段、召喚、護盾、復活、驅散、護韌、嘲諷、插隊行動與自訂計數器的示範首領戰；另附「夢織者」戰鬥示範觸發對象條件、支配與行動條事件。",
     create: (name) => {
       const p = newProject(name);
       const b = p.battle;
-      b.statuses.push(...structuredCloneJson(SHOWCASE_STATUSES));
-      b.units.push(...structuredCloneJson([...SHOWCASE_ALLIES, ...SHOWCASE_ENEMIES]));
+      b.statuses.push(...structuredCloneJson([...SHOWCASE_STATUSES, ...SHOWCASE_V07_STATUSES]));
+      b.units.push(...structuredCloneJson([...SHOWCASE_ALLIES, ...SHOWCASE_V07_ALLIES, ...SHOWCASE_ENEMIES, ...SHOWCASE_V07_ENEMIES]));
       // Taunt-weighted targeting needs a value on every ally; the defender draws more attacks.
       for (const u of b.units) if (u.team === "ally") u.stats.taunt ??= 100;
       // Lightning ultimate also detonates its shock immediately (DoT detonation).
       b.units.find((u) => u.id === "raimei")?.skills.find((s) => s.id === "ult")?.effects.push({ kind: "detonate", target: "enemy", ratio: 0.5, statusId: "shock" });
-      b.encounters.push(structuredCloneJson(SHOWCASE_ENCOUNTER));
+      b.encounters.push(structuredCloneJson(SHOWCASE_ENCOUNTER), structuredCloneJson(SHOWCASE_V07_ENCOUNTER));
       b.encounter = { allies: ["shimo", "iwamori", "raimei", "akari"], enemies: [...SHOWCASE_ENCOUNTER.enemies] };
       return p;
     },

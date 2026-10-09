@@ -7,7 +7,8 @@ import { IssueList, useBattleSetup } from "./common";
 import { AI_VARS } from "./meta";
 
 export function AiEditor({ project, update }: { project: Project; update: Updater }) {
-  const enemies = project.battle.units.filter((u) => u.team === "enemy");
+  // Allies use AI rules only while charmed or as timeline events (rules §14.3, §14.4); list them after enemies.
+  const enemies = [...project.battle.units.filter((u) => u.team === "enemy"), ...project.battle.units.filter((u) => u.team === "ally")];
   const [selected, setSelected] = useState(enemies[0]?.id ?? "");
   const unit = enemies.find((u) => u.id === selected);
   const { issues } = useBattleSetup(project);
@@ -18,9 +19,9 @@ export function AiEditor({ project, update }: { project: Project; update: Update
   return (
     <div className="tool-layout">
       <div className="workspace">
-        <Section title="敵人">
+        <Section title="角色">
           <div className="chips">
-            {enemies.map((u) => <button key={u.id} className={`chip-btn ${u.id === selected ? "on" : ""}`} onClick={() => setSelected(u.id)}>{u.name}</button>)}
+            {enemies.map((u) => <button key={u.id} className={`chip-btn ${u.id === selected ? "on" : ""}`} onClick={() => setSelected(u.id)}>{u.team === "ally" ? `${u.name}（我方）` : u.name}</button>)}
           </div>
         </Section>
         {unit && (
@@ -29,6 +30,7 @@ export function AiEditor({ project, update }: { project: Project; update: Update
             actions={<button className="btn small" disabled={!usable.length} onClick={() => edit((u) => { (u.ai ??= []).push({ skillId: usable[0]!.id, weight: 1 }); })}>＋ 新增規則</button>}
           >
             <p className="muted small">每次行動時，從「條件成立」的規則中依權重隨機選一個技能；沒有規則成立時使用第一個技能，目標從存活的對手中隨機選擇。</p>
+            {unit.team === "ally" && <p className="muted small">我方角色平常由玩家或自動策略控制；只有被「支配」或設定為行動條事件時才使用這些規則。</p>}
             {rules.length === 0 && <p className="muted">沒有規則：永遠使用「{unit.skills[0]?.name}」。</p>}
             <div className="ai-list">
               {rules.map((r, i) => (
@@ -63,10 +65,12 @@ function Preview({ unit, rules }: { unit: UnitDef; rules: AiRule[] }) {
   const [foes, setFoes] = useState(4);
 
   const evalAt = (h: number, t: number) => {
-    const scope = objectScope({
-      self: { hpPct: h, broken, energy: 0, toughnessPct: broken ? 0 : 1 },
+    const known = objectScope({
+      self: { hpPct: h, broken, energy: 0, toughnessPct: broken ? 0 : 1, phase: 1, shield: 0, av: 0, rank: 0 },
       battle: { turn: t, cycle: Math.max(1, Math.ceil(t / 4)), allies: 1, foes },
     });
+    // Counters, statuses and unit counts are not part of this preview: they read as 0, like an unset counter in battle.
+    const scope = (path: string) => known(path) ?? (/^(self\.(counter|status)|battle\.count)\./.test(path) ? 0 : undefined);
     const active = rules.filter((r) => {
       if (r.weight <= 0 || !unit.skills.some((s) => s.id === r.skillId)) return false;
       try { return !r.when || evalBool(r.when, scope); } catch { return false; }

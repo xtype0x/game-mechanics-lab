@@ -117,6 +117,7 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
     case "sp": return details ? { text: `　技能點 ${e.before} → ${e.after}`, tone: "muted" } : null;
     case "advance": return details ? { text: `　${name(e.uid)} 行動值 ${fmt(e.before, 1)} → ${fmt(e.after, 1)}`, tone: "muted" } : null;
     case "skip": return { text: `${name(e.uid)} 因「${e.reason}」無法行動`, tone: "status" };
+    case "charm": return { text: `${name(e.uid)} 被「${e.reason}」支配，自動行動並攻擊自己的隊友`, tone: "status" };
     case "death": return { text: `　✝ ${name(e.uid)} 倒下`, tone: "death" };
     case "revive": return { text: `　✚ ${name(e.uid)} 因「${sname(e.statusId)}」復活（生命 ${fmt(e.hp, 0)}）`, tone: "heal" };
     case "phase": return { text: `　◆ ${name(e.uid)} 進入第 ${e.phase} 階段「${e.name}」`, tone: "break" };

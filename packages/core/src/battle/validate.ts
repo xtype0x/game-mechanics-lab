@@ -12,13 +12,25 @@ export interface BattleIssue {
   where: { unitId?: string; skillId?: string; statusId?: string; passiveId?: string; encounterId?: string; field?: string };
 }
 
-export const AI_SCOPE_REFS = ["self.hpPct", "self.broken", "self.energy", "self.toughnessPct", "self.phase", "self.shield", "battle.turn", "battle.cycle", "battle.allies", "battle.foes"];
+const UNIT_VARS = ["hpPct", "broken", "energy", "toughnessPct", "phase", "shield", "av", "rank"];
+export const AI_SCOPE_REFS = [...UNIT_VARS.map((v) => `self.${v}`), "battle.turn", "battle.cycle", "battle.allies", "battle.foes"];
+/** Passive conditions only: the trigger subject (spec §14.1). */
+export const TARGET_SCOPE_REFS = ["target.exists", "target.isFoe", ...UNIT_VARS.map((v) => `target.${v}`)];
 
-/** Error text for a variable the AI/passive scope can't provide, or null (spec §6, §13.11). */
-export function aiRefProblem(ref: string, statusIds: Set<string>): string | null {
+/**
+ * Error text for a variable the AI/passive scope can't provide, or null (spec §6, §13.11, §14.1).
+ * `target.*` exists only for passives; AI rules have no subject.
+ */
+export function aiRefProblem(ref: string, statusIds: Set<string>, opts: { unitIds?: Set<string>; passive?: boolean } = {}): string | null {
   if (AI_SCOPE_REFS.includes(ref)) return null;
-  if (/^self\.counter\.[A-Za-z_]\w*$/.test(ref)) return null;
-  if (ref.startsWith("self.status.")) return statusIds.has(ref.slice(12)) ? null : `狀態「${ref.slice(12)}」不存在`;
+  for (const who of ["self", "target"]) {
+    if (who === "target" && !ref.startsWith("target.")) continue;
+    if (who === "target" && !opts.passive) return `「${ref}」只能用在被動條件（AI 規則沒有觸發對象）`;
+    if (who === "target" && TARGET_SCOPE_REFS.includes(ref)) return null;
+    if (new RegExp(`^${who}\\.counter\\.[A-Za-z_]\\w*$`).test(ref)) return null;
+    if (ref.startsWith(`${who}.status.`)) { const id = ref.slice(who.length + 8); return statusIds.has(id) ? null : `狀態「${id}」不存在`; }
+  }
+  if (ref.startsWith("battle.count.")) { const id = ref.slice(13); return !opts.unitIds || opts.unitIds.has(id) ? null : `角色「${id}」不存在`; }
   return `未定義的變數「${ref}」`;
 }
 
@@ -29,6 +41,7 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
   const statusIds = new Set(cfg.statuses.map((s) => s.id));
   const stepIds = new Set(damage.steps.map((s) => s.id));
   const unitIds = new Set<string>();
+  const allUnitIds = new Set(cfg.units.map((u) => u.id));
 
   for (const u of cfg.units) {
     const w = { unitId: u.id };
@@ -66,7 +79,7 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
         if (e.kind === "queueSkill") {
           const side = e.target === "enemy" || e.target === "blast" || e.target === "allEnemies" ? (u.team === "ally" ? "enemy" : "ally") : u.team;
           if (!cfg.units.some((x) => x.team === side && x.skills.some((s) => s.id === e.skillId))) warn(`${label}指定的下一個技能「${e.skillId}」不存在於任何可能的目標上，不會有效果`, ws);
-          if (side === "ally") warn(`${label}指定我方的下一個技能；我方由玩家或自動策略控制，不會有效果`, ws);
+          if (side === "ally") warn(`${label}指定我方的下一個技能；我方由玩家或自動策略控制，只有被支配或事件單位會使用`, ws);
         }
         if (e.kind === "counter" && !e.key.trim()) err(`${label}的計數器名稱不能是空的`, ws);
         if (e.kind === "detonate" && e.statusId !== undefined && !statusIds.has(e.statusId)) err(`${label}引爆不存在的狀態「${e.statusId}」`, ws);
@@ -84,19 +97,20 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
       warn(`「${u.name}」沒有不消耗技能點的技能，技能點用完時會無法行動`, w);
     }
 
-    if (u.team === "enemy") {
-      const rules = u.ai ?? [];
-      for (const r of rules) {
-        const wr = { ...w, skillId: r.skillId, field: "ai" };
-        const sk = u.skills.find((s) => s.id === r.skillId);
-        if (!sk) err(`「${u.name}」的 AI 規則指向不存在的技能「${r.skillId}」`, wr);
-        else if (sk.type === "followup") err(`「${u.name}」的 AI 規則不能使用追加攻擊「${sk.name}」`, wr);
-        if (r.weight < 0) err(`「${u.name}」的 AI 權重不能是負數`, wr);
-        if (r.when) for (const ref of collectRefs(r.when)) { const why = aiRefProblem(ref, statusIds); if (why) err(`「${u.name}」的 AI 條件：${why}`, wr); }
-      }
-      if (rules.length && rules.every((r) => r.weight <= 0)) warn(`「${u.name}」所有 AI 規則權重都是 0，會只用第一個技能`, w);
-    } else if (u.ai?.length) {
-      warn(`「${u.name}」是我方角色，AI 規則不會被使用（我方由自動策略控制）`, w);
+    // Allies use AI rules only while charmed or as timeline events (spec §14.3, §14.4).
+    const rules = u.ai ?? [];
+    for (const r of rules) {
+      const wr = { ...w, skillId: r.skillId, field: "ai" };
+      const sk = u.skills.find((s) => s.id === r.skillId);
+      if (!sk) err(`「${u.name}」的 AI 規則指向不存在的技能「${r.skillId}」`, wr);
+      else if (sk.type === "followup") err(`「${u.name}」的 AI 規則不能使用追加攻擊「${sk.name}」`, wr);
+      if (r.weight < 0) err(`「${u.name}」的 AI 權重不能是負數`, wr);
+      if (r.when) for (const ref of collectRefs(r.when)) { const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds }); if (why) err(`「${u.name}」的 AI 條件：${why}`, wr); }
+    }
+    if (rules.length && rules.every((r) => r.weight <= 0)) warn(`「${u.name}」所有 AI 規則權重都是 0，會只用第一個技能`, w);
+    if (u.timelineEvent) {
+      if (u.passives?.some((p) => p.on === "selfHit")) warn(`「${u.name}」是事件單位，不會被攻擊，「自己受到攻擊時」被動永遠不會觸發`, w);
+      if (u.phases?.length) warn(`「${u.name}」是事件單位，不會受到傷害，階段不會有作用`, { ...w, field: "phases" });
     }
 
     for (const [el, v] of Object.entries(u.elementRes ?? {})) if (!Number.isFinite(v)) err(`「${u.name}」的「${el}」屬性抗性不是數字`, { ...w, field: "elementRes" });
@@ -116,7 +130,8 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
       else if (sk.type !== "followup") warn(`「${u.name}」的被動「${p.name}」使用的「${sk.name}」不是追加攻擊類型`, wp);
       if (p.limitPerTurn < 0) err(`「${u.name}」的被動「${p.name}」次數上限不能是負數`, wp);
       if (p.limitPerTurn === 0 && p.on === "selfHit") warn(`「${u.name}」的被動「${p.name}」沒有次數上限，多段攻擊可能連續觸發很多次`, wp);
-      if (p.when) for (const ref of collectRefs(p.when)) { const why = aiRefProblem(ref, statusIds); if (why) err(`「${u.name}」的被動條件：${why}`, wp); }
+      if (p.when) for (const ref of collectRefs(p.when)) { const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds, passive: true }); if (why) err(`「${u.name}」的被動條件：${why}`, wp); }
+      if (p.limitPerTurn === 0 && p.on === "allyHit") warn(`「${u.name}」的被動「${p.name}」沒有次數上限，隊友每一段命中都會觸發`, wp);
       if (p.skillTypes && p.on !== "foeAction") warn(`「${u.name}」的被動「${p.name}」設定了技能類型篩選，但只有「對手行動」觸發會使用`, wp);
       if (p.on === "phaseChange" && !u.phases?.length) warn(`「${u.name}」沒有階段，被動「${p.name}」永遠不會觸發`, wp);
     }
@@ -132,6 +147,8 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
     if (s.revive && !(s.revive.hpPct > 0 && s.revive.hpPct <= 1)) err(`狀態「${s.name}」的復活血量比例必須在 0 到 100% 之間`, w);
     if (s.revive && s.kind === "debuff") warn(`狀態「${s.name}」是減益但有復活效果，可能讓敵人替我方施加復活`, w);
     if (s.release && s.duration === 0 && s.dispellable === false) warn(`狀態「${s.name}」永久、不可驅散，只會在施加者倒下時解除`, w);
+    if (s.charm && s.skipTurn) warn(`狀態「${s.name}」同時是無法行動與支配；無法行動優先，支配不會發生`, w);
+    if (s.charm && s.kind === "buff") warn(`狀態「${s.name}」是增益但有支配效果，會被當成增益驅散與計算機率`, w);
     if (!(s.maxStacks >= 1)) err(`狀態「${s.name}」最大層數至少為 1`, w);
     for (const m of s.modifiers) {
       if (m.target.startsWith("step:") && !stepIds.has(m.target.slice(5))) warn(`狀態「${s.name}」修正的乘區「${m.target.slice(5)}」不在目前的傷害公式中，不會有效果`, w);

@@ -133,7 +133,8 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
   // Layout
   // ---------------------------------------------------------------------------
   // Units on stage: everything with a view, except summons that have left (originals stay as fallen).
-  const onStage = battle.units.filter((u) => view[u.uid] && (view[u.uid]!.alive || !u.summonedBy));
+  // Timeline events (rules §14.4) are not fighters: they only appear in the turn order.
+  const onStage = battle.units.filter((u) => view[u.uid] && !u.timelineEvent && (view[u.uid]!.alive || !u.summonedBy));
   const stageKey = onStage.map((u) => u.uid).join();
   const layout = useMemo(() => {
     const enemies = onStage.filter((u) => u.team === "enemy").sort((a, b) => a.slot - b.slot);
@@ -231,6 +232,11 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
           animate(e.uid, [{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "translateX(0)" }], 400);
           await sleep(500);
           break;
+        case "charm":
+          addFloat(e.uid, `${e.reason}・失控`, "status");
+          burst("shadow", e.uid, 0.7);
+          await sleep(450);
+          break;
         case "trigger":
           setToast(`⚡ ${unitOf(e.uid).name}・${e.passiveName}`);
           window.setTimeout(() => aliveRef.current && setToast(null), 900);
@@ -242,6 +248,13 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
           const skill = def.skills.find((s) => s.id === e.skillId);
           lastElement = skill?.element ?? u.element;
           setActorUid(e.uid);
+          if (u.timelineEvent) {
+            // Off-stage timeline event: announce it instead of animating a sprite.
+            setToast(`◷ ${u.name}・${e.skillName}`);
+            window.setTimeout(() => aliveRef.current && setToast(null), 900);
+            await sleep(420);
+            break;
+          }
           if (e.skillType === "ultimate" && !skipRef.current) {
             setCutin({ unit: def, skill: e.skillName });
             burst("ult", e.uid, 1.2);
@@ -522,7 +535,7 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
       {/* top-left: turn order */}
       <div className="hud-order">
         {order.slice(0, 7).map((u, i) => (
-          <div key={u.uid} className={`ord ${u.team} ${i === 0 ? "first" : ""}`} title={`${u.name}（行動值 ${u.av.toFixed(1)}）`}>
+          <div key={u.uid} className={`ord ${u.team} ${i === 0 ? "first" : ""} ${u.timelineEvent ? "event" : ""}`} title={`${u.timelineEvent ? "◷ 事件・" : ""}${u.name}（行動值 ${u.av.toFixed(1)}）`}>
             <Sprite unit={defOf(u.defId)} portrait />
           </div>
         ))}

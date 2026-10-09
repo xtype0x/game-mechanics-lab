@@ -109,6 +109,8 @@ export interface StatusDef {
   release?: "sourceDeath" | "sourceBreak";
   /** false = immune to dispel effects. Default true. */
   dispellable?: boolean;
+  /** Holder acts automatically with sides swapped: attacks its own team, supports the other (§14.3). */
+  charm?: boolean;
   description?: string;
 }
 
@@ -145,7 +147,8 @@ export type TriggerEvent =
   | "enemyKilled" // a unit on the holder's team killed an opponent
   | "foeAction" // an opponent acted (filtered by skillTypes)
   | "phaseChange" // the holder entered a new phase
-  | "counterChange"; // one of the holder's counters changed
+  | "counterChange" // one of the holder's counters changed
+  | "allyHit"; // a unit on the holder's team (including the holder) hit an opponent
 
 export interface PassiveDef {
   id: string;
@@ -190,6 +193,8 @@ export interface UnitDef {
   phases?: PhaseDef[];
   /** Summons only: dismissed when the unit that summoned it dies or is dismissed. */
   boundToSummoner?: boolean;
+  /** Timeline event (§14.4): acts on the action bar via AI, but is never a target and never counts as a fighter. */
+  timelineEvent?: boolean;
   source?: ContentSource;
   role?: string;
   description?: string;
@@ -274,6 +279,8 @@ export interface UnitState {
   nextSkill?: string;
   /** uid of the unit that summoned this one. */
   summonedBy?: string;
+  /** Copied from UnitDef.timelineEvent (only present when true). */
+  timelineEvent?: true;
 }
 
 export type BattleEvent =
@@ -281,6 +288,7 @@ export type BattleEvent =
   | { t: "turn"; uid: string; time: number }
   | { t: "recover"; uid: string }
   | { t: "skip"; uid: string; reason: string }
+  | { t: "charm"; uid: string; reason: string }
   | { t: "action"; uid: string; skillId: string; skillName: string; skillType: SkillType; targetUid?: string; time: number }
   | { t: "trigger"; uid: string; passiveId: string; passiveName: string; targetUid?: string }
   | { t: "damage"; src: string; dst: string; amount: number; crit: boolean; kind: "hit" | "break" | "dot"; hpAfter: number; skillId?: string; absorbed?: number }

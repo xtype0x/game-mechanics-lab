@@ -238,12 +238,16 @@ function battleVectors() {
   // Extension mechanisms (battle.md §13): the boss-mechanics template covers phases, summons, shields,
   // revive, dispel, toughness lock, releases, taunt, forced actions, counters, SP drain and detonation.
   const ext = PROJECT_TEMPLATES.find((t) => t.id === "boss-mechanics")!.create("ext");
+  // Rules 0.7 (battle.md §14): the "dream" encounter covers allyHit + target.* conditions, foeAction
+  // subjects, battle.count, charm and a timeline-event countdown.
   const extBattles = [
     { id: "ext/boss-seed-11", seed: 11 },
     { id: "ext/boss-seed-ext", seed: "ext", healBonus: 0.15 },
-  ].map(({ id, seed, healBonus }: { id: string; seed: number | string; healBonus?: number }) => {
+    { id: "ext/dream-seed-58", seed: 58, dream: true },
+  ].map(({ id, seed, healBonus, dream }: { id: string; seed: number | string; healBonus?: number; dream?: boolean }) => {
     const p = structuredClone(ext);
     if (healBonus) p.battle.units.find((u) => u.id === "akari")!.stats.healBonus = healBonus;
+    if (dream) p.battle.encounter = { allies: ["kasumi", "iwamori", "shimo", "akari"], enemies: [...p.battle.encounters.find((e) => e.id === "dream")!.enemies] };
     const setup = battleSetupOf(p);
     const end = autoPlay(setup, createBattle(setup, seed), p.battle.policy);
     return {

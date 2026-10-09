@@ -71,7 +71,7 @@ function Stepper({ setup, seed, project }: { setup: BattleSetup; seed: number | 
   const actor = state.decision ? state.units.find((u) => u.uid === state.decision!.actorUid) : undefined;
   const normal = legal.filter((l) => l.action.kind === "skill");
   const ults = legal.filter((l) => l.action.kind === "ult");
-  const enemyTargets = state.units.filter((u) => u.alive && u.team === "enemy").sort((a, b) => a.slot - b.slot);
+  const enemyTargets = state.units.filter((u) => u.alive && u.team === "enemy" && !u.timelineEvent).sort((a, b) => a.slot - b.slot);
   const chosenTarget = target && state.units.find((u) => u.uid === target && u.alive) ? target : undefined;
   const newEvents = state.events.slice(prev ? prev.events.length : 0);
   const upcoming = state.units.filter((u) => u.alive).sort((a, b) => a.av - b.av || (a.team === b.team ? a.slot - b.slot : a.team === "ally" ? -1 : 1));
@@ -130,7 +130,7 @@ function Stepper({ setup, seed, project }: { setup: BattleSetup; seed: number | 
       <div className="battle-bottom">
         <Section title="接下來的行動">
           <ol className="order-list compact">
-            {upcoming.map((u) => <li key={u.uid} className={u.team}>{u.name} <span className="mono muted">{fmt(u.av, 1)}</span></li>)}
+            {upcoming.map((u) => <li key={u.uid} className={u.team}>{u.timelineEvent ? "◷ " : ""}{u.name} <span className="mono muted">{fmt(u.av, 1)}</span></li>)}
           </ol>
         </Section>
         <Section title={`戰鬥紀錄（${state.events.length}）`} actions={<label className="check small"><input type="checkbox" checked={details} onChange={(e) => setDetails(e.target.checked)} />顯示細節</label>}>
@@ -149,14 +149,14 @@ function UnitRow({ units, setup, actorUid, target, onPick }: { units: UnitState[
         <button
           key={u.uid}
           className={`unit-card ${u.team} ${u.alive ? "" : "dead"} ${u.uid === actorUid ? "acting" : ""} ${u.uid === target ? "targeted" : ""} ${u.broken ? "broken" : ""}`}
-          disabled={!onPick || !u.alive}
+          disabled={!onPick || !u.alive || !!u.timelineEvent}
           onClick={() => onPick?.(u.uid)}
         >
           <div className="uc-head">
             <strong>{u.name}</strong>
             <span className={`el el-${u.element}`}>{elementLabel(u.element)}</span>
           </div>
-          <Bar value={u.hp} max={u.maxHp} kind="hp" label={`${fmt(u.hp, 0)} / ${fmt(u.maxHp, 0)}`} />
+          {!u.timelineEvent && <Bar value={u.hp} max={u.maxHp} kind="hp" label={`${fmt(u.hp, 0)} / ${fmt(u.maxHp, 0)}`} />}
           {u.maxToughness > 0 && <Bar value={u.toughness} max={u.maxToughness} kind="tough" label={u.broken ? "擊破中" : `韌性 ${fmt(u.toughness, 0)}`} />}
           {u.maxEnergy > 0 && <Bar value={u.energy} max={u.maxEnergy} kind="energy" label={`能量 ${fmt(u.energy, 0)}`} />}
           {(() => {
@@ -164,10 +164,10 @@ function UnitRow({ units, setup, actorUid, target, onPick }: { units: UnitState[
             return shield > 0 ? <Bar value={shield} max={u.maxHp} kind="shield" label={`護盾 ${fmt(shield, 0)}`} /> : null;
           })()}
           {u.weaknesses.length > 0 && <div className="weak">弱點：{u.weaknesses.map(elementLabel).join(" ")}</div>}
-          {(u.phase > 1 || Object.keys(u.counters).length > 0 || u.nextSkill || u.summonedBy) && (
+          {(u.phase > 1 || Object.keys(u.counters).length > 0 || u.nextSkill || u.summonedBy || u.timelineEvent) && (
             <div className="uc-extra small">
               {u.phase > 1 && <span className="tag">第 {u.phase} 階段</span>}
-              {u.summonedBy && <span className="tag">召喚物</span>}
+              {u.timelineEvent ? <span className="tag" title="行動條上的事件：會行動，但不能被選為目標，也不計入勝負">◷ 事件</span> : u.summonedBy && <span className="tag">召喚物</span>}
               {Object.entries(u.counters).map(([k, v]) => <span key={k} className="tag mono">{k} {fmt(v, 0)}</span>)}
               {u.nextSkill && <span className="tag warn">下次：{setup.units.find((d) => d.id === u.defId)?.skills.find((s) => s.id === u.nextSkill)?.name ?? u.nextSkill}</span>}
             </div>

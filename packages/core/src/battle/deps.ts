@@ -39,7 +39,11 @@ export function contentReferences(cfg: BattleConfig): DepRef[] {
   };
   const conditionRefs = (from: DepNode, when: Parameters<typeof collectRefs>[0] | undefined) => {
     if (!when) return;
-    for (const ref of collectRefs(when)) if (ref.startsWith("self.status.")) push(from, { kind: "status", id: ref.slice(12) }, "condition");
+    for (const ref of collectRefs(when)) {
+      const status = /^(?:self|target)\.status\.(.+)$/.exec(ref)?.[1];
+      if (status !== undefined) push(from, { kind: "status", id: status }, "condition");
+      else if (ref.startsWith("battle.count.")) push(from, { kind: "unit", id: ref.slice(13) }, "condition");
+    }
   };
 
   for (const u of cfg.units) {

@@ -47,7 +47,7 @@ function makeUnit(setup: BattleSetup, defId: string, team: "ally" | "enemy", slo
   if (!def) throw new BattleError(`找不到角色「${defId}」`);
   if (def.team !== team) throw new BattleError(`「${def.name}」不是${team === "ally" ? "我方" : "敵方"}單位`);
   const hp = def.stats.hp ?? 1;
-  return {
+  const u: UnitState = {
     uid,
     defId,
     name: def.name,
@@ -70,6 +70,8 @@ function makeUnit(setup: BattleSetup, defId: string, team: "ally" | "enemy", slo
     phase: 1,
     counters: {},
   };
+  if (def.timelineEvent) u.timelineEvent = true;
+  return u;
 }
 
 const uidPrefix = (team: "ally" | "enemy") => (team === "ally" ? "A" : "E");
@@ -183,6 +185,29 @@ function alive(state: BattleState, team?: "ally" | "enemy") {
   return state.units.filter((u) => u.alive && (!team || u.team === team));
 }
 
+/** Living fighters: alive units that are not timeline events (spec §14.4). Only these can be targeted or win/lose. */
+function fielded(state: BattleState, team?: "ally" | "enemy") {
+  return alive(state, team).filter((u) => !u.timelineEvent);
+}
+
+/** §4 step 2 order: smallest AV first; ties → allies first, then slot. */
+const byTurnOrder = (a: UnitState, b: UnitState) => a.av - b.av || (a.team === b.team ? a.slot - b.slot : a.team === "ally" ? -1 : 1);
+
+function charmOf(setup: BattleSetup, u: UnitState): StatusInstance | undefined {
+  return u.statuses.find((s) => statusDef(setup, s.statusId).charm);
+}
+
+/**
+ * Who u fights and who it supports (both sorted by slot). A charmed unit swaps sides: its "foes" are its
+ * own team except itself, its "friends" the other team (spec §14.3).
+ */
+function sidesOf(setup: BattleSetup, state: BattleState, u: UnitState): { foes: UnitState[]; friends: UnitState[] } {
+  const other = u.team === "ally" ? "enemy" : "ally";
+  const bySlot = (a: UnitState, b: UnitState) => a.slot - b.slot;
+  if (charmOf(setup, u)) return { foes: fielded(state, u.team).filter((x) => x !== u).sort(bySlot), friends: fielded(state, other).sort(bySlot) };
+  return { foes: fielded(state, other).sort(bySlot), friends: fielded(state, u.team).sort(bySlot) };
+}
+
 function unit(state: BattleState, uid: string): UnitState {
   const u = state.units.find((x) => x.uid === uid);
   if (!u) throw new BattleError(`找不到單位 ${uid}`);
@@ -196,8 +221,8 @@ function cycleAt(rules: BattleRules, time: number): number {
 function checkEnd(state: BattleState): boolean {
   if (state.phase === "ended") return true;
   let result: BattleState["result"];
-  if (alive(state, "enemy").length === 0) result = "win";
-  else if (alive(state, "ally").length === 0) result = "lose";
+  if (fielded(state, "enemy").length === 0) result = "win";
+  else if (fielded(state, "ally").length === 0) result = "lose";
   if (!result) return false;
   finish(state, result);
   return true;
@@ -216,7 +241,7 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
     if (state.phase === "ended" || checkEnd(state)) return state;
 
     // Next actor: smallest AV; ties → allies first, then slot.
-    const next = alive(state).sort((a, b) => a.av - b.av || (a.team === b.team ? a.slot - b.slot : a.team === "ally" ? -1 : 1))[0]!;
+    const next = alive(state).sort(byTurnOrder)[0]!;
     const elapsed = next.av;
     const newTime = state.time + elapsed;
     const newCycle = cycleAt(setup.rules, newTime);
@@ -251,7 +276,10 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
       continue;
     }
 
-    if (next.team === "ally") {
+    // Charmed units and timeline events act on their own, through the AI (spec §14.3, §14.4).
+    const charm = charmOf(setup, next);
+    if (charm) state.events.push({ t: "charm", uid: next.uid, reason: statusDef(setup, charm.statusId).name });
+    if (next.team === "ally" && !charm && !next.timelineEvent) {
       state.phase = "await";
       state.decision = { actorUid: next.uid };
       return state;
@@ -313,14 +341,19 @@ function defOf(setup: BattleSetup, u: UnitState): UnitDef {
   return setup.units.find((d) => d.id === u.defId)!;
 }
 
-function candidateTargets(state: BattleState, actor: UnitState, skill: SkillDef): string[] {
+function candidateTargets(setup: BattleSetup, state: BattleState, actor: UnitState, skill: SkillDef): string[] {
   if (skill.targeting === "none") return [];
-  const team = skill.targeting === "ally" ? actor.team : actor.team === "ally" ? "enemy" : "ally";
-  return alive(state, team).sort((a, b) => a.slot - b.slot).map((u) => u.uid);
+  const { foes, friends } = sidesOf(setup, state, actor);
+  return (skill.targeting === "ally" ? friends : foes).map((u) => u.uid);
 }
 
 export function canUltimate(state: BattleState, u: UnitState, skill: SkillDef): boolean {
   return u.alive && skill.type === "ultimate" && u.energy >= (skill.energyCost ?? u.maxEnergy);
+}
+
+/** Allies under the player's control: not charmed, not timeline events (spec §14.3, §14.4). */
+function controllable(setup: BattleSetup, u: UnitState): boolean {
+  return u.team === "ally" && !u.timelineEvent && !charmOf(setup, u);
 }
 
 export function legalActions(setup: BattleSetup, state: BattleState): LegalAction[] {
@@ -331,11 +364,11 @@ export function legalActions(setup: BattleSetup, state: BattleState): LegalActio
     // Ultimates are listed below; follow-ups only fire from passives.
     if (skill.type === "ultimate" || skill.type === "followup" || skill.type === "dot") continue;
     if (skill.spDelta < 0 && state.sp + skill.spDelta < 0) continue;
-    out.push({ action: { kind: "skill", actorUid: actor.uid, skillId: skill.id }, skill, targets: candidateTargets(state, actor, skill) });
+    out.push({ action: { kind: "skill", actorUid: actor.uid, skillId: skill.id }, skill, targets: candidateTargets(setup, state, actor, skill) });
   }
-  for (const u of alive(state, "ally").sort((a, b) => a.slot - b.slot)) {
+  for (const u of alive(state, "ally").filter((x) => controllable(setup, x)).sort((a, b) => a.slot - b.slot)) {
     for (const skill of defOf(setup, u).skills) {
-      if (canUltimate(state, u, skill)) out.push({ action: { kind: "ult", actorUid: u.uid, skillId: skill.id }, skill, targets: candidateTargets(state, u, skill) });
+      if (canUltimate(state, u, skill)) out.push({ action: { kind: "ult", actorUid: u.uid, skillId: skill.id }, skill, targets: candidateTargets(setup, state, u, skill) });
     }
   }
   return out;
@@ -354,7 +387,7 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
   if (!skill) throw new BattleError(`「${actor.name}」沒有技能 ${action.skillId}`);
 
   if (action.kind === "ult") {
-    if (actor.team !== "ally" || !canUltimate(state, actor, skill)) throw new BattleError(`「${actor.name}」現在不能施放大招`);
+    if (!controllable(setup, actor) || !canUltimate(state, actor, skill)) throw new BattleError(`「${actor.name}」現在不能施放大招`);
     const from = state.events.length;
     execute(setup, state, actor, skill, action.targetUid);
     processTriggers(setup, state, from);
@@ -379,20 +412,41 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
   return run(setup, state);
 }
 
-/** Scope for AI rules and passive conditions. "allies"/"foes" are relative to u's team. */
-function unitScope(state: BattleState, u: UnitState): Scope {
+/** Number of living units that act before u (§4 step 2 order, timeline events included); −1 when u is not alive. */
+function rankOf(state: BattleState, u: UnitState): number {
+  return u.alive ? alive(state).sort(byTurnOrder).indexOf(u) : -1;
+}
+
+/** Fixed per-unit condition variables (spec §6, §14.1). */
+function unitVars(state: BattleState, u: UnitState) {
+  return {
+    hpPct: u.hp / u.maxHp, broken: u.broken, energy: u.energy, toughnessPct: u.maxToughness ? u.toughness / u.maxToughness : 0,
+    phase: u.phase, shield: u.statuses.reduce((a, s) => a + (s.shield ?? 0), 0), av: u.av, rank: rankOf(state, u),
+  };
+}
+
+const NO_TARGET = { exists: false, isFoe: false, hpPct: 0, broken: false, energy: 0, toughnessPct: 0, phase: 0, shield: 0, av: 0, rank: -1 };
+
+/**
+ * Scope for AI rules and passive conditions. "allies"/"foes" are relative to u's team. `subject` is the
+ * passive's trigger subject (spec §14.1); AI rules have none, so target.* reads as "no target".
+ */
+function unitScope(state: BattleState, u: UnitState, subject?: UnitState): Scope {
   const foeTeam = u.team === "ally" ? "enemy" : "ally";
   const base = objectScope({
-    self: {
-      hpPct: u.hp / u.maxHp, broken: u.broken, energy: u.energy, toughnessPct: u.maxToughness ? u.toughness / u.maxToughness : 0,
-      phase: u.phase, shield: u.statuses.reduce((a, s) => a + (s.shield ?? 0), 0),
-    },
-    battle: { turn: state.turns, cycle: state.cycle, allies: alive(state, u.team).length, foes: alive(state, foeTeam).length },
+    self: unitVars(state, u),
+    target: subject ? { exists: true, isFoe: subject.team !== u.team, ...unitVars(state, subject) } : NO_TARGET,
+    battle: { turn: state.turns, cycle: state.cycle, allies: fielded(state, u.team).length, foes: fielded(state, foeTeam).length },
   });
-  // Dynamic keys (spec §13.11): unknown counters and absent statuses read as 0.
+  // Dynamic keys (spec §13.11, §14.1): unknown counters and absent statuses read as 0.
   return (path) => {
-    if (path.startsWith("self.counter.")) return u.counters[path.slice(13)] ?? 0;
-    if (path.startsWith("self.status.")) return u.statuses.find((s) => s.statusId === path.slice(12))?.stacks ?? 0;
+    for (const [prefix, who] of [["self.", u], ["target.", subject]] as const) {
+      if (!path.startsWith(prefix)) continue;
+      const rest = path.slice(prefix.length);
+      if (rest.startsWith("counter.")) return who?.counters[rest.slice(8)] ?? 0;
+      if (rest.startsWith("status.")) return who?.statuses.find((s) => s.statusId === rest.slice(7))?.stacks ?? 0;
+    }
+    if (path.startsWith("battle.count.")) return alive(state).filter((x) => x.defId === path.slice(13)).length;
     return base(path);
   };
 }
@@ -416,7 +470,7 @@ function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { sk
     }
     skill = def.skills.find((s) => s.id === picked.skillId)!;
   }
-  const targets = candidateTargets(state, u, skill);
+  const targets = candidateTargets(setup, state, u, skill);
   const targetUid = targets.length ? pickAiTarget(setup, state, rng, targets, skill.targeting === "enemy") : undefined;
   state.rng.ai = rng.snapshot();
   return { skill, targetUid };
@@ -463,17 +517,21 @@ function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
         for (const p of defOf(setup, u).passives ?? []) {
           let match = false;
           let targetUid: string | undefined;
+          // Condition subject (spec §14.1): usually the chosen target; enemyKilled uses the fallen unit.
+          let subject: string | undefined;
           if (p.on === "allyUltimate" && e.t === "action" && e.skillType === "ultimate" && teamOf(e.uid) === u.team) { match = true; targetUid = e.targetUid; }
           else if (p.on === "allyBreak" && e.t === "break" && teamOf(e.src) === u.team) { match = true; targetUid = e.dst; }
           else if (p.on === "selfHit" && e.t === "damage" && e.kind === "hit" && e.dst === u.uid && teamOf(e.src) !== u.team) { match = true; targetUid = e.src; }
-          else if (p.on === "enemyKilled" && e.t === "death" && teamOf(e.by) === u.team && teamOf(e.uid) !== u.team) { match = true; }
+          else if (p.on === "enemyKilled" && e.t === "death" && teamOf(e.by) === u.team && teamOf(e.uid) !== u.team) { match = true; subject = e.uid; }
           else if (p.on === "foeAction" && e.t === "action" && teamOf(e.uid) !== u.team && (!p.skillTypes || p.skillTypes.includes(e.skillType))) { match = true; targetUid = e.uid; }
           else if (p.on === "phaseChange" && e.t === "phase" && e.uid === u.uid) { match = true; }
           else if (p.on === "counterChange" && e.t === "counter" && e.uid === u.uid) { match = true; }
+          else if (p.on === "allyHit" && e.t === "damage" && e.kind === "hit" && teamOf(e.src) === u.team && teamOf(e.dst) !== u.team) { match = true; targetUid = e.dst; }
           if (!match) continue;
+          subject ??= targetUid;
           const used = u.passiveUses[p.id] ?? 0;
           if (p.limitPerTurn > 0 && used >= p.limitPerTurn) continue;
-          if (p.when && !evalBool(p.when, unitScope(state, u))) continue;
+          if (p.when && !evalBool(p.when, unitScope(state, u, subject === undefined ? undefined : state.units.find((x) => x.uid === subject)))) continue;
           u.passiveUses[p.id] = used + 1;
           queue.push({ uid: u.uid, passiveId: p.id, targetUid });
         }
@@ -502,10 +560,8 @@ function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
 // Skill resolution
 // ---------------------------------------------------------------------------
 
-function resolveTargets(state: BattleState, actor: UnitState, mode: TargetMode, chosen: string | undefined): { main: UnitState[]; adjacent: UnitState[] } {
-  const foeTeam = actor.team === "ally" ? "enemy" : "ally";
-  const foes = alive(state, foeTeam).sort((a, b) => a.slot - b.slot);
-  const friends = alive(state, actor.team).sort((a, b) => a.slot - b.slot);
+function resolveTargets(setup: BattleSetup, state: BattleState, actor: UnitState, mode: TargetMode, chosen: string | undefined): { main: UnitState[]; adjacent: UnitState[] } {
+  const { foes, friends } = sidesOf(setup, state, actor);
   // A chosen target that died earlier in this action is not replaced: later effects on it are skipped.
   const chosenDead = chosen !== undefined && state.units.some((u) => u.uid === chosen && !u.alive);
   const pick = (list: UnitState[], fallback: UnitState | undefined) => (chosenDead ? undefined : (list.find((u) => u.uid === chosen) ?? fallback));
@@ -526,7 +582,8 @@ function resolveTargets(state: BattleState, actor: UnitState, mode: TargetMode, 
 
 function execute(setup: BattleSetup, state: BattleState, actor: UnitState, skill: SkillDef, chosen: string | undefined) {
   state.events.push({ t: "action", uid: actor.uid, skillId: skill.id, skillName: skill.name, skillType: skill.type, targetUid: chosen, time: state.time });
-  if (actor.team === "ally" && skill.spDelta !== 0) {
+  // Charmed allies don't touch the shared skill points (spec §14.3).
+  if (actor.team === "ally" && skill.spDelta !== 0 && !charmOf(setup, actor)) {
     const before = state.sp;
     state.sp = Math.min(setup.rules.spMax, Math.max(0, state.sp + skill.spDelta));
     state.events.push({ t: "sp", before, after: state.sp });
@@ -541,7 +598,7 @@ function execute(setup: BattleSetup, state: BattleState, actor: UnitState, skill
       applyUntargeted(setup, state, actor, eff);
       continue;
     }
-    const { main, adjacent } = resolveTargets(state, actor, eff.target, chosen);
+    const { main, adjacent } = resolveTargets(setup, state, actor, eff.target, chosen);
     const all: [UnitState, boolean][] = [...main.map((u) => [u, false] as [UnitState, boolean]), ...adjacent.map((u) => [u, true] as [UnitState, boolean])];
     for (const [target, isAdj] of all) {
       if (!target.alive) continue;
@@ -667,8 +724,10 @@ function applyUntargeted(setup: BattleSetup, state: BattleState, actor: UnitStat
     }
     case "summon": {
       const limit = setup.rules.maxFieldUnits ?? DEFAULT_MAX_FIELD_UNITS;
+      // Timeline events neither take nor need a field slot (spec §14.4).
+      const isEvent = !!setup.units.find((d) => d.id === eff.unitId)?.timelineEvent;
       for (let i = 0; i < eff.count; i++) {
-        if (alive(state, actor.team).length >= limit) break;
+        if (!isEvent && fielded(state, actor.team).length >= limit) break;
         const team = state.units.filter((u) => u.team === actor.team);
         const u = makeUnit(setup, eff.unitId, actor.team, Math.max(...team.map((x) => x.slot)) + 1, `${uidPrefix(actor.team)}${team.length + 1}`);
         u.summonedBy = actor.uid;

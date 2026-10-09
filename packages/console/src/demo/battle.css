@@ -55,6 +55,7 @@
 .ord.ally { border-color: #74c0fc; }
 .ord.enemy { border-color: #ff8787; }
 .ord.first { width: 58px; height: 58px; border-width: 3px; border-color: var(--gold); box-shadow: 0 0 12px rgba(255, 211, 107, 0.7); }
+.ord.event { border-style: dashed; border-color: #b197fc; opacity: 0.85; }
 .hud-title { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); display: flex; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 18px; font-size: 14px; z-index: 1000; }
 .hud-title b { color: var(--gold); letter-spacing: 1px; }
 .hud-toast { position: absolute; left: 50%; top: 60px; transform: translateX(-50%); background: rgba(255, 211, 107, 0.92); color: #2a1a05; font-weight: 800; padding: 6px 20px; border-radius: 6px; z-index: 1001; animation: toastIn 0.25s ease-out; }

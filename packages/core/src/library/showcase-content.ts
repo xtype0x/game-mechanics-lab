@@ -80,4 +80,68 @@ export const SHOWCASE_ENEMIES: UnitDef[] = [
   },
 ];
 
-export const SHOWCASE_ENCOUNTER: EncounterPreset = { id: "mechanics", name: "機制首領戰", enemies: ["wisp", "lantern", "wisp"], description: "冥燈祭司：階段、召喚、護韌、復活、插隊行動。" };
+// --- Rules 0.7 (battle.md §14): trigger subjects, charm, timeline events ---
+
+export const SHOWCASE_V07_STATUSES: StatusDef[] = [
+  { id: "galeMark", name: "風痕", kind: "debuff", duration: 2, maxStacks: 1, modifiers: [], description: "標記。霞織的隊友命中帶風痕的敵人時，霞織會追擊。" },
+  { id: "watch", name: "凝視", kind: "debuff", duration: 0, maxStacks: 1, modifiers: [], release: "sourceDeath", description: "被夢織者盯上：施放戰技或大招後會遭到反擊。永久，夢織者倒下時解除，可被驅散。" },
+  { id: "daze", name: "迷夢", kind: "debuff", category: "control", duration: 1, maxStacks: 1, modifiers: [], charm: true, description: "支配：下一個回合自動行動並攻擊自己的隊友（不消耗技能點）。" },
+];
+
+export const SHOWCASE_V07_ALLIES: UnitDef[] = [
+  {
+    id: "kasumi", name: "霞織", team: "ally", element: "wind", role: "追擊",
+    description: "替敵人留下風痕；隊友每次命中帶風痕的敵人，霞織就追擊一次（每回合最多 2 次）。",
+    weaknesses: [],
+    stats: { level: 80, hp: 3400, atk: 1900, def: 900, spd: 110, critRate: 0.35, critDmg: 0.9, dmgBonus: 0.15, defIgnore: 0, res: 0, resPen: 0, vulnerability: 0, dmgReduction: 0, effectHit: 0.2, effectRes: 0.1, breakEffect: 0.3, maxEnergy: 110, startEnergy: 0 },
+    skills: [
+      { id: "basic", name: "疾風", type: "basic", spDelta: 1, energyGain: 20, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 1, toughness: 10 }] },
+      { id: "skill", name: "留痕", type: "skill", spDelta: -1, energyGain: 30, targeting: "enemy", effects: [{ kind: "status", target: "enemy", statusId: "galeMark", chance: 1 }, { kind: "damage", target: "blast", multiplier: 1.4, adjMultiplier: 0.6, toughness: 20, adjToughness: 10 }] },
+      { id: "ult", name: "千風", type: "ultimate", spDelta: 0, energyGain: 5, energyCost: 110, targeting: "none", effects: [{ kind: "status", target: "allEnemies", statusId: "galeMark", chance: 1 }, { kind: "damage", target: "allEnemies", multiplier: 1.6, toughness: 20 }] },
+      { id: "chase", name: "追風", type: "followup", spDelta: 0, energyGain: 5, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 0.5, toughness: 5 }] },
+    ],
+    passives: [{ id: "chase", name: "追風", on: "allyHit", skillId: "chase", limitPerTurn: 2, when: parseExpr("target.status.galeMark > 0 && target.hpPct > 0"), description: "隊友命中帶風痕的敵人時追擊，每回合最多 2 次。" }],
+  },
+];
+
+export const SHOWCASE_V07_ENEMIES: UnitDef[] = [
+  {
+    id: "weaver", name: "夢織者", team: "enemy", element: "shadow", role: "精英",
+    description: "凝視一名對手，對方施放戰技或大招就反擊；迷夢會讓我方角色攻擊隊友；場上沒有夢鐘時會敲響一座。",
+    weaknesses: ["wind", "light", "fire"],
+    stats: { ...enemyBase, hp: 30000, atk: 1050, spd: 105, toughness: 100 },
+    statusRes: { control: 0.2 },
+    skills: [
+      { id: "thread", name: "絲刃", type: "basic", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 1.3, toughness: 0 }] },
+      { id: "gaze", name: "凝視", type: "skill", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "status", target: "enemy", statusId: "watch", chance: 0.9 }, { kind: "damage", target: "enemy", multiplier: 0.6, toughness: 0 }] },
+      { id: "lull", name: "迷夢", type: "skill", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "status", target: "enemy", statusId: "daze", chance: 0.8 }] },
+      { id: "ring", name: "喚鐘", type: "skill", spDelta: 0, energyGain: 0, targeting: "none", effects: [{ kind: "summon", unitId: "dreambell", count: 1 }] },
+      { id: "nightmare", name: "夢魘", type: "skill", spDelta: 0, energyGain: 0, targeting: "none", description: "只由夢鐘指定施放。", effects: [{ kind: "damage", target: "allEnemies", multiplier: 1.2, toughness: 0 }] },
+      { id: "glare", name: "反照", type: "followup", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 0.9, toughness: 0 }] },
+    ],
+    passives: [{ id: "glare", name: "反照", on: "foeAction", skillTypes: ["skill", "ultimate"], skillId: "glare", limitPerTurn: 1, when: parseExpr("target.status.watch > 0"), description: "被凝視的對手施放戰技或大招後反擊它。" }],
+    ai: [
+      { skillId: "thread", weight: 3 },
+      { skillId: "gaze", weight: 2 },
+      { skillId: "lull", weight: 2, when: f("battle.turn > 2") },
+      { skillId: "ring", weight: 3, when: f("battle.count.dreambell == 0") },
+    ],
+  },
+  {
+    id: "dreambell", name: "夢鐘", team: "enemy", element: "shadow", role: "事件", weaknesses: [], timelineEvent: true, boundToSummoner: true,
+    description: "行動條上的倒數事件：不能被攻擊。響兩次後讓夢織者立刻施放夢魘，然後消失；夢織者倒下時一起消失。",
+    stats: { ...enemyBase, hp: 1, atk: 0, spd: 90 },
+    skills: [
+      { id: "tick", name: "滴答", type: "skill", spDelta: 0, energyGain: 0, targeting: "none", effects: [{ kind: "counter", target: "self", key: "toll", op: "add", value: 1 }] },
+      { id: "toll", name: "鐘響", type: "skill", spDelta: 0, energyGain: 0, targeting: "none", effects: [{ kind: "queueSkill", target: "allAllies", skillId: "nightmare" }, { kind: "advance", target: "allAllies", amount: 1 }, { kind: "dismiss" }] },
+    ],
+    ai: [
+      { skillId: "tick", weight: 1, when: f("self.counter.toll < 2") },
+      { skillId: "toll", weight: 1, when: f("self.counter.toll >= 2") },
+    ],
+  },
+];
+
+export const SHOWCASE_V07_ENCOUNTER: EncounterPreset = { id: "dream", name: "夢織者", enemies: ["wisp", "weaver", "wisp"], description: "觸發對象條件、支配與行動條事件（規則 0.7）。" };
+
+export const SHOWCASE_ENCOUNTER: EncounterPreset ={ id: "mechanics", name: "機制首領戰", enemies: ["wisp", "lantern", "wisp"], description: "冥燈祭司：階段、召喚、護韌、復活、插隊行動。" };

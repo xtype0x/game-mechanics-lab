@@ -68,7 +68,7 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
               <button key={s.id} className={`status-item ${s.id === selected ? "on" : ""}`} onClick={() => setSelected(s.id)}>
                 <strong>{s.name}</strong>
                 <Badge tone={s.kind === "buff" ? "ok" : "warn"}>{s.kind === "buff" ? "增益" : "減益"}</Badge>
-                <span className="muted small">{s.duration === 0 ? "永久" : `${s.duration} 回合`}{s.maxStacks > 1 ? `・最多 ${s.maxStacks} 層` : ""}{s.dot ? "・持續傷害" : ""}{s.skipTurn ? "・無法行動" : ""}{s.shield ? "・護盾" : ""}{s.revive ? "・復活" : ""}{s.toughnessLock ? "・鎖韌性" : ""}{s.category ? `・${s.category}` : ""}</span>
+                <span className="muted small">{s.duration === 0 ? "永久" : `${s.duration} 回合`}{s.maxStacks > 1 ? `・最多 ${s.maxStacks} 層` : ""}{s.dot ? "・持續傷害" : ""}{s.skipTurn ? "・無法行動" : ""}{s.charm ? "・支配" : ""}{s.shield ? "・護盾" : ""}{s.revive ? "・復活" : ""}{s.toughnessLock ? "・鎖韌性" : ""}{s.category ? `・${s.category}` : ""}</span>
               </button>
             ))}
           </div>
@@ -97,6 +97,7 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
             </div>
             <div className="grid-fields" style={{ marginTop: 10 }}>
               <label className="check"><input type="checkbox" checked={!!st.skipTurn} onChange={(e) => edit((s) => { if (e.target.checked) s.skipTurn = true; else delete s.skipTurn; })} />持有者無法行動（控制）</label>
+              <label className="check"><input type="checkbox" checked={!!st.charm} onChange={(e) => edit((s) => { if (e.target.checked) s.charm = true; else delete s.charm; })} />支配：自動行動並攻擊自己的隊友</label>
               <label className="check"><input type="checkbox" checked={!!st.dot} onChange={(e) => edit((s) => { if (e.target.checked) s.dot = { multiplier: 0.5, element: "fire" }; else delete s.dot; })} />持續傷害</label>
               <label className="check"><input type="checkbox" checked={!!st.shield} onChange={(e) => edit((s) => { if (e.target.checked) s.shield = { scale: "def", multiplier: 0.5, flat: 0 }; else delete s.shield; })} />護盾</label>
               <label className="check"><input type="checkbox" checked={!!st.revive} onChange={(e) => edit((s) => { if (e.target.checked) s.revive = { hpPct: 0.3 }; else delete s.revive; })} />致命傷時復活（消耗此狀態）</label>
@@ -220,9 +221,10 @@ function Preview({ project, st, usage }: { project: Project; st: StatusDef; usag
           {st.release && <li>{st.release === "sourceDeath" ? "施加者倒下或被移除時解除。" : "施加者被擊破、倒下或被移除時解除。"}</li>}
           {st.dispellable === false && <li>不會被驅散效果移除。</li>}
           {st.skipTurn && <li>持有者在回合開始時跳過行動。</li>}
+          {st.charm && <li>支配：持有者的回合改由 AI 自動行動，敵我互換（攻擊自己的隊友、支援對方），不消耗或產生技能點；我方被支配時不能施放大招。{st.skipTurn ? "（同時無法行動時，無法行動優先。）" : ""}</li>}
           {st.dot && <li>持有者回合開始時受到持續傷害：施加者攻擊數值 × {fmt(st.dot.multiplier * 100, 0)}% × 層數，{elementLabel(st.dot.element)}屬性、不會暴擊。</li>}
           {st.modifiers.map((m, i) => <li key={i}>{m.target.startsWith("step:") ? `乘區「${m.target.slice(5)}」` : `數值「${STAT_LABELS[m.target.slice(5)] ?? m.target.slice(5)}」`} {OPS.find((o) => o.value === m.op)?.label} {fmt(m.value, 4)}（每層）{m.role === "incoming" ? "，於受到傷害時" : ""}</li>)}
-          {st.modifiers.length === 0 && !st.dot && !st.skipTurn && !st.shield && !st.revive && !st.toughnessLock && <li className="muted">目前沒有任何效果。</li>}
+          {st.modifiers.length === 0 && !st.dot && !st.skipTurn && !st.charm && !st.shield && !st.revive && !st.toughnessLock && <li className="muted">目前沒有任何效果。</li>}
         </ul>
       </Section>
       <Section title={`使用此狀態的地方（${usage.length}）`}>
