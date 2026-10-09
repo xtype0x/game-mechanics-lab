@@ -422,7 +422,7 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
       const won = battle.result === "win";
       const last = waveIdx === waves.length - 1;
       setEnded(true);
-      setBanner({ text: won ? (last ? "VICTORY" : "WAVE CLEAR") : "DEFEAT", sub: won ? (last ? title : `第 ${waveIdx + 2} 波即將來襲`) : battle.result === "timeout" ? "回合數用盡" : "隊伍全滅", kind: won ? "win" : "lose" });
+      setBanner({ text: won ? (last ? "VICTORY" : "WAVE CLEAR") : "DEFEAT", sub: won ? (last ? title : `第 ${waveIdx + 2} 波即將來襲`) : battle.result === "timeout" ? "回合數用盡" : battle.events.some((e) => e.t === "end" && e.reason === "disabled") ? "全員受控，無法行動" : "隊伍全滅", kind: won ? "win" : "lose" });
       window.setTimeout(() => {
         if (!aliveRef.current) return;
         if (won && !last) {

@@ -28,8 +28,8 @@ export type Effect =
       hits?: number[];
       toughness: number;
       adjToughness?: number;
-      /** Stat the multiplier scales with (§13.4). Default "atk". */
-      scale?: DamageScale;
+      /** Stat the multiplier scales with (§13.4); targetMaxHp / targetHp use the victim (§15.3). Default "atk". */
+      scale?: DamageEffectScale;
     }
   | { kind: "heal"; target: TargetMode; scale: "atk" | "maxHp"; multiplier: number; flat: number }
   | { kind: "status"; target: TargetMode; statusId: string; chance: number }
@@ -52,6 +52,8 @@ export type Effect =
   | { kind: "sp"; amount: number };
 
 export type DamageScale = "atk" | "def" | "hp";
+/** Damage effects may also scale with the victim's HP (§15.3). */
+export type DamageEffectScale = DamageScale | "targetMaxHp" | "targetHp";
 
 /** Effects that resolve once per action instead of per target. */
 export type UntargetedEffect = Extract<Effect, { kind: "summon" | "dismiss" | "sp" }>;
@@ -82,6 +84,10 @@ export interface StatusModifier {
   value: number;
   /** For step targets: apply when the holder deals damage ("outgoing") or takes it ("incoming"). */
   role?: "outgoing" | "incoming";
+  /** Only in damage calculations: applies when this holds (holder = self.*, opposing unit = target.*; §15.1). */
+  when?: Expr;
+  /** Only in damage calculations, add/pct only: per-stack value × this number (§15.1). */
+  scaleBy?: Expr;
 }
 
 export interface StatusDef {
@@ -111,6 +117,8 @@ export interface StatusDef {
   dispellable?: boolean;
   /** Holder acts automatically with sides swapped: attacks its own team, supports the other (§14.3). */
   charm?: boolean;
+  /** A team whose living fighters all carry a defeatIfAll status is defeated (§15.2). */
+  defeatIfAll?: boolean;
   description?: string;
 }
 
@@ -306,7 +314,7 @@ export type BattleEvent =
   | { t: "dismiss"; uid: string; by: string }
   | { t: "counter"; uid: string; key: string; before: number; after: number }
   | { t: "queue"; uid: string; skillId: string }
-  | { t: "end"; result: BattleResult; time: number };
+  | { t: "end"; result: BattleResult; time: number; reason?: "disabled" };
 
 export type BattleResult = "win" | "lose" | "timeout";
 

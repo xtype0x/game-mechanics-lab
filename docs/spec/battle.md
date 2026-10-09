@@ -1,6 +1,6 @@
 # 回合戰鬥規格
 
-規則版本 0.7.0（§13 擴充機制、§14 觸發對象、支配與行動條事件）。
+規則版本 0.8.0（§13 擴充機制、§14 觸發對象、支配與行動條事件、§15 條件式修正、受控判負與依目標生命的傷害）。
 
 戰鬥直接使用專案的傷害規則（damage.md）計算每段命中。所有狀態都是純 JSON；給定（設定, 種子, 行動序列）結果完全確定。
 
@@ -29,9 +29,10 @@
 **保距離規則**：任何可能改變 u 速度的操作（加入、刷新、移除狀態）前後各算一次速度；若不同且新速度 > 0，`u.av = u.av × 舊速度 / 新速度`。
 
 ### 3.3 狀態修正轉換
-狀態修正只有 `target`、`op`、`value`、`role` 四個欄位，沒有 `enabled` 或條件。
+狀態修正有 `target`、`op`、`value`、`role`，以及選填的 `when`、`scaleBy`（§15.1）；沒有 `enabled`。
 對每個狀態實例（列表順序）的每個修正（定義順序）：
-- 數值：`add`／`pct` 為 `value × stacks`；`mul` 為 `value ^ stacks`；`override` 為 `value`。
+- 有 `when` 或 `scaleBy` 的修正只在傷害情境（§3.4、§4 步驟 7、§5.3、§5.5、§13.10）中存在，依 §15.1 先決定是否套用與倍數 k；用於 §3.1 時一律略過。
+- 數值：`add`／`pct` 為 `(value × stacks) × k`（沒有 scaleBy 時 k = 1，即 `value × stacks`）；`mul` 為 `value ^ stacks`；`override` 為 `value`。
 - `stat:<key>`：
   - 持有者是攻擊方時，轉為 `stat:attacker.<key>`；
   - 持有者是防守方時，轉為 `stat:defender.<key>`；
@@ -50,8 +51,7 @@
 ## 4. 主迴圈
 重複執行：
 1. 若已結束，或 `checkEnd` 成立，則停止。`checkEnd`：
-   - 沒有存活的敵方**戰鬥單位**（不含事件單位，§14.4）→ `win`；
-   - 否則若沒有存活的我方戰鬥單位 → `lose`；
+   - 敵方落敗 → `win`；否則我方落敗 → `lose`。一隊**落敗**＝沒有存活的戰鬥單位（不含事件單位，§14.4），或存活的戰鬥單位全員都帶有 `defeatIfAll` 狀態（§15.2，此時 `end` 事件加上 `reason: "disabled"`）；
    - 成立時加入 `end` 事件、清除決策。
 2. **下一位行動者**：存活單位依下列順序排序，取第一個：
    - `av` 小者優先；
@@ -225,7 +225,7 @@
 | dismiss | uid, by | 單位被移除（非擊殺；§13.5） |
 | counter | uid, key, before, after | 計數器**有變化**時（§13.9） |
 | queue | uid, skillId | 指定下一次行動（§13.8） |
-| end | result, time | 戰鬥結束；timeout 時 time 為未推進前的時間 |
+| end | result, time, reason?（`"disabled"`，§15.2） | 戰鬥結束；timeout 時 time 為未推進前的時間 |
 
 ## 11. 單位狀態（向量 `units`）
 `uid, defId, name, team, slot, element, base（= stats 複本）, weaknesses, hp, maxHp, energy, maxEnergy, toughness, maxToughness, broken, alive, av, statuses[{statusId, sourceUid, stacks, turnsLeft, snapshot?, shield?}], passiveUses{passiveId: 次數}, phase, counters{key: 值}, nextSkill?, summonedBy?, timelineEvent?`（timelineEvent 只在定義為事件單位時出現，值為 true）
@@ -293,7 +293,7 @@
 
 ### 13.4 數值依據 `scaleValue(u, scale)`
 `scale == "hp"` 時為 `u.maxHp`；`"atk"`／`"def"` 時為 `unitStat(u, scale)`。
-- **傷害效果** `scale`：省略或 `"atk"` 時照舊。否則每段命中的攻擊方為 `base = {...行動者.stats, atk: scaleValue(行動者, scale)}`，修正值為攻擊方修正**去掉**目標為 `stat:attacker.atk` 的項目（傷害公式仍讀 `attacker.atk`）。
+- **傷害效果** `scale`：省略或 `"atk"` 時照舊。否則每段命中的攻擊方為 `base = {...行動者.stats, atk: scaleValue(行動者, scale)}`（`targetMaxHp`／`targetHp` 改用目標的數值，§15.3），修正值為攻擊方修正**去掉**目標為 `stat:attacker.atk` 的項目（傷害公式仍讀 `attacker.atk`）。
 - **護盾** `StatusDef.shield = {scale, multiplier, flat}`：以施加者計算（§5.5）。
 
 ### 13.5 召喚與移除
@@ -374,3 +374,21 @@ AI 與被動條件可用：§6 的固定變數、`self.phase`、`self.shield`、
 - 不在任何目標列表中（§5.1、§6 第 4 步、§7.3），因此不會被攻擊、治療或施加狀態；只能用 `self` 模式影響自己，或被 `dismiss`／召喚者離場（`boundToSummoner`）移除。
 - 不計入勝負（§4 步驟 1）、`battle.allies／foes` 與召喚人數上限；召喚事件單位不受上限限制（§13.5）。
 - 計入 `battle.count.*` 與 `rank`。
+
+## 15. 條件式修正、受控判負、依目標生命的傷害（規則 v0.8）
+
+以下欄位全部選填；不使用時行為與 v0.7 完全相同（既有向量的事件逐筆不變）。
+
+### 15.1 條件式狀態修正
+`StatusModifier.when`（布林表示式）與 `scaleBy`（數值表示式）。
+- **作用範圍**：只在建立傷害情境時：技能命中（§5.2）、持續傷害一跳與引爆（§4 步驟 7、§13.10）、擊破傷害（§5.3）、持續傷害快照（§5.5）。§3.1 的 `unitStat`（速度、效果命中、嘲諷、治療加成、護盾依據等）**一律略過**這種修正，因此不影響保距離規則。
+- **scope**：被動條件的 scope（§6、§14.1），`self` 為持有者，`target` 為這次傷害的另一方：持有者是攻擊方時為防守方；持有者是防守方時為攻擊方（持續傷害為實例的 sourceUid 對應單位，不存在時為無對象）。持續傷害快照時，`target` 為被施加者。
+- **求值**：每個持有者在每次建立情境時最多建立一次 scope（scope 內容在同一次建立中不變）。先求 `when`，為假則該修正不存在；再求 `scaleBy` 得 k。
+- `scaleBy` 只對 `add`／`pct` 有效（數值 = `(value × stacks) × k`）；用在 `mul`／`override` 為驗證錯誤，引擎忽略它（k = 1）。
+- 目標為 `stat:<key>` 而 key 不是傷害規則宣告的數值時，驗證器提醒「不會有效果」。
+
+### 15.2 受控判負
+`StatusDef.defeatIfAll: true`。§4 步驟 1 的 `checkEnd` 中，一隊存活的戰鬥單位**全員**都至少帶有一個 defeatIfAll 狀態時，該隊落敗；敵方先判（勝利優先）。`checkEnd` 在所有既有時機檢查（主迴圈、每個頂層行動後、每個追加攻擊取出前），所以狀態施加完、該行動結束時就會判定。事件單位不計入。
+
+### 15.3 依目標生命的傷害
+傷害效果 `scale` 可為 `"targetMaxHp"` 或 `"targetHp"`：每段命中建立情境時，攻擊方 `atk` 取目標的 `maxHp`／目前 `hp`（該段命中**之前**的值），並照 §13.4 去掉攻擊方 `stat:attacker.atk` 修正。其他乘區（防禦、抗性、暴擊等）照常計算。護盾的 `scale` 不接受這兩個值。

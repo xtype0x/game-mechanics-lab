@@ -1,4 +1,4 @@
-import type { DamageScale, Effect, PassiveDef, SkillDef, SkillType, TargetMode } from "@ggt/core";
+import type { DamageEffectScale, DamageScale, Effect, PassiveDef, SkillDef, SkillType, TargetMode } from "@ggt/core";
 
 export interface StatMeta {
   key: string;
@@ -98,6 +98,13 @@ export const DAMAGE_SCALES: { value: DamageScale; label: string }[] = [
   { value: "atk", label: "攻擊力" },
   { value: "def", label: "防禦力" },
   { value: "hp", label: "生命上限" },
+];
+
+/** Damage effects also accept the victim's HP (rules §15.3). */
+export const DAMAGE_EFFECT_SCALES: { value: DamageEffectScale; label: string }[] = [
+  ...DAMAGE_SCALES.map((s) => ({ ...s, label: `施放者${s.label}` })),
+  { value: "targetMaxHp", label: "目標生命上限" },
+  { value: "targetHp", label: "目標目前生命" },
 ];
 
 export const TRIGGERS: { value: PassiveDef["on"]; label: string }[] = [

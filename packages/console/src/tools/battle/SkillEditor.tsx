@@ -5,7 +5,7 @@ import { Badge, Field, NumberField, Section } from "../../ui";
 import { ExprField } from "../common";
 import { elementLabel } from "./common";
 import { useElementOptions } from "./elements";
-import { AI_VARS, DAMAGE_SCALES, EFFECT_GROUPS, EFFECT_KINDS, SKILL_TYPES, TARGETING, TARGET_MODES, TARGET_VARS, TRIGGERS, TRIGGER_SUBJECT, defaultEffect, nextId } from "./meta";
+import { AI_VARS, DAMAGE_EFFECT_SCALES, EFFECT_GROUPS, EFFECT_KINDS, SKILL_TYPES, TARGETING, TARGET_MODES, TARGET_VARS, TRIGGERS, TRIGGER_SUBJECT, defaultEffect, nextId } from "./meta";
 
 type Edit = (fn: (u: UnitDef) => void) => void;
 
@@ -147,7 +147,7 @@ function summarize(sk: SkillDef, statuses: StatusDef[], units: UnitDef[]): strin
     const t = "target" in e ? TARGET_MODES.find((m) => m.value === e.target)?.label ?? e.target : "";
     const uname = (id: string) => units.find((u) => u.id === id)?.name ?? id;
     switch (e.kind) {
-      case "damage": return `${t} ${Math.round(e.multiplier * 100)}%${e.scale && e.scale !== "atk" ? `（${DAMAGE_SCALES.find((x) => x.value === e.scale)?.label}）` : ""}`;
+      case "damage": return `${t} ${Math.round(e.multiplier * 100)}%${e.scale && e.scale !== "atk" ? `（${DAMAGE_EFFECT_SCALES.find((x) => x.value === e.scale)?.label}）` : ""}`;
       case "heal": return `治療${t}`;
       case "status": return `${statuses.find((s) => s.id === e.statusId)?.name ?? e.statusId}→${t}`;
       case "advance": return `${t}提前 ${Math.round(e.amount * 100)}%`;
@@ -199,9 +199,9 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
         {e.kind === "damage" && (
           <>
             <Field label="倍率"><NumberField percent value={e.multiplier} onChange={(v) => set("multiplier", v)} /></Field>
-            <Field label="倍率依據" hint="非攻擊力時，攻擊力的增減益不會套用">
+            <Field label="倍率依據" hint="非攻擊力時，攻擊力的增減益不會套用；目標生命於每段命中時讀取">
               <select value={e.scale ?? "atk"} onChange={(ev) => (ev.target.value === "atk" ? unset("scale") : set("scale", ev.target.value))}>
-                {DAMAGE_SCALES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                {DAMAGE_EFFECT_SCALES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </Field>
             <Field label="削韌"><NumberField value={e.toughness} onChange={(v) => set("toughness", v)} /></Field>

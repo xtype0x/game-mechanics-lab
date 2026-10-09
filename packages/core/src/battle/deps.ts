@@ -46,6 +46,12 @@ export function contentReferences(cfg: BattleConfig): DepRef[] {
     }
   };
 
+  for (const s of cfg.statuses) {
+    for (const m of s.modifiers) {
+      conditionRefs({ kind: "status", id: s.id }, m.when);
+      conditionRefs({ kind: "status", id: s.id }, m.scaleBy);
+    }
+  }
   for (const u of cfg.units) {
     for (const sk of u.skills) {
       const from: DepNode = { kind: "skill", id: sk.id, unitId: u.id };

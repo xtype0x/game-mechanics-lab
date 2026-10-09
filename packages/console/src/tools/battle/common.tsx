@@ -125,7 +125,7 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
     case "dismiss": return { text: `　－ ${name(e.uid)} 離場${e.by !== e.uid ? `（${name(e.by)}）` : ""}`, tone: "death" };
     case "counter": return details ? { text: `　${name(e.uid)} 的 ${e.key}：${fmt(e.before, 0)} → ${fmt(e.after, 0)}`, tone: "muted" } : null;
     case "queue": return { text: `　${name(e.uid)} 下一次行動將使用「${units.find((d) => d.id === state.units.find((u) => u.uid === e.uid)?.defId)?.skills.find((s) => s.id === e.skillId)?.name ?? e.skillId}」`, tone: "status" };
-    case "end": return { text: `══ 戰鬥結束：${{ win: "勝利", lose: "失敗", timeout: "超時" }[e.result]} ══`, tone: "end" };
+    case "end": return { text: `══ 戰鬥結束：${{ win: "勝利", lose: "失敗", timeout: "超時" }[e.result]}${e.reason === "disabled" ? (e.result === "win" ? "（敵方全員受控）" : "（我方全員受控）") : ""} ══`, tone: "end" };
   }
 }
 

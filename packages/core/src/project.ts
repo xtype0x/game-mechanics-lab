@@ -11,7 +11,7 @@ import { SHOWCASE_ALLIES, SHOWCASE_ENCOUNTER, SHOWCASE_ENEMIES, SHOWCASE_STATUSE
 import { DEFAULT_BATTLE_RULES, DEFAULT_ENCOUNTER, DEFAULT_ENCOUNTERS, DEFAULT_POLICY_CONFIG, DEFAULT_STATUSES, DEFAULT_UNITS } from "./library/battle-content";
 
 export const SCHEMA_VERSION = 3;
-export const RULES_VERSION = "0.7.0";
+export const RULES_VERSION = "0.8.0";
 
 export interface BattleConfig {
   rules: BattleRules;

@@ -1,7 +1,8 @@
-import { computeHit, contentReferences, referencesTo, resolveStats, type DamageScale, type DepRef, type ModOp, type Project, type Scenario, type StatusDef } from "@ggt/core";
+import { computeHit, contentReferences, printExpr, referencesTo, resolveStats, type DamageScale, type DepRef, type ModOp, type Project, type Scenario, type StatusDef } from "@ggt/core";
 import { GoLink, useFocus } from "../../nav";
 import { refLabel } from "./SkillEditor";
-import { DAMAGE_SCALES } from "./meta";
+import { DAMAGE_SCALES, AI_VARS, TARGET_VARS } from "./meta";
+import { ExprField } from "../common";
 import { useMemo, useState } from "react";
 import type { Updater } from "../../useProject";
 import { Badge, ErrorBox, Field, NumberField, Section, fmt } from "../../ui";
@@ -98,6 +99,7 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
             <div className="grid-fields" style={{ marginTop: 10 }}>
               <label className="check"><input type="checkbox" checked={!!st.skipTurn} onChange={(e) => edit((s) => { if (e.target.checked) s.skipTurn = true; else delete s.skipTurn; })} />持有者無法行動（控制）</label>
               <label className="check"><input type="checkbox" checked={!!st.charm} onChange={(e) => edit((s) => { if (e.target.checked) s.charm = true; else delete s.charm; })} />支配：自動行動並攻擊自己的隊友</label>
+              <label className="check" title="我方全員都有 → 失敗；敵方全員都有 → 勝利（事件單位不計）"><input type="checkbox" checked={!!st.defeatIfAll} onChange={(e) => edit((s) => { if (e.target.checked) s.defeatIfAll = true; else delete s.defeatIfAll; })} />全隊都帶此狀態時該隊落敗</label>
               <label className="check"><input type="checkbox" checked={!!st.dot} onChange={(e) => edit((s) => { if (e.target.checked) s.dot = { multiplier: 0.5, element: "fire" }; else delete s.dot; })} />持續傷害</label>
               <label className="check"><input type="checkbox" checked={!!st.shield} onChange={(e) => edit((s) => { if (e.target.checked) s.shield = { scale: "def", multiplier: 0.5, flat: 0 }; else delete s.shield; })} />護盾</label>
               <label className="check"><input type="checkbox" checked={!!st.revive} onChange={(e) => edit((s) => { if (e.target.checked) s.revive = { hpPct: 0.3 }; else delete s.revive; })} />致命傷時復活（消耗此狀態）</label>
@@ -149,7 +151,8 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
                 const isStep = m.target.startsWith("step:");
                 const isPct = !isStep && (m.op === "pct" || ["critRate", "critDmg", "dmgBonus", "res", "resPen", "vulnerability", "dmgReduction", "defIgnore", "effectHit", "effectRes", "breakEffect"].includes(m.target.slice(5)));
                 return (
-                  <div key={i} className="smod-row">
+                  <div key={i} className="smod">
+                  <div className="smod-row">
                     <select aria-label="對象" value={m.target} onChange={(e) => edit((s) => { s.modifiers[i]!.target = e.target.value; })}>
                       <optgroup label="持有者數值">
                         {statKeys.map((k) => <option key={k} value={`stat:${k}`}>{STAT_LABELS[k] ?? k}</option>)}
@@ -169,6 +172,15 @@ export function StatusEditor({ project, update }: { project: Project; update: Up
                       </select>
                     ) : <span />}
                     <button className="btn icon" aria-label="刪除修正" onClick={() => edit((s) => { s.modifiers.splice(i, 1); })}>✕</button>
+                  </div>
+                  <details className="smod-cond" open={!!(m.when || m.scaleBy)}>
+                    <summary>條件與倍數{m.when || m.scaleBy ? "（已設定）" : ""}</summary>
+                    <p className="muted small">只在傷害計算中生效（命中、持續傷害、擊破）。self 是持有者，target 是這次傷害的另一方（攻擊時為被攻擊者，受擊時為攻擊者）。可用：{AI_VARS}；{TARGET_VARS}</p>
+                    <div className="grid-fields">
+                      <Field label="條件（成立才套用）"><ExprField ariaLabel="修正條件" allowEmpty value={m.when} placeholder="例如 target.status.mark > 0" onChange={(e) => edit((s) => { if (e) s.modifiers[i]!.when = e; else delete s.modifiers[i]!.when; })} /></Field>
+                      <Field label="倍數（數值 × 層數 × 倍數，限加算／百分比）"><ExprField ariaLabel="修正倍數" allowEmpty value={m.scaleBy} placeholder="例如 battle.count.summonId" onChange={(e) => edit((s) => { if (e) s.modifiers[i]!.scaleBy = e; else delete s.modifiers[i]!.scaleBy; })} /></Field>
+                    </div>
+                  </details>
                   </div>
                 );
               })}
@@ -223,8 +235,9 @@ function Preview({ project, st, usage }: { project: Project; st: StatusDef; usag
           {st.skipTurn && <li>持有者在回合開始時跳過行動。</li>}
           {st.charm && <li>支配：持有者的回合改由 AI 自動行動，敵我互換（攻擊自己的隊友、支援對方），不消耗或產生技能點；我方被支配時不能施放大招。{st.skipTurn ? "（同時無法行動時，無法行動優先。）" : ""}</li>}
           {st.dot && <li>持有者回合開始時受到持續傷害：施加者攻擊數值 × {fmt(st.dot.multiplier * 100, 0)}% × 層數，{elementLabel(st.dot.element)}屬性、不會暴擊。</li>}
-          {st.modifiers.map((m, i) => <li key={i}>{m.target.startsWith("step:") ? `乘區「${m.target.slice(5)}」` : `數值「${STAT_LABELS[m.target.slice(5)] ?? m.target.slice(5)}」`} {OPS.find((o) => o.value === m.op)?.label} {fmt(m.value, 4)}（每層）{m.role === "incoming" ? "，於受到傷害時" : ""}</li>)}
-          {st.modifiers.length === 0 && !st.dot && !st.skipTurn && !st.charm && !st.shield && !st.revive && !st.toughnessLock && <li className="muted">目前沒有任何效果。</li>}
+          {st.modifiers.map((m, i) => <li key={i}>{m.target.startsWith("step:") ? `乘區「${m.target.slice(5)}」` : `數值「${STAT_LABELS[m.target.slice(5)] ?? m.target.slice(5)}」`} {OPS.find((o) => o.value === m.op)?.label} {fmt(m.value, 4)}（每層）{m.role === "incoming" ? "，於受到傷害時" : ""}{m.scaleBy ? `，再乘以 ${printExpr(m.scaleBy)}` : ""}{m.when ? `，僅在 ${printExpr(m.when)} 時` : ""}{m.when || m.scaleBy ? "（只在傷害計算中）" : ""}</li>)}
+          {st.defeatIfAll && <li>存活的戰鬥單位全員都帶有此類狀態時，該隊立即落敗（我方失敗、敵方則我方勝利）。</li>}
+          {st.modifiers.length === 0 && !st.dot && !st.skipTurn && !st.charm && !st.defeatIfAll && !st.shield && !st.revive && !st.toughnessLock && <li className="muted">目前沒有任何效果。</li>}
         </ul>
       </Section>
       <Section title={`使用此狀態的地方（${usage.length}）`}>

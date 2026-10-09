@@ -13,6 +13,7 @@ import type {
   BattleEvent,
   BattleRules,
   BattleState,
+  DamageEffectScale,
   DamageScale,
   EncounterDef,
   Effect,
@@ -115,13 +116,32 @@ function statDefault(setup: BattleSetup, key: string): number {
   return setup.damage.stats.find((s) => s.key === key)?.default ?? 0;
 }
 
-/** Holder stat modifiers from statuses, as plain modifiers on `targetPrefix + key`. */
-function statusMods(setup: BattleSetup, u: UnitState, side: "attacker" | "defender" | null): Modifier[] {
+/** Damage-calculation context for conditional modifiers (spec §15.1): the battle and the opposing unit. */
+interface ModCtx {
+  state: BattleState;
+  /** The other side of the hit; undefined when it no longer exists (e.g. a DoT whose source is gone). */
+  other?: UnitState;
+}
+
+/**
+ * Holder stat modifiers from statuses, as plain modifiers on `targetPrefix + key`. Modifiers with
+ * `when`/`scaleBy` only exist in damage calculations (ctx given) and are skipped otherwise (§15.1).
+ */
+function statusMods(setup: BattleSetup, u: UnitState, side: "attacker" | "defender" | null, ctx?: ModCtx): Modifier[] {
   const out: Modifier[] = [];
+  let scope: Scope | undefined;
   for (const inst of u.statuses) {
     const def = statusDef(setup, inst.statusId);
     def.modifiers.forEach((m, i) => {
-      const base = { id: `${def.id}#${i}`, label: def.name, op: m.op, value: m.op === "mul" ? Math.pow(m.value, inst.stacks) : m.op === "override" ? m.value : m.value * inst.stacks, source: inst.sourceUid };
+      let k = 1;
+      if (m.when || m.scaleBy) {
+        if (!ctx) return;
+        scope ??= unitScope(ctx.state, u, ctx.other);
+        if (m.when && !evalBool(m.when, scope)) return;
+        if (m.scaleBy && (m.op === "add" || m.op === "pct")) k = evalNumber(m.scaleBy, scope);
+      }
+      const value = m.op === "mul" ? Math.pow(m.value, inst.stacks) : m.op === "override" ? m.value : m.value * inst.stacks * k;
+      const base = { id: `${def.id}#${i}`, label: def.name, op: m.op, value, source: inst.sourceUid };
       if (m.target.startsWith("stat:")) {
         const key = m.target.slice(5);
         out.push({ ...base, target: side ? `stat:${side}.${key}` : `stat:${key}` });
@@ -155,9 +175,17 @@ function preservingDistance(setup: BattleSetup, u: UnitState, fn: () => void) {
   if (after !== before && after > 0) u.av = (u.av * before) / after;
 }
 
+interface AttackerSide {
+  /** Attacking unit, if it still exists (conditional defender modifiers see it as target.*). */
+  unit?: UnitState;
+  base: Record<string, number>;
+  mods: Modifier[];
+}
+
 function scenarioFor(
   setup: BattleSetup,
-  attacker: { base: Record<string, number>; mods: Modifier[] },
+  state: BattleState,
+  attacker: AttackerSide,
   defender: UnitState,
   skill: { name: string; type: Scenario["skill"]["type"]; element: string; multiplier: number; hits: number[] },
 ): Scenario {
@@ -169,12 +197,12 @@ function scenarioFor(
     defender: elementRes === undefined ? defender.base : { ...defender.base, res: elementRes },
     skill: { ...skill },
     flags: { broken: defender.broken, weakness: defender.weaknesses.includes(skill.element) },
-    modifiers: [...attacker.mods, ...statusMods(setup, defender, "defender")],
+    modifiers: [...attacker.mods, ...statusMods(setup, defender, "defender", { state, other: attacker.unit })],
   };
 }
 
-function attackerOf(setup: BattleSetup, u: UnitState) {
-  return { base: u.base, mods: statusMods(setup, u, "attacker") };
+function attackerOf(setup: BattleSetup, state: BattleState, u: UnitState, target: UnitState): AttackerSide {
+  return { unit: u, base: u.base, mods: statusMods(setup, u, "attacker", { state, other: target }) };
 }
 
 // ---------------------------------------------------------------------------
@@ -218,27 +246,35 @@ function cycleAt(rules: BattleRules, time: number): number {
   return time < rules.firstCycleAv ? 1 : 2 + Math.floor((time - rules.firstCycleAv) / rules.cycleAv);
 }
 
-function checkEnd(state: BattleState): boolean {
+/** "wiped": no living fighters; "disabled": every living fighter carries a defeatIfAll status (§15.2). */
+function defeatOf(setup: BattleSetup, state: BattleState, team: "ally" | "enemy"): "wiped" | "disabled" | null {
+  const units = fielded(state, team);
+  if (units.length === 0) return "wiped";
+  return units.every((u) => u.statuses.some((s) => statusDef(setup, s.statusId).defeatIfAll)) ? "disabled" : null;
+}
+
+function checkEnd(setup: BattleSetup, state: BattleState): boolean {
   if (state.phase === "ended") return true;
-  let result: BattleState["result"];
-  if (fielded(state, "enemy").length === 0) result = "win";
-  else if (fielded(state, "ally").length === 0) result = "lose";
-  if (!result) return false;
-  finish(state, result);
+  const enemy = defeatOf(setup, state, "enemy");
+  const ally = enemy ? null : defeatOf(setup, state, "ally");
+  if (!enemy && !ally) return false;
+  finish(state, enemy ? "win" : "lose", (enemy ?? ally) === "disabled" ? "disabled" : undefined);
   return true;
 }
 
-function finish(state: BattleState, result: NonNullable<BattleState["result"]>) {
+function finish(state: BattleState, result: NonNullable<BattleState["result"]>, reason?: "disabled") {
   state.phase = "ended";
   state.result = result;
   state.decision = undefined;
-  state.events.push({ t: "end", result, time: state.time });
+  const ev: BattleEvent = { t: "end", result, time: state.time };
+  if (reason) ev.reason = reason;
+  state.events.push(ev);
 }
 
 /** Advances the battle until an ally needs a decision or the battle ends. Mutates and returns state. */
 function run(setup: BattleSetup, state: BattleState): BattleState {
   for (let guard = 0; guard < 100000; guard++) {
-    if (state.phase === "ended" || checkEnd(state)) return state;
+    if (state.phase === "ended" || checkEnd(setup, state)) return state;
 
     // Next actor: smallest AV; ties → allies first, then slot.
     const next = alive(state).sort(byTurnOrder)[0]!;
@@ -267,7 +303,7 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
     }
     tickDots(setup, state, next);
     if (!next.alive) continue;
-    if (checkEnd(state)) return state;
+    if (checkEnd(setup, state)) return state;
 
     const control = next.statuses.find((s) => statusDef(setup, s.statusId).skipTurn);
     if (control) {
@@ -288,7 +324,7 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
     const from = state.events.length;
     execute(setup, state, next, act.skill, act.targetUid);
     processTriggers(setup, state, from);
-    if (checkEnd(state)) return state;
+    if (checkEnd(setup, state)) return state;
     if (next.alive) endTurn(setup, state, next);
   }
   throw new BattleError("戰鬥迴圈超過上限，可能有無限循環");
@@ -310,13 +346,13 @@ function tickDots(setup: BattleSetup, state: BattleState, u: UnitState) {
   for (const inst of [...u.statuses]) {
     const def = statusDef(setup, inst.statusId);
     if (!def.dot || !u.alive) continue;
-    dealDamage(setup, state, inst.sourceUid, u, dotDamage(setup, u, inst, def, 1), false, "dot");
+    dealDamage(setup, state, inst.sourceUid, u, dotDamage(setup, state, u, inst, def, 1), false, "dot");
   }
 }
 
 /** One DoT tick of `inst` on its holder; `ratio` scales the multiplier (1 for a normal tick, spec §13.10). */
-function dotDamage(setup: BattleSetup, u: UnitState, inst: StatusInstance, def: StatusDef, ratio: number): number {
-  const sc = scenarioFor(setup, { base: inst.snapshot ?? {}, mods: [] }, u, {
+function dotDamage(setup: BattleSetup, state: BattleState, u: UnitState, inst: StatusInstance, def: StatusDef, ratio: number): number {
+  const sc = scenarioFor(setup, state, { unit: state.units.find((x) => x.uid === inst.sourceUid), base: inst.snapshot ?? {}, mods: [] }, u, {
     name: def.name,
     type: "dot",
     element: def.dot!.element,
@@ -392,7 +428,7 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
     execute(setup, state, actor, skill, action.targetUid);
     processTriggers(setup, state, from);
     // The decision actor can only die here in pathological setups (self-damage); resume the loop then.
-    if (!checkEnd(state) && !unit(state, decision.actorUid).alive) {
+    if (!checkEnd(setup, state) && !unit(state, decision.actorUid).alive) {
       state.decision = undefined;
       return run(setup, state);
     }
@@ -407,7 +443,7 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
   const from = state.events.length;
   execute(setup, state, actor, skill, action.targetUid);
   processTriggers(setup, state, from);
-  if (checkEnd(state)) return state;
+  if (checkEnd(setup, state)) return state;
   if (actor.alive) endTurn(setup, state, actor);
   return run(setup, state);
 }
@@ -541,7 +577,7 @@ function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
 
   scan(from, state.events.length);
   for (let budget = MAX_FOLLOWUPS_PER_ACTION; queue.length && budget > 0; budget--) {
-    if (checkEnd(state)) return;
+    if (checkEnd(setup, state)) return;
     const q = queue.shift()!;
     const u = unit(state, q.uid);
     if (!u.alive) continue;
@@ -623,7 +659,7 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
       const toughness = isAdj ? (eff.adjToughness ?? 0) : eff.toughness;
       const crng = Rng.fromState(state.rng.crit);
       for (let i = 0; i < hits.length && target.alive; i++) {
-        const sc = scenarioFor(setup, scaledAttacker(setup, actor, eff.scale), target, { name: skill.name, type: skill.type, element, multiplier, hits });
+        const sc = scenarioFor(setup, state, scaledAttacker(setup, state, actor, target, eff.scale), target, { name: skill.name, type: skill.type, element, multiplier, hits });
         const stats = resolveStats(setup.damage, sc);
         const p = critChanceOf(setup.damage, sc, stats);
         // One crit draw per hit, always consumed (spec battle.md §5).
@@ -675,7 +711,7 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
       for (const inst of [...target.statuses]) {
         const def = statusDef(setup, inst.statusId);
         if (!def.dot || !target.alive || (eff.statusId !== undefined && inst.statusId !== eff.statusId)) continue;
-        dealDamage(setup, state, inst.sourceUid, target, dotDamage(setup, target, inst, def, eff.ratio), false, "dot");
+        dealDamage(setup, state, inst.sourceUid, target, dotDamage(setup, state, target, inst, def, eff.ratio), false, "dot");
       }
       break;
     case "queueSkill":
@@ -701,13 +737,15 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
 }
 
 /** Attacker for a damage effect. Non-ATK scaling swaps in the stat and drops ATK modifiers (spec §13.4). */
-function scaledAttacker(setup: BattleSetup, actor: UnitState, scale: DamageScale | undefined) {
-  const a = attackerOf(setup, actor);
+/**
+ * Attacker for a damage effect. Non-ATK scaling swaps in the stat and drops ATK modifiers (spec §13.4);
+ * targetMaxHp / targetHp take the victim's HP at the time of each hit (§15.3).
+ */
+function scaledAttacker(setup: BattleSetup, state: BattleState, actor: UnitState, target: UnitState, scale: DamageEffectScale | undefined): AttackerSide {
+  const a = attackerOf(setup, state, actor, target);
   if (!scale || scale === "atk") return a;
-  return {
-    base: { ...actor.base, atk: scaleValue(setup, actor, scale) },
-    mods: a.mods.filter((m) => m.target !== "stat:attacker.atk"),
-  };
+  const atk = scale === "targetMaxHp" ? target.maxHp : scale === "targetHp" ? target.hp : scaleValue(setup, actor, scale);
+  return { unit: actor, base: { ...actor.base, atk }, mods: a.mods.filter((m) => m.target !== "stat:attacker.atk") };
 }
 
 function scaleValue(setup: BattleSetup, u: UnitState, scale: DamageScale): number {
@@ -838,7 +876,7 @@ function reduceToughness(setup: BattleSetup, state: BattleState, actor: UnitStat
 
   target.broken = true;
   state.events.push({ t: "break", src: actor.uid, dst: target.uid });
-  const sc = scenarioFor(setup, attackerOf(setup, actor), target, { name: "擊破", type: "skill", element, multiplier: 0, hits: [1] });
+  const sc = scenarioFor(setup, state, attackerOf(setup, state, actor, target), target, { name: "擊破", type: "skill", element, multiplier: 0, hits: [1] });
   const stats = resolveStats(setup.damage, sc);
   const values = (side: "attacker" | "defender") => Object.fromEntries(Object.entries(stats[side]).map(([k, v]) => [k, v.value]));
   const breakScope = objectScope({
@@ -876,7 +914,7 @@ function applyStatus(setup: BattleSetup, state: BattleState, actor: UnitState, t
   }
   let snapshot: Record<string, number> | undefined;
   if (def.dot) {
-    const sc = scenarioFor(setup, attackerOf(setup, actor), target, { name: def.name, type: "dot", element: def.dot.element, multiplier: 0, hits: [1] });
+    const sc = scenarioFor(setup, state, attackerOf(setup, state, actor, target), target, { name: def.name, type: "dot", element: def.dot.element, multiplier: 0, hits: [1] });
     snapshot = Object.fromEntries(Object.entries(resolveStats(setup.damage, sc).attacker).map(([k, v]) => [k, v.value]));
   }
   const shield = def.shield ? applyRounding(scaleValue(setup, actor, def.shield.scale) * def.shield.multiplier + def.shield.flat, setup.rules.rounding) : undefined;

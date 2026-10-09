@@ -150,7 +150,14 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
     if (s.charm && s.skipTurn) warn(`狀態「${s.name}」同時是無法行動與支配；無法行動優先，支配不會發生`, w);
     if (s.charm && s.kind === "buff") warn(`狀態「${s.name}」是增益但有支配效果，會被當成增益驅散與計算機率`, w);
     if (!(s.maxStacks >= 1)) err(`狀態「${s.name}」最大層數至少為 1`, w);
+    const damageStats = new Set(damage.stats.map((x) => x.key));
     for (const m of s.modifiers) {
+      // Conditional modifiers (spec §15.1): passive-style scope, damage calculations only.
+      for (const [field, expr] of [["條件", m.when], ["倍數", m.scaleBy]] as const) {
+        if (expr) for (const ref of collectRefs(expr)) { const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds, passive: true }); if (why) err(`狀態「${s.name}」修正的${field}：${why}`, w); }
+      }
+      if (m.scaleBy && m.op !== "add" && m.op !== "pct") err(`狀態「${s.name}」的修正倍數只能用在「加」或「百分比」`, w);
+      if ((m.when || m.scaleBy) && m.target.startsWith("stat:") && !damageStats.has(m.target.slice(5))) warn(`狀態「${s.name}」的條件式修正只在傷害計算中生效；「${m.target.slice(5)}」不是傷害公式的數值，不會有效果`, w);
       if (m.target.startsWith("step:") && !stepIds.has(m.target.slice(5))) warn(`狀態「${s.name}」修正的乘區「${m.target.slice(5)}」不在目前的傷害公式中，不會有效果`, w);
       else if (!m.target.startsWith("step:") && !m.target.startsWith("stat:")) err(`狀態「${s.name}」的修正對象「${m.target}」格式錯誤`, w);
     }
