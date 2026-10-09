@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Updater } from "../../useProject";
 import { ErrorBox, Section, fmt } from "../../ui";
 import { EncounterBar, SeedField, describeEvent, elementLabel, useBattleSetup } from "./common";
+import { openReplay } from "../../demo/link";
 
 export function BattleStepper({ project, update }: { project: Project; update: Updater }) {
   const { setup, error } = useBattleSetup(project);
@@ -96,6 +97,7 @@ function Stepper({ setup, seed, project }: { setup: BattleSetup; seed: number | 
           <button className="btn small" disabled={state.phase !== "await"} onClick={autoStep}>自動一步</button>
           <button className="btn small" disabled={state.phase !== "await"} onClick={autoToEnd}>自動到結束</button>
           <button className="btn small" onClick={() => { setHistory([createBattle(setup, seed)]); setErr(null); }}>重新開始</button>
+          <button className="btn small play-btn" title="用 DEMO 的戰鬥畫面，從頭播放到目前這一步" onClick={() => openReplay({ setup, final: state })}>▶ 在 DEMO 中重播</button>
         </div>
       </div>
       {err && <ErrorBox error={err} />}

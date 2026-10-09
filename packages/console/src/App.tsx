@@ -11,7 +11,7 @@ import {
   type ToolEntry,
   type ToolStatus,
 } from "@ggt/core";
-import { useMemo, useRef, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { AbCompare } from "./tools/AbCompare";
 import { Composer } from "./tools/Composer";
 import { CritDistribution } from "./tools/CritDistribution";
@@ -24,6 +24,9 @@ import { BreakCurves, EnergyCurves } from "./tools/battle/BattleCurves";
 import { CharacterSkills, CharacterStats } from "./tools/battle/CharacterEditor";
 import { EncounterEditor } from "./tools/battle/EncounterEditor";
 import { StatusEditor } from "./tools/battle/StatusEditor";
+import { Demo } from "./demo/Demo";
+import { onReplay, type ReplayRequest } from "./demo/link";
+import { canExportDemo, downloadDemo } from "./demo/exportDemo";
 import { Badge } from "./ui";
 import { useProject, type Updater } from "./useProject";
 
@@ -62,6 +65,17 @@ export function App() {
   const [toolId, setToolId] = useState("damage.breakdown");
   const [navOpen, setNavOpen] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [demo, setDemo] = useState(() => location.hash === "#demo");
+  const openDemo = (on: boolean) => {
+    setDemo(on);
+    history.replaceState(null, "", on ? "#demo" : location.pathname + location.search);
+  };
+
+  const [replay, setReplay] = useState<ReplayRequest | null>(null);
+  useEffect(() => onReplay((r) => setReplay(r)), []);
+
+  if (replay) return <Demo project={project} replay={replay} onExit={() => setReplay(null)} />;
+  if (demo) return <Demo project={project} update={update} onExit={() => openDemo(false)} />;
   const tool = TOOLS.find((t) => t.id === toolId)!;
   const Impl = IMPLEMENTED[toolId];
   const compat = toolCompat(tool, project);
@@ -79,6 +93,7 @@ export function App() {
           <Badge tone={STATUS_TONE[tool.status]}>{STATUS_LABELS[tool.status]}</Badge>
           {Impl && <button className="btn icon info-btn" aria-label="工具說明" aria-expanded={showDetail} onClick={() => setShowDetail((s) => !s)}>ⓘ</button>}
         </div>
+        <button className="btn small play-btn" onClick={() => openDemo(true)}>▶ 試玩 DEMO</button>
         <ProjectControls project={project} update={update} onExport={exportFile} onImport={importFile} onReset={reset} saveState={saveState} />
       </header>
       <aside className="library">
@@ -203,6 +218,12 @@ function ProjectControls({
       <button className="btn small" aria-expanded={picking} onClick={() => setPicking((x) => !x)}>新專案</button>
       <button className="btn small" onClick={() => fileRef.current?.click()}>開啟檔案</button>
       <button className="btn small primary" onClick={onExport}>儲存檔案</button>
+      <button
+        className="btn small"
+        disabled={!canExportDemo()}
+        title={canExportDemo() ? "下載一個只有試玩畫面的單一 HTML 檔，內含目前專案的角色與數值" : "開發模式無法匯出；請開啟建置後的 dist/index.html"}
+        onClick={() => { try { downloadDemo(project); } catch (err) { setError((err as Error).message); } }}
+      >匯出試玩 DEMO</button>
       <input
         ref={fileRef}
         type="file"
