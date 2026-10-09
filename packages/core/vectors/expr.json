@@ -1,0 +1,544 @@
+{
+  "variables": {
+    "a": 2,
+    "b": 3.5,
+    "n": -1.5,
+    "s": "fire",
+    "t": true
+  },
+  "cases": [
+    {
+      "src": "1 + 2 * 3",
+      "tree": {
+        "op": "add",
+        "args": [
+          {
+            "const": 1
+          },
+          {
+            "op": "mul",
+            "args": [
+              {
+                "const": 2
+              },
+              {
+                "const": 3
+              }
+            ]
+          }
+        ]
+      },
+      "value": 7
+    },
+    {
+      "src": "10 - 4 - 3",
+      "tree": {
+        "op": "sub",
+        "args": [
+          {
+            "op": "sub",
+            "args": [
+              {
+                "const": 10
+              },
+              {
+                "const": 4
+              }
+            ]
+          },
+          {
+            "const": 3
+          }
+        ]
+      },
+      "value": 3
+    },
+    {
+      "src": "a * (b + 1)",
+      "tree": {
+        "op": "mul",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "op": "add",
+            "args": [
+              {
+                "ref": "b"
+              },
+              {
+                "const": 1
+              }
+            ]
+          }
+        ]
+      },
+      "value": 9
+    },
+    {
+      "src": "-a * b",
+      "tree": {
+        "op": "mul",
+        "args": [
+          {
+            "op": "neg",
+            "args": [
+              {
+                "ref": "a"
+              }
+            ]
+          },
+          {
+            "ref": "b"
+          }
+        ]
+      },
+      "value": -7
+    },
+    {
+      "src": "a / b",
+      "tree": {
+        "op": "div",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "ref": "b"
+          }
+        ]
+      },
+      "value": 0.5714285714285714
+    },
+    {
+      "src": "round(n)",
+      "tree": {
+        "op": "round",
+        "args": [
+          {
+            "ref": "n"
+          }
+        ]
+      },
+      "value": -2
+    },
+    {
+      "src": "round(2.5)",
+      "tree": {
+        "op": "round",
+        "args": [
+          {
+            "const": 2.5
+          }
+        ]
+      },
+      "value": 3
+    },
+    {
+      "src": "floor(n)",
+      "tree": {
+        "op": "floor",
+        "args": [
+          {
+            "ref": "n"
+          }
+        ]
+      },
+      "value": -2
+    },
+    {
+      "src": "ceil(n)",
+      "tree": {
+        "op": "ceil",
+        "args": [
+          {
+            "ref": "n"
+          }
+        ]
+      },
+      "value": -1
+    },
+    {
+      "src": "clamp(b, 0, 3)",
+      "tree": {
+        "op": "clamp",
+        "args": [
+          {
+            "ref": "b"
+          },
+          {
+            "const": 0
+          },
+          {
+            "const": 3
+          }
+        ]
+      },
+      "value": 3
+    },
+    {
+      "src": "min(a, b, n)",
+      "tree": {
+        "op": "min",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "ref": "b"
+          },
+          {
+            "ref": "n"
+          }
+        ]
+      },
+      "value": -1.5
+    },
+    {
+      "src": "max(a, b)",
+      "tree": {
+        "op": "max",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "ref": "b"
+          }
+        ]
+      },
+      "value": 3.5
+    },
+    {
+      "src": "abs(n)",
+      "tree": {
+        "op": "abs",
+        "args": [
+          {
+            "ref": "n"
+          }
+        ]
+      },
+      "value": 1.5
+    },
+    {
+      "src": "if(s == \"fire\", 1, 0)",
+      "tree": {
+        "op": "if",
+        "args": [
+          {
+            "op": "eq",
+            "args": [
+              {
+                "ref": "s"
+              },
+              {
+                "const": "fire"
+              }
+            ]
+          },
+          {
+            "const": 1
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "value": 1
+    },
+    {
+      "src": "a > 1 && b < 3",
+      "tree": {
+        "op": "and",
+        "args": [
+          {
+            "op": "gt",
+            "args": [
+              {
+                "ref": "a"
+              },
+              {
+                "const": 1
+              }
+            ]
+          },
+          {
+            "op": "lt",
+            "args": [
+              {
+                "ref": "b"
+              },
+              {
+                "const": 3
+              }
+            ]
+          }
+        ]
+      },
+      "value": false
+    },
+    {
+      "src": "!t || a >= 2",
+      "tree": {
+        "op": "or",
+        "args": [
+          {
+            "op": "not",
+            "args": [
+              {
+                "ref": "t"
+              }
+            ]
+          },
+          {
+            "op": "gte",
+            "args": [
+              {
+                "ref": "a"
+              },
+              {
+                "const": 2
+              }
+            ]
+          }
+        ]
+      },
+      "value": true
+    },
+    {
+      "src": "50% + 1",
+      "tree": {
+        "op": "add",
+        "args": [
+          {
+            "const": 0.5
+          },
+          {
+            "const": 1
+          }
+        ]
+      },
+      "value": 1.5
+    },
+    {
+      "src": "1e3 / 4",
+      "tree": {
+        "op": "div",
+        "args": [
+          {
+            "const": 1000
+          },
+          {
+            "const": 4
+          }
+        ]
+      },
+      "value": 250
+    },
+    {
+      "src": "a != b",
+      "tree": {
+        "op": "neq",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "ref": "b"
+          }
+        ]
+      },
+      "value": true
+    },
+    {
+      "src": "a <= 2",
+      "tree": {
+        "op": "lte",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "const": 2
+          }
+        ]
+      },
+      "value": true
+    },
+    {
+      "src": "false && 1 / 0 > 0",
+      "tree": {
+        "op": "and",
+        "args": [
+          {
+            "const": false
+          },
+          {
+            "op": "gt",
+            "args": [
+              {
+                "op": "div",
+                "args": [
+                  {
+                    "const": 1
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        ]
+      },
+      "value": false
+    },
+    {
+      "src": "t || 1 / 0 > 0",
+      "tree": {
+        "op": "or",
+        "args": [
+          {
+            "ref": "t"
+          },
+          {
+            "op": "gt",
+            "args": [
+              {
+                "op": "div",
+                "args": [
+                  {
+                    "const": 1
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        ]
+      },
+      "value": true
+    },
+    {
+      "src": "if(t, s, 0)",
+      "tree": {
+        "op": "if",
+        "args": [
+          {
+            "ref": "t"
+          },
+          {
+            "ref": "s"
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "value": "fire"
+    },
+    {
+      "src": "-(a - b)",
+      "tree": {
+        "op": "neg",
+        "args": [
+          {
+            "op": "sub",
+            "args": [
+              {
+                "ref": "a"
+              },
+              {
+                "ref": "b"
+              }
+            ]
+          }
+        ]
+      },
+      "value": 1.5
+    },
+    {
+      "src": "a - -1",
+      "tree": {
+        "op": "sub",
+        "args": [
+          {
+            "ref": "a"
+          },
+          {
+            "const": -1
+          }
+        ]
+      },
+      "value": 3
+    }
+  ],
+  "errors": [
+    {
+      "src": "1 / 0",
+      "tree": {
+        "op": "div",
+        "args": [
+          {
+            "const": 1
+          },
+          {
+            "const": 0
+          }
+        ]
+      }
+    },
+    {
+      "src": "missing + 1",
+      "tree": {
+        "op": "add",
+        "args": [
+          {
+            "ref": "missing"
+          },
+          {
+            "const": 1
+          }
+        ]
+      }
+    },
+    {
+      "src": "s + 1",
+      "tree": {
+        "op": "add",
+        "args": [
+          {
+            "ref": "s"
+          },
+          {
+            "const": 1
+          }
+        ]
+      }
+    },
+    {
+      "src": "s > 1",
+      "tree": {
+        "op": "gt",
+        "args": [
+          {
+            "ref": "s"
+          },
+          {
+            "const": 1
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,6270 @@
+{
+  "rulesVersion": "0.3.0",
+  "components": [
+    {
+      "id": "dmg.base-atk",
+      "name": "基礎傷害（攻擊力 × 倍率）",
+      "description": "以攻擊方的最終攻擊力乘上技能倍率與該段命中比例，作為傷害起點。",
+      "provides": [
+        "dmg:base"
+      ],
+      "requires": [],
+      "stats": [
+        {
+          "side": "attacker",
+          "key": "atk",
+          "label": "攻擊力",
+          "default": 1000,
+          "unit": "flat",
+          "min": 0
+        }
+      ],
+      "steps": [
+        {
+          "id": "base",
+          "label": "基礎傷害",
+          "apply": "set",
+          "order": 0,
+          "base": {
+            "op": "mul",
+            "args": [
+              {
+                "op": "mul",
+                "args": [
+                  {
+                    "ref": "attacker.atk"
+                  },
+                  {
+                    "ref": "skill.multiplier"
+                  }
+                ]
+              },
+              {
+                "ref": "hit.ratio"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.def-sub",
+      "name": "防禦減算",
+      "description": "傷害直接扣除防禦值，最低保留原傷害的 10%。適合數字直觀、早期回合制或像素風遊戲。",
+      "provides": [
+        "dmg:defense"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "defender",
+          "key": "def",
+          "label": "防禦力",
+          "default": 300,
+          "unit": "flat",
+          "min": 0
+        },
+        {
+          "side": "attacker",
+          "key": "defIgnore",
+          "label": "無視防禦",
+          "default": 0,
+          "unit": "percent",
+          "min": 0,
+          "max": 1
+        }
+      ],
+      "steps": [
+        {
+          "id": "defSub",
+          "label": "防禦減算",
+          "apply": "set",
+          "order": 5,
+          "base": {
+            "op": "max",
+            "args": [
+              {
+                "op": "sub",
+                "args": [
+                  {
+                    "ref": "prev"
+                  },
+                  {
+                    "op": "mul",
+                    "args": [
+                      {
+                        "op": "mul",
+                        "args": [
+                          {
+                            "ref": "defender.def"
+                          },
+                          {
+                            "ref": "hit.ratio"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "sub",
+                        "args": [
+                          {
+                            "const": 1
+                          },
+                          {
+                            "ref": "attacker.defIgnore"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "mul",
+                "args": [
+                  {
+                    "ref": "prev"
+                  },
+                  {
+                    "const": 0.1
+                  }
+                ]
+              }
+            ]
+          },
+          "description": "防禦按命中比例分攤，避免多段攻擊被防禦重複扣除。"
+        }
+      ]
+    },
+    {
+      "id": "dmg.crit",
+      "name": "暴擊",
+      "description": "每段命中獨立判定暴擊；暴擊時乘上 1 + 暴擊傷害。",
+      "provides": [
+        "dmg:crit"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "attacker",
+          "key": "critRate",
+          "label": "暴擊率",
+          "default": 0.05,
+          "unit": "percent",
+          "min": 0
+        },
+        {
+          "side": "attacker",
+          "key": "critDmg",
+          "label": "暴擊傷害",
+          "default": 0.5,
+          "unit": "percent",
+          "min": 0
+        }
+      ],
+      "critChance": {
+        "ref": "attacker.critRate"
+      },
+      "steps": [
+        {
+          "id": "crit",
+          "label": "暴擊乘區",
+          "apply": "mul",
+          "order": 10,
+          "base": {
+            "op": "if",
+            "args": [
+              {
+                "ref": "flags.crit"
+              },
+              {
+                "op": "add",
+                "args": [
+                  {
+                    "const": 1
+                  },
+                  {
+                    "ref": "attacker.critDmg"
+                  }
+                ]
+              },
+              {
+                "const": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.bonus",
+      "name": "增傷乘區",
+      "description": "所有「傷害提高」類加成在同一乘區相加，再整體乘上。",
+      "provides": [
+        "dmg:bonus"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "attacker",
+          "key": "dmgBonus",
+          "label": "增傷",
+          "default": 0,
+          "unit": "percent"
+        }
+      ],
+      "steps": [
+        {
+          "id": "dmgBonus",
+          "label": "增傷乘區",
+          "apply": "mul",
+          "order": 20,
+          "base": {
+            "op": "add",
+            "args": [
+              {
+                "const": 1
+              },
+              {
+                "ref": "attacker.dmgBonus"
+              }
+            ]
+          },
+          "cap": {
+            "min": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.def-ratio",
+      "name": "防禦比例減免",
+      "description": "防禦以比例減傷：1 − 有效防禦 /（有效防禦 + 200 + 10 × 攻擊方等級）。防禦再高也不會讓傷害歸零。",
+      "provides": [
+        "dmg:defense"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "attacker",
+          "key": "level",
+          "label": "等級",
+          "default": 80,
+          "unit": "level",
+          "min": 1
+        },
+        {
+          "side": "attacker",
+          "key": "defIgnore",
+          "label": "無視防禦",
+          "default": 0,
+          "unit": "percent",
+          "min": 0,
+          "max": 1
+        },
+        {
+          "side": "defender",
+          "key": "def",
+          "label": "防禦力",
+          "default": 1000,
+          "unit": "flat",
+          "min": 0
+        }
+      ],
+      "steps": [
+        {
+          "id": "defRatio",
+          "label": "防禦乘區",
+          "apply": "mul",
+          "order": 30,
+          "base": {
+            "op": "sub",
+            "args": [
+              {
+                "const": 1
+              },
+              {
+                "op": "div",
+                "args": [
+                  {
+                    "op": "mul",
+                    "args": [
+                      {
+                        "ref": "defender.def"
+                      },
+                      {
+                        "op": "sub",
+                        "args": [
+                          {
+                            "const": 1
+                          },
+                          {
+                            "ref": "attacker.defIgnore"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "add",
+                    "args": [
+                      {
+                        "op": "add",
+                        "args": [
+                          {
+                            "op": "mul",
+                            "args": [
+                              {
+                                "ref": "defender.def"
+                              },
+                              {
+                                "op": "sub",
+                                "args": [
+                                  {
+                                    "const": 1
+                                  },
+                                  {
+                                    "ref": "attacker.defIgnore"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "const": 200
+                          }
+                        ]
+                      },
+                      {
+                        "op": "mul",
+                        "args": [
+                          {
+                            "const": 10
+                          },
+                          {
+                            "ref": "attacker.level"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.res",
+      "name": "抗性乘區",
+      "description": "1 −（抗性 − 抗性穿透），限制在 0.1 到 2 之間。",
+      "provides": [
+        "dmg:res"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "defender",
+          "key": "res",
+          "label": "抗性",
+          "default": 0.2,
+          "unit": "percent"
+        },
+        {
+          "side": "attacker",
+          "key": "resPen",
+          "label": "抗性穿透",
+          "default": 0,
+          "unit": "percent"
+        }
+      ],
+      "steps": [
+        {
+          "id": "res",
+          "label": "抗性乘區",
+          "apply": "mul",
+          "order": 40,
+          "base": {
+            "op": "sub",
+            "args": [
+              {
+                "const": 1
+              },
+              {
+                "op": "sub",
+                "args": [
+                  {
+                    "ref": "defender.res"
+                  },
+                  {
+                    "ref": "attacker.resPen"
+                  }
+                ]
+              }
+            ]
+          },
+          "cap": {
+            "min": 0.1,
+            "max": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.vuln",
+      "name": "易傷乘區",
+      "description": "目標身上的「受到傷害提高」效果相加後整體乘上。",
+      "provides": [
+        "dmg:vuln"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "defender",
+          "key": "vulnerability",
+          "label": "易傷",
+          "default": 0,
+          "unit": "percent"
+        }
+      ],
+      "steps": [
+        {
+          "id": "vuln",
+          "label": "易傷乘區",
+          "apply": "mul",
+          "order": 50,
+          "base": {
+            "op": "add",
+            "args": [
+              {
+                "const": 1
+              },
+              {
+                "ref": "defender.vulnerability"
+              }
+            ]
+          },
+          "cap": {
+            "min": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.reduction",
+      "name": "減傷乘區",
+      "description": "目標的「受到傷害降低」效果，最低為 0。",
+      "provides": [
+        "dmg:reduction"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [
+        {
+          "side": "defender",
+          "key": "dmgReduction",
+          "label": "減傷",
+          "default": 0,
+          "unit": "percent"
+        }
+      ],
+      "steps": [
+        {
+          "id": "reduction",
+          "label": "減傷乘區",
+          "apply": "mul",
+          "order": 60,
+          "base": {
+            "op": "sub",
+            "args": [
+              {
+                "const": 1
+              },
+              {
+                "ref": "defender.dmgReduction"
+              }
+            ]
+          },
+          "cap": {
+            "min": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "dmg.toughness",
+      "name": "韌性減免（弱點擊破）",
+      "description": "目標韌性未被擊破時受到的傷害降低 10%；擊破後恢復全額。",
+      "provides": [
+        "dmg:toughness"
+      ],
+      "requires": [
+        "dmg:base"
+      ],
+      "stats": [],
+      "flags": [
+        {
+          "key": "broken",
+          "label": "目標已被擊破",
+          "default": false
+        }
+      ],
+      "steps": [
+        {
+          "id": "toughness",
+          "label": "韌性乘區",
+          "apply": "mul",
+          "order": 70,
+          "base": {
+            "op": "if",
+            "args": [
+              {
+                "ref": "flags.broken"
+              },
+              {
+                "const": 1
+              },
+              {
+                "const": 0.9
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "tpl.standard",
+      "name": "標準乘區型",
+      "description": "現代手遊常見的多乘區結構：基礎 × 暴擊 × 增傷 × 防禦 × 抗性 × 易傷。",
+      "components": [
+        "dmg.base-atk",
+        "dmg.crit",
+        "dmg.bonus",
+        "dmg.def-ratio",
+        "dmg.res",
+        "dmg.vuln"
+      ]
+    },
+    {
+      "id": "tpl.subtraction",
+      "name": "防禦減算型",
+      "description": "攻擊減防禦的直觀算法，數字好懂，但防禦影響很劇烈。",
+      "components": [
+        "dmg.base-atk",
+        "dmg.def-sub",
+        "dmg.crit",
+        "dmg.bonus"
+      ]
+    },
+    {
+      "id": "tpl.weakness-break",
+      "name": "弱點擊破型",
+      "description": "標準乘區再加上減傷與韌性乘區；擊破前後傷害差距是戰鬥節奏的核心。",
+      "components": [
+        "dmg.base-atk",
+        "dmg.crit",
+        "dmg.bonus",
+        "dmg.def-ratio",
+        "dmg.res",
+        "dmg.vuln",
+        "dmg.reduction",
+        "dmg.toughness"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "tpl.standard/default",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2688,
+          "hits": [
+            {
+              "damage": 1344,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1344,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 5912,
+          "hits": [
+            {
+              "damage": 2956,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 2956,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 4622.4,
+        "distribution": [
+          {
+            "value": 2688,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 4300,
+            "prob": 0.48
+          },
+          {
+            "value": 5912,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            4300,
+            4300,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            4300,
+            4300,
+            4300,
+            4300,
+            4300,
+            4300,
+            5912,
+            4300,
+            5912,
+            2688,
+            4300,
+            5912,
+            2688,
+            5912,
+            5912,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300,
+            2688,
+            2688,
+            4300,
+            2688,
+            4300,
+            4300,
+            5912,
+            2688,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            2688,
+            2688,
+            5912,
+            5912,
+            4300,
+            5912,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.standard/broken",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": true
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2688,
+          "hits": [
+            {
+              "damage": 1344,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1344,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 5912,
+          "hits": [
+            {
+              "damage": 2956,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 2956,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 4622.4,
+        "distribution": [
+          {
+            "value": 2688,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 4300,
+            "prob": 0.48
+          },
+          {
+            "value": 5912,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            4300,
+            4300,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            4300,
+            4300,
+            4300,
+            4300,
+            4300,
+            4300,
+            5912,
+            4300,
+            5912,
+            2688,
+            4300,
+            5912,
+            2688,
+            5912,
+            5912,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300,
+            2688,
+            2688,
+            4300,
+            2688,
+            4300,
+            4300,
+            5912,
+            2688,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            2688,
+            2688,
+            5912,
+            5912,
+            4300,
+            5912,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            4300,
+            4300,
+            4300,
+            5912,
+            5912,
+            4300,
+            4300
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.standard/highDef",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 5000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 894,
+          "hits": [
+            {
+              "damage": 447,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 447,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 1970,
+          "hits": [
+            {
+              "damage": 985,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 985,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 1539.6,
+        "distribution": [
+          {
+            "value": 894,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 1432,
+            "prob": 0.48
+          },
+          {
+            "value": 1970,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            1432,
+            1432,
+            1970,
+            1432,
+            1432,
+            1432,
+            1970,
+            1432,
+            1432,
+            1432,
+            1432,
+            1432,
+            1432,
+            1970,
+            1432,
+            1970,
+            894,
+            1432,
+            1970,
+            894,
+            1970,
+            1970,
+            1432,
+            1970,
+            1970,
+            1432,
+            1432,
+            1970,
+            1970,
+            1432,
+            1432,
+            894,
+            894,
+            1432,
+            894,
+            1432,
+            1432,
+            1970,
+            894,
+            1970,
+            1432,
+            1432,
+            1432,
+            1970,
+            894,
+            894,
+            1970,
+            1970,
+            1432,
+            1970,
+            1432,
+            1970,
+            1970,
+            1432,
+            1432,
+            1432,
+            1970,
+            1432,
+            1432,
+            1432,
+            1970,
+            1970,
+            1432,
+            1432
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.standard/resCapped",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 336,
+          "hits": [
+            {
+              "damage": 168,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 168,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 738,
+          "hits": [
+            {
+              "damage": 369,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 369,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 577.2,
+        "distribution": [
+          {
+            "value": 336,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 537,
+            "prob": 0.48
+          },
+          {
+            "value": 738,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            537,
+            537,
+            738,
+            537,
+            537,
+            537,
+            738,
+            537,
+            537,
+            537,
+            537,
+            537,
+            537,
+            738,
+            537,
+            738,
+            336,
+            537,
+            738,
+            336,
+            738,
+            738,
+            537,
+            738,
+            738,
+            537,
+            537,
+            738,
+            738,
+            537,
+            537,
+            336,
+            336,
+            537,
+            336,
+            537,
+            537,
+            738,
+            336,
+            738,
+            537,
+            537,
+            537,
+            738,
+            336,
+            336,
+            738,
+            738,
+            537,
+            738,
+            537,
+            738,
+            738,
+            537,
+            537,
+            537,
+            738,
+            537,
+            537,
+            537,
+            738,
+            738,
+            537,
+            537
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.standard/fourHits",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.1,
+              0.2,
+              0.3,
+              0.4
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2686,
+          "hits": [
+            {
+              "damage": 268,
+              "steps": {
+                "base": 480,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 537,
+              "steps": {
+                "base": 960,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 806,
+              "steps": {
+                "base": 1440,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1075,
+              "steps": {
+                "base": 1920,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 5912,
+          "hits": [
+            {
+              "damage": 591,
+              "steps": {
+                "base": 480,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1182,
+              "steps": {
+                "base": 960,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1774,
+              "steps": {
+                "base": 1440,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 2365,
+              "steps": {
+                "base": 1920,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 4621.6,
+        "distribution": [
+          {
+            "value": 2686,
+            "prob": 0.025600000000000008
+          },
+          {
+            "value": 3009,
+            "prob": 0.038400000000000004
+          },
+          {
+            "value": 3331,
+            "prob": 0.038400000000000004
+          },
+          {
+            "value": 3654,
+            "prob": 0.096
+          },
+          {
+            "value": 3976,
+            "prob": 0.03840000000000001
+          },
+          {
+            "value": 3977,
+            "prob": 0.0576
+          },
+          {
+            "value": 4299,
+            "prob": 0.1152
+          },
+          {
+            "value": 4621,
+            "prob": 0.0576
+          },
+          {
+            "value": 4622,
+            "prob": 0.0864
+          },
+          {
+            "value": 4944,
+            "prob": 0.144
+          },
+          {
+            "value": 5267,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 5589,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 5912,
+            "prob": 0.1296
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            4621,
+            4622,
+            4621,
+            4622,
+            4299,
+            4621,
+            5267,
+            5267,
+            3976,
+            3654,
+            5912,
+            5589,
+            4944,
+            5589,
+            4944,
+            3331,
+            3976,
+            3654,
+            5267,
+            4944,
+            4299,
+            5589,
+            2686,
+            5912,
+            5267,
+            5589,
+            4622,
+            4299,
+            4944,
+            3977,
+            5912,
+            4299,
+            3654,
+            4944,
+            4622,
+            5912,
+            5267,
+            4944,
+            4299,
+            3009,
+            3976,
+            3331,
+            4944,
+            4622,
+            5267,
+            5589,
+            4621,
+            4944,
+            3976,
+            5589,
+            5912,
+            3977,
+            3331,
+            5912,
+            5912,
+            5589,
+            4621,
+            5267,
+            4944,
+            4621,
+            4622,
+            3654,
+            5589,
+            4299
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.standard/buffs",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "ultimate",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": [
+            {
+              "id": "atkPct",
+              "label": "攻擊+30%",
+              "target": "stat:attacker.atk",
+              "op": "pct",
+              "value": 0.3
+            },
+            {
+              "id": "flat",
+              "label": "攻擊+150",
+              "target": "stat:attacker.atk",
+              "op": "add",
+              "value": 150
+            },
+            {
+              "id": "ult",
+              "label": "大招增傷",
+              "target": "step:dmgBonus",
+              "op": "add",
+              "value": 0.25,
+              "condition": {
+                "op": "eq",
+                "args": [
+                  {
+                    "ref": "skill.type"
+                  },
+                  {
+                    "const": "ultimate"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "vuln",
+              "label": "易傷",
+              "target": "stat:defender.vulnerability",
+              "op": "add",
+              "value": 0.12
+            }
+          ]
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 4834,
+          "hits": [
+            {
+              "damage": 2417,
+              "steps": {
+                "base": 3270,
+                "crit": 1,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12
+              }
+            },
+            {
+              "damage": 2417,
+              "steps": {
+                "base": 3270,
+                "crit": 1,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 10634,
+          "hits": [
+            {
+              "damage": 5317,
+              "steps": {
+                "base": 3270,
+                "crit": 2.2,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12
+              }
+            },
+            {
+              "damage": 5317,
+              "steps": {
+                "base": 3270,
+                "crit": 2.2,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12
+              }
+            }
+          ]
+        },
+        "expected": 8314,
+        "distribution": [
+          {
+            "value": 4834,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 7734,
+            "prob": 0.48
+          },
+          {
+            "value": 10634,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            7734,
+            7734,
+            10634,
+            7734,
+            7734,
+            7734,
+            10634,
+            7734,
+            7734,
+            7734,
+            7734,
+            7734,
+            7734,
+            10634,
+            7734,
+            10634,
+            4834,
+            7734,
+            10634,
+            4834,
+            10634,
+            10634,
+            7734,
+            10634,
+            10634,
+            7734,
+            7734,
+            10634,
+            10634,
+            7734,
+            7734,
+            4834,
+            4834,
+            7734,
+            4834,
+            7734,
+            7734,
+            10634,
+            4834,
+            10634,
+            7734,
+            7734,
+            7734,
+            10634,
+            4834,
+            4834,
+            10634,
+            10634,
+            7734,
+            10634,
+            7734,
+            10634,
+            10634,
+            7734,
+            7734,
+            7734,
+            10634,
+            7734,
+            7734,
+            7734,
+            10634,
+            10634,
+            7734,
+            7734
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.subtraction/default",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.def-sub",
+            "dmg.crit",
+            "dmg.bonus"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "defSub",
+          "crit",
+          "dmgBonus"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 5320,
+          "hits": [
+            {
+              "damage": 2660,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 2660,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 11704,
+          "hits": [
+            {
+              "damage": 5852,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 5852,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "expected": 9150.4,
+        "distribution": [
+          {
+            "value": 5320,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 8512,
+            "prob": 0.48
+          },
+          {
+            "value": 11704,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            11704,
+            5320,
+            8512,
+            11704,
+            5320,
+            11704,
+            11704,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            5320,
+            5320,
+            8512,
+            5320,
+            8512,
+            8512,
+            11704,
+            5320,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            5320,
+            5320,
+            11704,
+            11704,
+            8512,
+            11704,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.subtraction/broken",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.def-sub",
+            "dmg.crit",
+            "dmg.bonus"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": true
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "defSub",
+          "crit",
+          "dmgBonus"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 5320,
+          "hits": [
+            {
+              "damage": 2660,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 2660,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 11704,
+          "hits": [
+            {
+              "damage": 5852,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 5852,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "expected": 9150.4,
+        "distribution": [
+          {
+            "value": 5320,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 8512,
+            "prob": 0.48
+          },
+          {
+            "value": 11704,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            11704,
+            5320,
+            8512,
+            11704,
+            5320,
+            11704,
+            11704,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            5320,
+            5320,
+            8512,
+            5320,
+            8512,
+            8512,
+            11704,
+            5320,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            5320,
+            5320,
+            11704,
+            11704,
+            8512,
+            11704,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.subtraction/highDef",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.def-sub",
+            "dmg.crit",
+            "dmg.bonus"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 5000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "defSub",
+          "crit",
+          "dmgBonus"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 672,
+          "hits": [
+            {
+              "damage": 336,
+              "steps": {
+                "base": 2400,
+                "defSub": 240,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 336,
+              "steps": {
+                "base": 2400,
+                "defSub": 240,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 1478,
+          "hits": [
+            {
+              "damage": 739,
+              "steps": {
+                "base": 2400,
+                "defSub": 240,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 739,
+              "steps": {
+                "base": 2400,
+                "defSub": 240,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "expected": 1155.6,
+        "distribution": [
+          {
+            "value": 672,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 1075,
+            "prob": 0.48
+          },
+          {
+            "value": 1478,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            1075,
+            1075,
+            1478,
+            1075,
+            1075,
+            1075,
+            1478,
+            1075,
+            1075,
+            1075,
+            1075,
+            1075,
+            1075,
+            1478,
+            1075,
+            1478,
+            672,
+            1075,
+            1478,
+            672,
+            1478,
+            1478,
+            1075,
+            1478,
+            1478,
+            1075,
+            1075,
+            1478,
+            1478,
+            1075,
+            1075,
+            672,
+            672,
+            1075,
+            672,
+            1075,
+            1075,
+            1478,
+            672,
+            1478,
+            1075,
+            1075,
+            1075,
+            1478,
+            672,
+            672,
+            1478,
+            1478,
+            1075,
+            1478,
+            1075,
+            1478,
+            1478,
+            1075,
+            1075,
+            1075,
+            1478,
+            1075,
+            1075,
+            1075,
+            1478,
+            1478,
+            1075,
+            1075
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.subtraction/resCapped",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.def-sub",
+            "dmg.crit",
+            "dmg.bonus"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "defSub",
+          "crit",
+          "dmgBonus"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 5320,
+          "hits": [
+            {
+              "damage": 2660,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 2660,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 11704,
+          "hits": [
+            {
+              "damage": 5852,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 5852,
+              "steps": {
+                "base": 2400,
+                "defSub": 1900,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "expected": 9150.4,
+        "distribution": [
+          {
+            "value": 5320,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 8512,
+            "prob": 0.48
+          },
+          {
+            "value": 11704,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            11704,
+            5320,
+            8512,
+            11704,
+            5320,
+            11704,
+            11704,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            5320,
+            5320,
+            8512,
+            5320,
+            8512,
+            8512,
+            11704,
+            5320,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            5320,
+            5320,
+            11704,
+            11704,
+            8512,
+            11704,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            8512,
+            8512,
+            8512,
+            11704,
+            11704,
+            8512,
+            8512
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.subtraction/fourHits",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.def-sub",
+            "dmg.crit",
+            "dmg.bonus"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.1,
+              0.2,
+              0.3,
+              0.4
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "defSub",
+          "crit",
+          "dmgBonus"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 5320,
+          "hits": [
+            {
+              "damage": 532,
+              "steps": {
+                "base": 480,
+                "defSub": 380,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 1064,
+              "steps": {
+                "base": 960,
+                "defSub": 760,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 1596,
+              "steps": {
+                "base": 1440,
+                "defSub": 1140,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 2128,
+              "steps": {
+                "base": 1920,
+                "defSub": 1520,
+                "crit": 1,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 11702,
+          "hits": [
+            {
+              "damage": 1170,
+              "steps": {
+                "base": 480,
+                "defSub": 380,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 2340,
+              "steps": {
+                "base": 960,
+                "defSub": 760,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 3511,
+              "steps": {
+                "base": 1440,
+                "defSub": 1140,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            },
+            {
+              "damage": 4681,
+              "steps": {
+                "base": 1920,
+                "defSub": 1520,
+                "crit": 2.2,
+                "dmgBonus": 1.4
+              }
+            }
+          ]
+        },
+        "expected": 9149.2,
+        "distribution": [
+          {
+            "value": 5320,
+            "prob": 0.025600000000000008
+          },
+          {
+            "value": 5958,
+            "prob": 0.038400000000000004
+          },
+          {
+            "value": 6596,
+            "prob": 0.038400000000000004
+          },
+          {
+            "value": 7234,
+            "prob": 0.0576
+          },
+          {
+            "value": 7235,
+            "prob": 0.03840000000000001
+          },
+          {
+            "value": 7873,
+            "prob": 0.096
+          },
+          {
+            "value": 8511,
+            "prob": 0.1152
+          },
+          {
+            "value": 9149,
+            "prob": 0.14400000000000002
+          },
+          {
+            "value": 9787,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 9788,
+            "prob": 0.057600000000000005
+          },
+          {
+            "value": 10426,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 11064,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 11702,
+            "prob": 0.1296
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            9149,
+            9149,
+            9149,
+            9149,
+            8511,
+            9149,
+            10426,
+            10426,
+            7873,
+            7234,
+            11702,
+            11064,
+            9787,
+            11064,
+            9787,
+            6596,
+            7873,
+            7235,
+            10426,
+            9788,
+            8511,
+            11064,
+            5320,
+            11702,
+            10426,
+            11064,
+            9149,
+            8511,
+            9787,
+            7873,
+            11702,
+            8511,
+            7234,
+            9787,
+            9149,
+            11702,
+            10426,
+            9787,
+            8511,
+            5958,
+            7873,
+            6596,
+            9787,
+            9149,
+            10426,
+            11064,
+            9149,
+            9788,
+            7873,
+            11064,
+            11702,
+            7873,
+            6596,
+            11702,
+            11702,
+            11064,
+            9149,
+            10426,
+            9787,
+            9149,
+            9149,
+            7235,
+            11064,
+            8511
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.subtraction/buffs",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.def-sub",
+            "dmg.crit",
+            "dmg.bonus"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "ultimate",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": [
+            {
+              "id": "atkPct",
+              "label": "攻擊+30%",
+              "target": "stat:attacker.atk",
+              "op": "pct",
+              "value": 0.3
+            },
+            {
+              "id": "flat",
+              "label": "攻擊+150",
+              "target": "stat:attacker.atk",
+              "op": "add",
+              "value": 150
+            },
+            {
+              "id": "ult",
+              "label": "大招增傷",
+              "target": "step:dmgBonus",
+              "op": "add",
+              "value": 0.25,
+              "condition": {
+                "op": "eq",
+                "args": [
+                  {
+                    "ref": "skill.type"
+                  },
+                  {
+                    "const": "ultimate"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "vuln",
+              "label": "易傷",
+              "target": "stat:defender.vulnerability",
+              "op": "add",
+              "value": 0.12
+            }
+          ]
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "defSub",
+          "crit",
+          "dmgBonus"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 9140,
+          "hits": [
+            {
+              "damage": 4570,
+              "steps": {
+                "base": 3270,
+                "defSub": 2770,
+                "crit": 1,
+                "dmgBonus": 1.65
+              }
+            },
+            {
+              "damage": 4570,
+              "steps": {
+                "base": 3270,
+                "defSub": 2770,
+                "crit": 1,
+                "dmgBonus": 1.65
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 20110,
+          "hits": [
+            {
+              "damage": 10055,
+              "steps": {
+                "base": 3270,
+                "defSub": 2770,
+                "crit": 2.2,
+                "dmgBonus": 1.65
+              }
+            },
+            {
+              "damage": 10055,
+              "steps": {
+                "base": 3270,
+                "defSub": 2770,
+                "crit": 2.2,
+                "dmgBonus": 1.65
+              }
+            }
+          ]
+        },
+        "expected": 15722,
+        "distribution": [
+          {
+            "value": 9140,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 14625,
+            "prob": 0.48
+          },
+          {
+            "value": 20110,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            14625,
+            14625,
+            20110,
+            14625,
+            14625,
+            14625,
+            20110,
+            14625,
+            14625,
+            14625,
+            14625,
+            14625,
+            14625,
+            20110,
+            14625,
+            20110,
+            9140,
+            14625,
+            20110,
+            9140,
+            20110,
+            20110,
+            14625,
+            20110,
+            20110,
+            14625,
+            14625,
+            20110,
+            20110,
+            14625,
+            14625,
+            9140,
+            9140,
+            14625,
+            9140,
+            14625,
+            14625,
+            20110,
+            9140,
+            20110,
+            14625,
+            14625,
+            14625,
+            20110,
+            9140,
+            9140,
+            20110,
+            20110,
+            14625,
+            20110,
+            14625,
+            20110,
+            20110,
+            14625,
+            14625,
+            14625,
+            20110,
+            14625,
+            14625,
+            14625,
+            20110,
+            20110,
+            14625,
+            14625
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.weakness-break/default",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2176,
+          "hits": [
+            {
+              "damage": 1088,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 1088,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 4790,
+          "hits": [
+            {
+              "damage": 2395,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 2395,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 3744.4,
+        "distribution": [
+          {
+            "value": 2176,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 3483,
+            "prob": 0.48
+          },
+          {
+            "value": 4790,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            3483,
+            3483,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            3483,
+            3483,
+            3483,
+            3483,
+            3483,
+            3483,
+            4790,
+            3483,
+            4790,
+            2176,
+            3483,
+            4790,
+            2176,
+            4790,
+            4790,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483,
+            2176,
+            2176,
+            3483,
+            2176,
+            3483,
+            3483,
+            4790,
+            2176,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            2176,
+            2176,
+            4790,
+            4790,
+            3483,
+            4790,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.weakness-break/broken",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": true
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2418,
+          "hits": [
+            {
+              "damage": 1209,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 1
+              }
+            },
+            {
+              "damage": 1209,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 5322,
+          "hits": [
+            {
+              "damage": 2661,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 1
+              }
+            },
+            {
+              "damage": 2661,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 1
+              }
+            }
+          ]
+        },
+        "expected": 4160.4,
+        "distribution": [
+          {
+            "value": 2418,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 3870,
+            "prob": 0.48
+          },
+          {
+            "value": 5322,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            3870,
+            3870,
+            5322,
+            3870,
+            3870,
+            3870,
+            5322,
+            3870,
+            3870,
+            3870,
+            3870,
+            3870,
+            3870,
+            5322,
+            3870,
+            5322,
+            2418,
+            3870,
+            5322,
+            2418,
+            5322,
+            5322,
+            3870,
+            5322,
+            5322,
+            3870,
+            3870,
+            5322,
+            5322,
+            3870,
+            3870,
+            2418,
+            2418,
+            3870,
+            2418,
+            3870,
+            3870,
+            5322,
+            2418,
+            5322,
+            3870,
+            3870,
+            3870,
+            5322,
+            2418,
+            2418,
+            5322,
+            5322,
+            3870,
+            5322,
+            3870,
+            5322,
+            5322,
+            3870,
+            3870,
+            3870,
+            5322,
+            3870,
+            3870,
+            3870,
+            5322,
+            5322,
+            3870,
+            3870
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.weakness-break/highDef",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 5000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 724,
+          "hits": [
+            {
+              "damage": 362,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 362,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 1596,
+          "hits": [
+            {
+              "damage": 798,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 798,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.16666666666666663,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 1247.1999999999998,
+        "distribution": [
+          {
+            "value": 724,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 1160,
+            "prob": 0.48
+          },
+          {
+            "value": 1596,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            1160,
+            1160,
+            1596,
+            1160,
+            1160,
+            1160,
+            1596,
+            1160,
+            1160,
+            1160,
+            1160,
+            1160,
+            1160,
+            1596,
+            1160,
+            1596,
+            724,
+            1160,
+            1596,
+            724,
+            1596,
+            1596,
+            1160,
+            1596,
+            1596,
+            1160,
+            1160,
+            1596,
+            1596,
+            1160,
+            1160,
+            724,
+            724,
+            1160,
+            724,
+            1160,
+            1160,
+            1596,
+            724,
+            1596,
+            1160,
+            1160,
+            1160,
+            1596,
+            724,
+            724,
+            1596,
+            1596,
+            1160,
+            1596,
+            1160,
+            1596,
+            1596,
+            1160,
+            1160,
+            1160,
+            1596,
+            1160,
+            1160,
+            1160,
+            1596,
+            1596,
+            1160,
+            1160
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.weakness-break/resCapped",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 272,
+          "hits": [
+            {
+              "damage": 136,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 136,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 598,
+          "hits": [
+            {
+              "damage": 299,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 299,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.1,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 467.6,
+        "distribution": [
+          {
+            "value": 272,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 435,
+            "prob": 0.48
+          },
+          {
+            "value": 598,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            435,
+            435,
+            598,
+            435,
+            435,
+            435,
+            598,
+            435,
+            435,
+            435,
+            435,
+            435,
+            435,
+            598,
+            435,
+            598,
+            272,
+            435,
+            598,
+            272,
+            598,
+            598,
+            435,
+            598,
+            598,
+            435,
+            435,
+            598,
+            598,
+            435,
+            435,
+            272,
+            272,
+            435,
+            272,
+            435,
+            435,
+            598,
+            272,
+            598,
+            435,
+            435,
+            435,
+            598,
+            272,
+            272,
+            598,
+            598,
+            435,
+            598,
+            435,
+            598,
+            598,
+            435,
+            435,
+            435,
+            598,
+            435,
+            435,
+            435,
+            598,
+            598,
+            435,
+            435
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.weakness-break/fourHits",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.1,
+              0.2,
+              0.3,
+              0.4
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2175,
+          "hits": [
+            {
+              "damage": 217,
+              "steps": {
+                "base": 480,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 435,
+              "steps": {
+                "base": 960,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 653,
+              "steps": {
+                "base": 1440,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 870,
+              "steps": {
+                "base": 1920,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 4790,
+          "hits": [
+            {
+              "damage": 479,
+              "steps": {
+                "base": 480,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 958,
+              "steps": {
+                "base": 960,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 1437,
+              "steps": {
+                "base": 1440,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 1916,
+              "steps": {
+                "base": 1920,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 3743.9999999999995,
+        "distribution": [
+          {
+            "value": 2175,
+            "prob": 0.025600000000000008
+          },
+          {
+            "value": 2437,
+            "prob": 0.038400000000000004
+          },
+          {
+            "value": 2698,
+            "prob": 0.038400000000000004
+          },
+          {
+            "value": 2959,
+            "prob": 0.03840000000000001
+          },
+          {
+            "value": 2960,
+            "prob": 0.0576
+          },
+          {
+            "value": 3221,
+            "prob": 0.096
+          },
+          {
+            "value": 3482,
+            "prob": 0.0576
+          },
+          {
+            "value": 3483,
+            "prob": 0.0576
+          },
+          {
+            "value": 3744,
+            "prob": 0.14400000000000002
+          },
+          {
+            "value": 4005,
+            "prob": 0.057600000000000005
+          },
+          {
+            "value": 4006,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 4267,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 4528,
+            "prob": 0.08639999999999999
+          },
+          {
+            "value": 4790,
+            "prob": 0.1296
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            3744,
+            3744,
+            3744,
+            3744,
+            3482,
+            3744,
+            4267,
+            4267,
+            3221,
+            2960,
+            4790,
+            4528,
+            4006,
+            4528,
+            4006,
+            2698,
+            3221,
+            2959,
+            4267,
+            4005,
+            3483,
+            4528,
+            2175,
+            4790,
+            4267,
+            4528,
+            3744,
+            3482,
+            4006,
+            3221,
+            4790,
+            3482,
+            2960,
+            4006,
+            3744,
+            4790,
+            4267,
+            4006,
+            3482,
+            2437,
+            3221,
+            2698,
+            4006,
+            3744,
+            4267,
+            4528,
+            3744,
+            4005,
+            3221,
+            4528,
+            4790,
+            3221,
+            2698,
+            4790,
+            4790,
+            4528,
+            3744,
+            4267,
+            4006,
+            3744,
+            3744,
+            2959,
+            4528,
+            3482
+          ]
+        }
+      }
+    },
+    {
+      "id": "tpl.weakness-break/buffs",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "ultimate",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": [
+            {
+              "id": "atkPct",
+              "label": "攻擊+30%",
+              "target": "stat:attacker.atk",
+              "op": "pct",
+              "value": 0.3
+            },
+            {
+              "id": "flat",
+              "label": "攻擊+150",
+              "target": "stat:attacker.atk",
+              "op": "add",
+              "value": 150
+            },
+            {
+              "id": "ult",
+              "label": "大招增傷",
+              "target": "step:dmgBonus",
+              "op": "add",
+              "value": 0.25,
+              "condition": {
+                "op": "eq",
+                "args": [
+                  {
+                    "ref": "skill.type"
+                  },
+                  {
+                    "const": "ultimate"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "vuln",
+              "label": "易傷",
+              "target": "stat:defender.vulnerability",
+              "op": "add",
+              "value": 0.12
+            }
+          ]
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 3914,
+          "hits": [
+            {
+              "damage": 1957,
+              "steps": {
+                "base": 3270,
+                "crit": 1,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 1957,
+              "steps": {
+                "base": 3270,
+                "crit": 1,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 8614,
+          "hits": [
+            {
+              "damage": 4307,
+              "steps": {
+                "base": 3270,
+                "crit": 2.2,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 4307,
+              "steps": {
+                "base": 3270,
+                "crit": 2.2,
+                "dmgBonus": 1.65,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1.12,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 6734,
+        "distribution": [
+          {
+            "value": 3914,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 6264,
+            "prob": 0.48
+          },
+          {
+            "value": 8614,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            6264,
+            6264,
+            8614,
+            6264,
+            6264,
+            6264,
+            8614,
+            6264,
+            6264,
+            6264,
+            6264,
+            6264,
+            6264,
+            8614,
+            6264,
+            8614,
+            3914,
+            6264,
+            8614,
+            3914,
+            8614,
+            8614,
+            6264,
+            8614,
+            8614,
+            6264,
+            6264,
+            8614,
+            8614,
+            6264,
+            6264,
+            3914,
+            3914,
+            6264,
+            3914,
+            6264,
+            6264,
+            8614,
+            3914,
+            8614,
+            6264,
+            6264,
+            6264,
+            8614,
+            3914,
+            3914,
+            8614,
+            8614,
+            6264,
+            8614,
+            6264,
+            8614,
+            8614,
+            6264,
+            6264,
+            6264,
+            8614,
+            6264,
+            6264,
+            6264,
+            8614,
+            8614,
+            6264,
+            6264
+          ]
+        }
+      }
+    },
+    {
+      "id": "feature/custom-override-disabled",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [
+            {
+              "id": "elite",
+              "label": "精英",
+              "apply": "mul",
+              "order": 25,
+              "base": {
+                "op": "if",
+                "args": [
+                  {
+                    "ref": "flags.isBoss"
+                  },
+                  {
+                    "op": "add",
+                    "args": [
+                      {
+                        "const": 1
+                      },
+                      {
+                        "ref": "attacker.eliteBonus"
+                      }
+                    ]
+                  },
+                  {
+                    "const": 1
+                  }
+                ]
+              },
+              "rounding": "round"
+            }
+          ],
+          "overrides": {
+            "res": {
+              "base": {
+                "op": "sub",
+                "args": [
+                  {
+                    "const": 1
+                  },
+                  {
+                    "op": "mul",
+                    "args": [
+                      {
+                        "ref": "defender.res"
+                      },
+                      {
+                        "const": 0.5
+                      }
+                    ]
+                  }
+                ]
+              },
+              "cap": {
+                "min": 0.5,
+                "max": 1
+              },
+              "order": 35
+            }
+          },
+          "disabledSteps": [
+            "vuln"
+          ],
+          "finalRounding": "ceil",
+          "minDamage": 1,
+          "customStats": [
+            {
+              "side": "attacker",
+              "key": "eliteBonus",
+              "label": "精英增傷",
+              "default": 0.15,
+              "unit": "percent"
+            }
+          ],
+          "customFlags": [
+            {
+              "key": "isBoss",
+              "label": "首領",
+              "default": true
+            }
+          ]
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "elite",
+          "defRatio",
+          "res"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 3024,
+          "hits": [
+            {
+              "damage": 1512,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "elite": 1,
+                "defRatio": 0.5,
+                "res": 0.9
+              }
+            },
+            {
+              "damage": 1512,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "elite": 1,
+                "defRatio": 0.5,
+                "res": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 6654,
+          "hits": [
+            {
+              "damage": 3327,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "elite": 1,
+                "defRatio": 0.5,
+                "res": 0.9
+              }
+            },
+            {
+              "damage": 3327,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "elite": 1,
+                "defRatio": 0.5,
+                "res": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 5202,
+        "distribution": [
+          {
+            "value": 3024,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 4839,
+            "prob": 0.48
+          },
+          {
+            "value": 6654,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            4839,
+            4839,
+            6654,
+            4839,
+            4839,
+            4839,
+            6654,
+            4839,
+            4839,
+            4839,
+            4839,
+            4839,
+            4839,
+            6654,
+            4839,
+            6654,
+            3024,
+            4839,
+            6654,
+            3024,
+            6654,
+            6654,
+            4839,
+            6654,
+            6654,
+            4839,
+            4839,
+            6654,
+            6654,
+            4839,
+            4839,
+            3024,
+            3024,
+            4839,
+            3024,
+            4839,
+            4839,
+            6654,
+            3024,
+            6654,
+            4839,
+            4839,
+            4839,
+            6654,
+            3024,
+            3024,
+            6654,
+            6654,
+            4839,
+            6654,
+            4839,
+            6654,
+            6654,
+            4839,
+            4839,
+            4839,
+            6654,
+            4839,
+            4839,
+            4839,
+            6654,
+            6654,
+            4839,
+            4839
+          ]
+        }
+      }
+    },
+    {
+      "id": "feature/step-rounding",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {
+            "dmgBonus": {
+              "rounding": "round"
+            },
+            "defRatio": {
+              "rounding": "ceil"
+            }
+          },
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 3840,
+          "hits": [
+            {
+              "damage": 1920,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1,
+                "defRatio": 1,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1920,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1,
+                "defRatio": 1,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 8448,
+          "hits": [
+            {
+              "damage": 4224,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1,
+                "defRatio": 1,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 4224,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1,
+                "defRatio": 1,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 6604.8,
+        "distribution": [
+          {
+            "value": 3840,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 6144,
+            "prob": 0.48
+          },
+          {
+            "value": 8448,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            6144,
+            6144,
+            8448,
+            6144,
+            6144,
+            6144,
+            8448,
+            6144,
+            6144,
+            6144,
+            6144,
+            6144,
+            6144,
+            8448,
+            6144,
+            8448,
+            3840,
+            6144,
+            8448,
+            3840,
+            8448,
+            8448,
+            6144,
+            8448,
+            8448,
+            6144,
+            6144,
+            8448,
+            8448,
+            6144,
+            6144,
+            3840,
+            3840,
+            6144,
+            3840,
+            6144,
+            6144,
+            8448,
+            3840,
+            8448,
+            6144,
+            6144,
+            6144,
+            8448,
+            3840,
+            3840,
+            8448,
+            8448,
+            6144,
+            8448,
+            6144,
+            8448,
+            8448,
+            6144,
+            6144,
+            6144,
+            8448,
+            6144,
+            6144,
+            6144,
+            8448,
+            8448,
+            6144,
+            6144
+          ]
+        }
+      }
+    },
+    {
+      "id": "feature/modifier-ops",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": [
+            {
+              "id": "m",
+              "label": "×1.25",
+              "target": "step:dmgBonus",
+              "op": "mul",
+              "value": 1.25
+            },
+            {
+              "id": "o1",
+              "label": "覆寫",
+              "target": "stat:attacker.critDmg",
+              "op": "override",
+              "value": 2
+            },
+            {
+              "id": "o2",
+              "label": "覆寫（較後）",
+              "target": "stat:attacker.critDmg",
+              "op": "override",
+              "value": 1.5
+            },
+            {
+              "id": "off",
+              "label": "停用",
+              "target": "stat:attacker.atk",
+              "op": "add",
+              "value": 99999,
+              "enabled": false
+            },
+            {
+              "id": "cond",
+              "label": "擊破時",
+              "target": "step:base",
+              "op": "pct",
+              "value": 0.5,
+              "condition": {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "gt",
+                    "args": [
+                      {
+                        "ref": "attacker.atk"
+                      },
+                      {
+                        "const": 1000
+                      }
+                    ]
+                  },
+                  {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "ref": "skill.element"
+                      },
+                      {
+                        "const": "fire"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 5040,
+          "hits": [
+            {
+              "damage": 2520,
+              "steps": {
+                "base": 3600,
+                "crit": 1,
+                "dmgBonus": 1.75,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 2520,
+              "steps": {
+                "base": 3600,
+                "crit": 1,
+                "dmgBonus": 1.75,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 12600,
+          "hits": [
+            {
+              "damage": 6300,
+              "steps": {
+                "base": 3600,
+                "crit": 2.5,
+                "dmgBonus": 1.75,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 6300,
+              "steps": {
+                "base": 3600,
+                "crit": 2.5,
+                "dmgBonus": 1.75,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 9576,
+        "distribution": [
+          {
+            "value": 5040,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 8820,
+            "prob": 0.48
+          },
+          {
+            "value": 12600,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            8820,
+            8820,
+            12600,
+            8820,
+            8820,
+            8820,
+            12600,
+            8820,
+            8820,
+            8820,
+            8820,
+            8820,
+            8820,
+            12600,
+            8820,
+            12600,
+            5040,
+            8820,
+            12600,
+            5040,
+            12600,
+            12600,
+            8820,
+            12600,
+            12600,
+            8820,
+            8820,
+            12600,
+            12600,
+            8820,
+            8820,
+            5040,
+            5040,
+            8820,
+            5040,
+            8820,
+            8820,
+            12600,
+            5040,
+            12600,
+            8820,
+            8820,
+            8820,
+            12600,
+            5040,
+            5040,
+            12600,
+            12600,
+            8820,
+            12600,
+            8820,
+            12600,
+            12600,
+            8820,
+            8820,
+            8820,
+            12600,
+            8820,
+            8820,
+            8820,
+            12600,
+            12600,
+            8820,
+            8820
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge/p0-min-damage",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 5
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 1,
+            "critRate": 0,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0,
+        "nonCrit": {
+          "total": 10,
+          "hits": [
+            {
+              "damage": 5,
+              "steps": {
+                "base": 1,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 5,
+              "steps": {
+                "base": 1,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 10,
+          "hits": [
+            {
+              "damage": 5,
+              "steps": {
+                "base": 1,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 5,
+              "steps": {
+                "base": 1,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 10,
+        "distribution": [
+          {
+            "value": 10,
+            "prob": 1
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge/p1-clamped",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 1.7,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 1,
+        "nonCrit": {
+          "total": 2688,
+          "hits": [
+            {
+              "damage": 1344,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1344,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 5912,
+          "hits": [
+            {
+              "damage": 2956,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 2956,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 5912,
+        "distribution": [
+          {
+            "value": 5912,
+            "prob": 1
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912,
+            5912
+          ]
+        }
+      }
+    },
+    {
+      "id": "edge/equal-hits-merge",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.35,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "defRatio",
+          "res",
+          "vuln"
+        ],
+        "critChance": 0.35,
+        "nonCrit": {
+          "total": 2688,
+          "hits": [
+            {
+              "damage": 672,
+              "steps": {
+                "base": 1200,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 672,
+              "steps": {
+                "base": 1200,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 672,
+              "steps": {
+                "base": 1200,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 672,
+              "steps": {
+                "base": 1200,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 5912,
+          "hits": [
+            {
+              "damage": 1478,
+              "steps": {
+                "base": 1200,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1478,
+              "steps": {
+                "base": 1200,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1478,
+              "steps": {
+                "base": 1200,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            },
+            {
+              "damage": 1478,
+              "steps": {
+                "base": 1200,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1
+              }
+            }
+          ]
+        },
+        "expected": 3816.3999999999996,
+        "distribution": [
+          {
+            "value": 2688,
+            "prob": 0.17850625000000006
+          },
+          {
+            "value": 3494,
+            "prob": 0.384475
+          },
+          {
+            "value": 4300,
+            "prob": 0.3105374999999999
+          },
+          {
+            "value": 5106,
+            "prob": 0.11147499999999998
+          },
+          {
+            "value": 5912,
+            "prob": 0.015006249999999995
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            2688,
+            4300,
+            4300,
+            3494,
+            2688,
+            4300,
+            4300,
+            4300,
+            3494,
+            3494,
+            5106,
+            3494,
+            4300,
+            5106,
+            3494,
+            2688,
+            3494,
+            2688,
+            2688,
+            3494,
+            4300,
+            2688,
+            2688,
+            5106,
+            3494,
+            4300,
+            3494,
+            3494,
+            2688,
+            3494,
+            5106,
+            3494,
+            3494,
+            4300,
+            3494,
+            5912,
+            5106,
+            4300,
+            3494,
+            3494,
+            3494,
+            3494,
+            5106,
+            3494,
+            4300,
+            4300,
+            4300,
+            4300,
+            3494,
+            5106,
+            3494,
+            2688,
+            3494,
+            5106,
+            5106,
+            2688,
+            3494,
+            5106,
+            3494,
+            3494,
+            4300,
+            2688,
+            4300,
+            3494
+          ]
+        }
+      }
+    }
+  ],
+  "compat": [
+    {
+      "id": "template",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln"
+        ],
+        "customSteps": [],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "verified",
+        "matchedTemplate": "tpl.standard",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "conflict",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln",
+          "dmg.def-sub"
+        ],
+        "customSteps": [],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 1,
+        "warnings": 1
+      }
+    },
+    {
+      "id": "missing-dep",
+      "config": {
+        "components": [
+          "dmg.crit"
+        ],
+        "customSteps": [],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 2,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "unknown-component",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln",
+          "dmg.nope"
+        ],
+        "customSteps": [],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 1,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "unknown-ref",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln"
+        ],
+        "customSteps": [
+          {
+            "id": "x",
+            "label": "x",
+            "apply": "mul",
+            "order": 1,
+            "base": {
+              "ref": "attacker.nope"
+            }
+          }
+        ],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 1,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "forward-step-ref",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln"
+        ],
+        "customSteps": [
+          {
+            "id": "x",
+            "label": "x",
+            "apply": "mul",
+            "order": 1,
+            "base": {
+              "ref": "step.res"
+            }
+          }
+        ],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 1,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "two-bad-refs-one-step",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln"
+        ],
+        "customSteps": [
+          {
+            "id": "x",
+            "label": "x",
+            "apply": "mul",
+            "order": 1,
+            "base": {
+              "op": "add",
+              "args": [
+                {
+                  "op": "add",
+                  "args": [
+                    {
+                      "ref": "attacker.nope"
+                    },
+                    {
+                      "ref": "step.res"
+                    }
+                  ]
+                },
+                {
+                  "ref": "attacker.nope"
+                }
+              ]
+            }
+          }
+        ],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 2,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "custom-is-experimental",
+      "config": {
+        "components": [
+          "dmg.base-atk",
+          "dmg.crit",
+          "dmg.bonus",
+          "dmg.def-ratio",
+          "dmg.res",
+          "dmg.vuln"
+        ],
+        "customSteps": [],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1,
+        "customFlags": [
+          {
+            "key": "f",
+            "label": "f",
+            "default": false
+          }
+        ]
+      },
+      "expected": {
+        "status": "experimental",
+        "matchedTemplate": null,
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "id": "no-set-step",
+      "config": {
+        "components": [
+          "dmg.crit",
+          "dmg.bonus"
+        ],
+        "customSteps": [],
+        "overrides": {},
+        "disabledSteps": [],
+        "finalRounding": "floor",
+        "minDamage": 1
+      },
+      "expected": {
+        "status": "incompatible",
+        "matchedTemplate": null,
+        "errors": 3,
+        "warnings": 0
+      }
+    }
+  ]
+}
