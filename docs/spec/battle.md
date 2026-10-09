@@ -57,7 +57,7 @@
 3. `elapsed = next.av`，`newTime = time + elapsed`，`newCycle = cycleAt(newTime)`。若 `newCycle > maxCycles`，以 `timeout` 結束，且**不**更新時間。
    - `cycleAt(t) = t < firstCycleAv ? 1 : 2 + floor((t − firstCycleAv) / cycleAv)`
 4. 所有存活單位 `av −= elapsed`，然後 `next.av = 0`，`time = newTime`。cycle 每增加 1 就加入一個 `cycle` 事件。
-5. `turns += 1`，加入 `turn` 事件。
+5. `turns += 1`，加入 `turn` 事件，並清空行動者的 `passiveUses`。
 6. 若 `next.broken`：設 `broken = false`、`toughness = maxToughness`，加入 `recover` 事件。
 7. **持續傷害**：依狀態列表順序（迭代開始時的副本）處理每個有 `dot` 的實例（持有者需存活）：
    - 攻擊方數值 = 該實例的 `snapshot`；修正值**只有**持有者作為防守方的修正（§3.3），沒有攻擊方修正；
@@ -66,7 +66,7 @@
    - 以 `kind:"dot"`、來源 `sourceUid` 造成傷害（§5.6）。
 8. 若行動者已死亡，回到步驟 1；若 `checkEnd` 成立，停止。
 9. 若有任一 `skipTurn` 狀態：以第一個這種狀態的名稱加入 `skip` 事件，執行回合結束（§4.1），回到步驟 1。
-10. 我方：設定決策 `{actorUid}` 並等待輸入。敵方：依 §6 決定行動並執行（§5）；若仍存活，執行回合結束。
+10. 我方：設定決策 `{actorUid}` 並等待輸入。敵方：依 §6 決定行動並執行（§5），處理被動觸發（§12）；若 `checkEnd` 成立則停止（**不執行**回合結束）；否則若仍存活，執行回合結束。
 
 ### 4.1 回合結束
 在保距離規則內：
@@ -147,16 +147,16 @@
 2. 候選規則 = `weight > 0`、`when` 成立（或省略）、且技能存在者。
 3. 有候選時：`roll = aiRng.next() × 總權重`，依序找第一個 `roll < weight` 的規則，否則 `roll −= weight`。都沒有命中時取最後一個。沒有候選時取第一個技能，不抽亂數。
 4. 技能 `targeting ≠ "none"` 時：`targeting == "enemy"` 從存活對手、`"ally"` 從存活友方（皆依 slot 排序）以 `aiRng.int(數量)` 選出一個；候選為空時不抽。
-5. `self.toughnessPct` 在 `maxToughness = 0` 時為 0。scope 一律以敵方視角命名（AI 只驅動敵方單位）。
+5. `self.toughnessPct` 在 `maxToughness = 0` 時為 0。`battle.allies` 是與 self **同隊**的存活數，`battle.foes` 是對手存活數（AI 與 §12 被動條件共用此 scope）。
 
 ## 7. 決策與自動策略
 ### 7.1 合法行動
-1. 決策角色的非大招技能，依技能定義順序列出；若 `spDelta < 0` 且 `sp + spDelta < 0` 則排除。
+1. 決策角色的技能，依技能定義順序列出，排除 `ultimate`、`followup`、`dot` 類型；若 `spDelta < 0` 且 `sp + spDelta < 0` 則排除。
 2. 接著列出大招：存活我方依 slot 排序，每人的大招依技能順序；只列出 `energy ≥ (energyCost ?? maxEnergy)` 者。
 
 ### 7.2 提交行動
-- **大招**：任何符合條件的我方都可施放。執行後立即 `checkEnd`（成立時照 §4 步驟 1 結束）；否則回到**同一個**決策（若決策角色已死亡，清除決策並繼續主迴圈）。
-- **一般行動**：必須是決策角色，且技能點足夠。清除決策後執行，若行動者仍存活則執行回合結束，接著繼續主迴圈。
+- **大招**：任何符合條件的我方都可施放。執行後處理被動觸發（§12），然後立即 `checkEnd`（成立時照 §4 步驟 1 結束）；否則回到**同一個**決策（若決策角色已死亡，清除決策並繼續主迴圈）。
+- **一般行動**：必須是決策角色，不可為大招／追加攻擊／dot 類型，且技能點足夠。清除決策後執行，處理被動觸發（§12）；若 `checkEnd` 成立則停止（不執行回合結束）；否則若行動者仍存活則執行回合結束，接著繼續主迴圈。
 
 ### 7.3 自動策略（向量使用）
 **選擇行動：**
@@ -195,7 +195,8 @@
 | turn | uid, time | 每個回合開始 |
 | recover | uid | 擊破狀態在自己回合開始時恢復 |
 | skip | uid, reason（狀態名稱） | 控制狀態跳過行動 |
-| action | uid, skillId, skillName, skillType, targetUid（有指定時）, time | 每次執行技能 |
+| action | uid, skillId, skillName, skillType, targetUid（有指定時）, time | 每次執行技能（含追加攻擊） |
+| trigger | uid, passiveId, passiveName, targetUid（有時） | 被動即將執行追加攻擊（緊接在其 action 之前） |
 | damage | src, dst, amount, crit, kind（hit／break／dot）, hpAfter, skillId（僅 hit） | 每次造成傷害（含 0） |
 | toughness | dst, before, after | 削韌實際發生時 |
 | break | src, dst | 擊破 |
@@ -208,4 +209,36 @@
 | end | result, time | 戰鬥結束；timeout 時 time 為未推進前的時間 |
 
 ## 11. 單位狀態（向量 `units`）
-`uid, defId, name, team, slot, element, base（= stats 複本）, weaknesses, hp, maxHp, energy, maxEnergy, toughness, maxToughness, broken, alive, av, statuses[{statusId, sourceUid, stacks, turnsLeft, snapshot?}]`
+`uid, defId, name, team, slot, element, base（= stats 複本）, weaknesses, hp, maxHp, energy, maxEnergy, toughness, maxToughness, broken, alive, av, statuses[{statusId, sourceUid, stacks, turnsLeft, snapshot?}], passiveUses{passiveId: 次數}`
+
+## 12. 被動與追加攻擊
+單位定義可有 `passives: [{id, name, on, skillId, when?, limitPerTurn}]`。被動在**每個頂層行動**（我方一般行動、大招、敵方行動）執行完畢後處理；持續傷害與回合開始的事件不觸發被動。
+
+### 12.1 觸發比對
+從該行動的第一個事件開始，依事件順序掃描。對每個事件，依「存活我方依 slot、再存活敵方依 slot」的順序檢查每個單位（**存活與否以掃描當下為準**，不是事件發生當下），再依被動定義順序比對。事件中 src／by／dst 的隊伍一律依該單位所屬隊伍判斷，即使它已死亡：
+
+| on | 事件條件 | 追加攻擊的 chosen |
+|---|---|---|
+| allyUltimate | `action`，skillType 為 ultimate，行動者與持有者同隊（含自己） | 該 action 的 targetUid |
+| allyBreak | `break`，src 與持有者同隊 | 被擊破者（dst） |
+| selfHit | `damage`，kind 為 hit，dst 是持有者，src 與持有者異隊（**每個 damage 事件各比對一次**） | 攻擊者（src） |
+| enemyKilled | `death`，by 與持有者同隊、死者與持有者異隊 | 無（使用 §5.1 預設） |
+
+`allyUltimate` 的大招若沒有指定目標，chosen 為無。
+
+比對成立後：
+1. 若 `limitPerTurn > 0` 且 `passiveUses[id] ≥ limitPerTurn` 則略過。
+2. 若有 `when` 且以持有者的 §6 scope 求值為假則略過。
+3. 否則 `passiveUses[id] += 1`（**入列時**就計數），加入佇列尾端 `{uid, passiveId, chosen}`。
+
+### 12.2 執行佇列
+最多執行 20 個追加攻擊（每個頂層行動，含連鎖）：
+1. 每次取出前都先 `checkEnd`；成立則停止（剩餘佇列丟棄）。頂層行動本身已分出勝負時，第一次檢查就會結束，`end` 事件只會有一個。
+2. 從佇列頭取出（每次取出都計入 20 次額度）；持有者已死亡則略過，其 `passiveUses` 不退回。
+3. 加入 `trigger` 事件，依 §5 執行該技能（chosen 照上表；chosen 已死亡時其 `action` 事件仍記錄該 targetUid，依 §5.1 目標為空），然後從該技能的第一個事件起依 §12.1 掃描並入列（可連鎖）。
+
+`skillId` 不存在於持有者時為錯誤（實作丟出例外；驗證器會事先標示）。
+
+**「每回合」的意義**：`passiveUses` 只在持有者**自己的**回合開始時清空，也就是「兩次自己行動之間」最多觸發 limitPerTurn 次。
+
+追加攻擊照常套用技能的 spDelta（我方）與 energyGain。

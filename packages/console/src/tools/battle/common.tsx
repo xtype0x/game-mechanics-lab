@@ -1,31 +1,46 @@
-import { ELEMENT_LABELS, battleSetupOf, type BattleEvent, type BattleState, type Project, type StatusDef } from "@ggt/core";
+import { ELEMENT_LABELS, battleSetupOf, validateBattle, type BattleEvent, type BattleIssue, type BattleState, type Project, type StatusDef } from "@ggt/core";
 import { useMemo } from "react";
 import type { Updater } from "../../useProject";
 import { fmt } from "../../ui";
 
-export const ENCOUNTER_PRESETS: { id: string; label: string; enemies: string[] }[] = [
-  { id: "normal", label: "普通戰：影翼蝠 ×2 + 岩甲獸", enemies: ["bat", "golem", "bat"] },
-  { id: "sentinel", label: "精英戰：雷晶哨兵 ×2 + 岩甲獸", enemies: ["sentinel", "golem", "sentinel"] },
-  { id: "boss", label: "首領戰：灰燼巨像", enemies: ["colossus"] },
-];
-
 export const elementLabel = (e: string) => ELEMENT_LABELS[e] ?? e;
 
-/** Setup + any error from building it (e.g. incompatible damage composition). */
+/**
+ * Setup + validation. When content has errors, setup is null and `error` explains why, so simulators never
+ * run on half-edited data.
+ */
 export function useBattleSetup(project: Project) {
   return useMemo(() => {
     try {
-      return { setup: battleSetupOf(project), error: null as string | null };
+      const setup = battleSetupOf(project);
+      const issues = validateBattle(project.battle, setup.damage);
+      const errors = issues.filter((i) => i.level === "error");
+      if (errors.length) {
+        const list = errors.slice(0, 4).map((e) => "・" + e.message).join("\n");
+        return { setup: null, issues, error: `戰鬥資料有 ${errors.length} 個錯誤，請先修正：\n${list}` };
+      }
+      return { setup, issues, error: null as string | null };
     } catch (e) {
-      return { setup: null, error: (e as Error).message };
+      return { setup: null, issues: [] as BattleIssue[], error: (e as Error).message };
     }
   }, [project]);
+}
+
+export function IssueList({ issues, empty }: { issues: BattleIssue[]; empty?: string }) {
+  if (!issues.length) return empty ? <p className="muted small">{empty}</p> : null;
+  return (
+    <div className="issue-list">
+      {issues.map((i, k) => <div key={k} className={`issue ${i.level === "error" ? "err" : "warn"}`}>{i.level === "error" ? "✕" : "!"} {i.message}</div>)}
+    </div>
+  );
 }
 
 export function EncounterBar({ project, update }: { project: Project; update: Updater }) {
   const enc = project.battle.encounter;
   const allies = project.battle.units.filter((u) => u.team === "ally");
-  const preset = ENCOUNTER_PRESETS.find((p) => p.enemies.join() === enc.enemies.join())?.id ?? "custom";
+  const presets = project.battle.encounters;
+  const nameOf = (id: string) => project.battle.units.find((u) => u.id === id)?.name ?? id;
+  const preset = presets.find((p) => p.enemies.join() === enc.enemies.join())?.id ?? "custom";
   return (
     <div className="encounter-bar">
       <label className="field">
@@ -33,12 +48,12 @@ export function EncounterBar({ project, update }: { project: Project; update: Up
         <select
           value={preset}
           onChange={(e) => {
-            const p = ENCOUNTER_PRESETS.find((x) => x.id === e.target.value);
+            const p = presets.find((x) => x.id === e.target.value);
             if (p) update((d) => { d.battle.encounter.enemies = [...p.enemies]; });
           }}
         >
-          {ENCOUNTER_PRESETS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-          {preset === "custom" && <option value="custom">自訂：{enc.enemies.join("、")}</option>}
+          {presets.map((p) => <option key={p.id} value={p.id}>{p.name}：{p.enemies.map(nameOf).join("、")}</option>)}
+          {preset === "custom" && <option value="custom">自訂：{enc.enemies.map(nameOf).join("、")}</option>}
         </select>
       </label>
       <div className="field">
@@ -86,7 +101,8 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
   switch (e.t) {
     case "cycle": return { text: `──── 第 ${e.cycle} 輪（行動值 ${fmt(e.time, 1)}）────`, tone: "cycle" };
     case "turn": return details ? { text: `▶ ${name(e.uid)} 的回合（${fmt(e.time, 1)}）`, tone: "muted" } : null;
-    case "action": return { text: `${name(e.uid)} 使用「${e.skillName}」${e.targetUid ? ` → ${name(e.targetUid)}` : ""}`, tone: e.skillType === "ultimate" ? "ult" : "action" };
+    case "action": return { text: `${name(e.uid)} 使用「${e.skillName}」${e.targetUid ? ` → ${name(e.targetUid)}` : ""}`, tone: e.skillType === "ultimate" ? "ult" : e.skillType === "followup" ? "followup" : "action" };
+    case "trigger": return { text: `⚡ ${name(e.uid)} 的被動「${e.passiveName}」觸發`, tone: "trigger" };
     case "damage": return { text: `　${name(e.src)} 對 ${name(e.dst)} 造成 ${fmt(e.amount, 0)}${KIND_LABEL[e.kind] ? ` ${KIND_LABEL[e.kind]}` : " 傷害"}${e.crit ? "（暴擊）" : ""}，剩 ${fmt(e.hpAfter, 0)}`, tone: e.kind === "break" ? "break" : e.crit ? "crit" : undefined };
     case "toughness": return details ? { text: `　${name(e.dst)} 韌性 ${fmt(e.before, 1)} → ${fmt(e.after, 1)}`, tone: "muted" } : null;
     case "break": return { text: `　💥 ${name(e.dst)} 被擊破！`, tone: "break" };

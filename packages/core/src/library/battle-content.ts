@@ -2,7 +2,7 @@
  * Original sample roster for the turn-based templates. All names and numbers are original to this tool.
  */
 import { parseExpr } from "../expr";
-import type { AllyPolicy, BattleRules, EncounterDef, SkillDef, StatusDef, UnitDef } from "../battle/types";
+import type { AllyPolicy, BattleRules, EncounterDef, EncounterPreset, SkillDef, StatusDef, UnitDef } from "../battle/types";
 
 const f = parseExpr;
 
@@ -62,7 +62,9 @@ export const DEFAULT_UNITS: UnitDef[] = [
       basic(),
       { id: "skill", name: "灼流", type: "skill", spDelta: -1, energyGain: 30, targeting: "enemy", effects: [{ kind: "damage", target: "blast", multiplier: 2, adjMultiplier: 0.8, toughness: 20, adjToughness: 10, hits: [0.3, 0.3, 0.4] }] },
       { id: "ult", name: "焚天", type: "ultimate", spDelta: 0, energyGain: 5, energyCost: 120, targeting: "none", effects: [{ kind: "damage", target: "allEnemies", multiplier: 2.4, toughness: 20 }] },
+      { id: "ember", name: "餘燼", type: "followup", spDelta: 0, energyGain: 10, targeting: "none", effects: [{ kind: "damage", target: "allEnemies", multiplier: 0.5, toughness: 5 }] },
     ],
+    passives: [{ id: "ember", name: "餘燼", on: "allyUltimate", skillId: "ember", limitPerTurn: 1, description: "隊友（含自己）施放大招後，追加一次全體火焰傷害。每回合一次。" }],
   },
   {
     id: "shimo", name: "霜語", team: "ally", element: "ice", role: "控制", weaknesses: [],
@@ -112,7 +114,9 @@ export const DEFAULT_UNITS: UnitDef[] = [
       basic(undefined, 1, 15),
       { id: "skill", name: "影刃", type: "skill", spDelta: -1, energyGain: 30, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 1.6, toughness: 30 }, { kind: "status", target: "enemy", statusId: "armorBreak", chance: 0.8 }] },
       { id: "ult", name: "夜幕斬", type: "ultimate", spDelta: 0, energyGain: 5, energyCost: 110, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 3, toughness: 40 }] },
+      { id: "shade", name: "影襲", type: "followup", spDelta: 0, energyGain: 10, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 0.9, toughness: 0 }, { kind: "status", target: "enemy", statusId: "armorBreak", chance: 1 }] },
     ],
+    passives: [{ id: "shade", name: "影襲", on: "allyBreak", skillId: "shade", limitPerTurn: 2, description: "隊友擊破敵人時，對該敵人追加攻擊並施加碎甲。每回合最多兩次。" }],
   },
   {
     id: "golem", name: "岩甲獸", team: "enemy", element: "fire", weaknesses: ["ice", "wind", "shadow"], role: "普通",
@@ -135,12 +139,14 @@ export const DEFAULT_UNITS: UnitDef[] = [
   },
   {
     id: "colossus", name: "灰燼巨像", team: "enemy", element: "fire", weaknesses: ["ice", "thunder", "light"], role: "首領",
-    stats: enemyStats({ hp: 70000, atk: 2500, spd: 100, toughness: 160, def: 1100, effectRes: 0.3 }),
+    stats: enemyStats({ hp: 70000, atk: 2250, spd: 100, toughness: 160, def: 1100, effectRes: 0.3 }),
     skills: [
       { id: "smash", name: "重擊", type: "basic", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 2.2, toughness: 0 }] },
       { id: "quake", name: "震地", type: "skill", spDelta: 0, energyGain: 0, targeting: "none", effects: [{ kind: "damage", target: "allEnemies", multiplier: 1.1, toughness: 0 }] },
       { id: "roar", name: "怒吼", type: "skill", spDelta: 0, energyGain: 0, targeting: "none", effects: [{ kind: "status", target: "self", statusId: "rage", chance: 1 }] },
+      { id: "recoil", name: "反震", type: "followup", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 0.5, toughness: 0 }] },
     ],
+    passives: [{ id: "recoil", name: "反震", on: "selfHit", skillId: "recoil", limitPerTurn: 1, when: f("self.hpPct < 0.5"), description: "血量低於 50% 後，受到攻擊時反擊攻擊者。每回合一次。" }],
     ai: [
       { skillId: "smash", weight: 3 },
       { skillId: "quake", weight: 2, when: f("self.hpPct < 0.6") },
@@ -150,5 +156,11 @@ export const DEFAULT_UNITS: UnitDef[] = [
 ];
 
 export const DEFAULT_ENCOUNTER: EncounterDef = { allies: ["homura", "shimo", "raimei", "akari"], enemies: ["bat", "golem", "bat"] };
+
+export const DEFAULT_ENCOUNTERS: EncounterPreset[] = [
+  { id: "normal", name: "普通戰", enemies: ["bat", "golem", "bat"], description: "兩隻高速的影翼蝠護著岩甲獸。" },
+  { id: "elite", name: "精英戰", enemies: ["sentinel", "golem", "sentinel"], description: "雷晶哨兵會隨機施放全體電弧。" },
+  { id: "boss", name: "首領戰", enemies: ["colossus"], description: "灰燼巨像：血量低時會震地與反擊。" },
+];
 
 export const DEFAULT_POLICY_CONFIG: AllyPolicy = { ult: "asap", skill: "whenSp", target: "weaknessFirst" };

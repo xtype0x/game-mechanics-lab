@@ -9,3 +9,4 @@ export * from "./battle/types";
 export * from "./battle/engine";
 export * from "./battle/sim";
 export * from "./library/battle-content";
+export * from "./battle/validate";

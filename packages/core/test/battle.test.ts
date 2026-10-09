@@ -17,6 +17,7 @@ import {
   simulateOne,
   submitAction,
   DEFAULT_POLICY,
+  SCHEMA_VERSION,
   type BattleSetup,
   type BattleState,
   type SkillDef,
@@ -271,7 +272,7 @@ describe("project migration", () => {
     const { battle: _drop, ...rest } = v2;
     const v1 = { ...rest, schemaVersion: 1 };
     const loaded = loadProject(JSON.parse(JSON.stringify(v1)));
-    expect(loaded.schemaVersion).toBe(2);
+    expect(loaded.schemaVersion).toBe(SCHEMA_VERSION);
     expect(loaded.battle.units.length).toBeGreaterThan(0);
   });
 });

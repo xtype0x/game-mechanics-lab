@@ -65,6 +65,7 @@ export function createBattle(setup: BattleSetup, seed: number | string): BattleS
       alive: true,
       av: 0,
       statuses: [],
+      passiveUses: {},
     });
   };
   setup.encounter.allies.forEach((id, i) => add(id, "ally", i));
@@ -182,6 +183,7 @@ function cycleAt(rules: BattleRules, time: number): number {
 }
 
 function checkEnd(state: BattleState): boolean {
+  if (state.phase === "ended") return true;
   let result: BattleState["result"];
   if (alive(state, "enemy").length === 0) result = "win";
   else if (alive(state, "ally").length === 0) result = "lose";
@@ -221,6 +223,7 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
 
     state.turns++;
     state.events.push({ t: "turn", uid: next.uid, time: state.time });
+    next.passiveUses = {};
     if (next.broken) {
       next.broken = false;
       next.toughness = next.maxToughness;
@@ -243,7 +246,10 @@ function run(setup: BattleSetup, state: BattleState): BattleState {
       return state;
     }
     const act = enemyAction(setup, state, next);
+    const from = state.events.length;
     execute(setup, state, next, act.skill, act.targetUid);
+    processTriggers(setup, state, from);
+    if (checkEnd(state)) return state;
     if (next.alive) endTurn(setup, state, next);
   }
   throw new BattleError("戰鬥迴圈超過上限，可能有無限循環");
@@ -305,7 +311,8 @@ export function legalActions(setup: BattleSetup, state: BattleState): LegalActio
   const out: LegalAction[] = [];
   const actor = unit(state, state.decision.actorUid);
   for (const skill of defOf(setup, actor).skills) {
-    if (skill.type === "ultimate") continue;
+    // Ultimates are listed below; follow-ups only fire from passives.
+    if (skill.type === "ultimate" || skill.type === "followup" || skill.type === "dot") continue;
     if (skill.spDelta < 0 && state.sp + skill.spDelta < 0) continue;
     out.push({ action: { kind: "skill", actorUid: actor.uid, skillId: skill.id }, skill, targets: candidateTargets(state, actor, skill) });
   }
@@ -331,7 +338,9 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
 
   if (action.kind === "ult") {
     if (actor.team !== "ally" || !canUltimate(state, actor, skill)) throw new BattleError(`「${actor.name}」現在不能施放大招`);
+    const from = state.events.length;
     execute(setup, state, actor, skill, action.targetUid);
+    processTriggers(setup, state, from);
     // The decision actor can only die here in pathological setups (self-damage); resume the loop then.
     if (!checkEnd(state) && !unit(state, decision.actorUid).alive) {
       state.decision = undefined;
@@ -342,20 +351,30 @@ export function submitAction(setup: BattleSetup, prev: BattleState, action: Acti
 
   if (action.actorUid !== decision.actorUid) throw new BattleError("現在不是這個角色的回合");
   if (skill.type === "ultimate") throw new BattleError("大招請用 ult 行動施放");
+  if (skill.type === "followup" || skill.type === "dot") throw new BattleError("追加攻擊只能由被動觸發");
   if (skill.spDelta < 0 && state.sp + skill.spDelta < 0) throw new BattleError("技能點不足");
   state.decision = undefined;
+  const from = state.events.length;
   execute(setup, state, actor, skill, action.targetUid);
+  processTriggers(setup, state, from);
+  if (checkEnd(state)) return state;
   if (actor.alive) endTurn(setup, state, actor);
   return run(setup, state);
+}
+
+/** Scope for AI rules and passive conditions. "allies"/"foes" are relative to u's team. */
+function unitScope(state: BattleState, u: UnitState) {
+  const foeTeam = u.team === "ally" ? "enemy" : "ally";
+  return objectScope({
+    self: { hpPct: u.hp / u.maxHp, broken: u.broken, energy: u.energy, toughnessPct: u.maxToughness ? u.toughness / u.maxToughness : 0 },
+    battle: { turn: state.turns, cycle: state.cycle, allies: alive(state, u.team).length, foes: alive(state, foeTeam).length },
+  });
 }
 
 function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { skill: SkillDef; targetUid?: string } {
   const def = defOf(setup, u);
   const rng = Rng.fromState(state.rng.ai);
-  const scope = objectScope({
-    self: { hpPct: u.hp / u.maxHp, broken: u.broken, energy: u.energy, toughnessPct: u.maxToughness ? u.toughness / u.maxToughness : 0 },
-    battle: { turn: state.turns, cycle: state.cycle, allies: alive(state, "enemy").length, foes: alive(state, "ally").length },
-  });
+  const scope = unitScope(state, u);
   const rules = (def.ai ?? []).filter((r) => r.weight > 0 && (!r.when || evalBool(r.when, scope)) && def.skills.some((s) => s.id === r.skillId));
   let skill = def.skills[0]!;
   if (rules.length) {
@@ -372,6 +391,63 @@ function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { sk
   const targetUid = targets.length ? targets[rng.int(targets.length)] : undefined;
   state.rng.ai = rng.snapshot();
   return { skill, targetUid };
+}
+
+// ---------------------------------------------------------------------------
+// Passive triggers / follow-ups (spec §12)
+// ---------------------------------------------------------------------------
+
+/** Follow-ups resolved per top-level action, including chains. */
+export const MAX_FOLLOWUPS_PER_ACTION = 20;
+
+interface QueuedTrigger {
+  uid: string;
+  passiveId: string;
+  targetUid?: string;
+}
+
+function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
+  const queue: QueuedTrigger[] = [];
+  const teamOf = (uid: string) => state.units.find((u) => u.uid === uid)?.team;
+  const holders = () => [...alive(state, "ally"), ...alive(state, "enemy")].sort((a, b) => (a.team === b.team ? a.slot - b.slot : a.team === "ally" ? -1 : 1));
+
+  const scan = (start: number, end: number) => {
+    for (let k = start; k < end; k++) {
+      const e = state.events[k]!;
+      for (const u of holders()) {
+        for (const p of defOf(setup, u).passives ?? []) {
+          let match = false;
+          let targetUid: string | undefined;
+          if (p.on === "allyUltimate" && e.t === "action" && e.skillType === "ultimate" && teamOf(e.uid) === u.team) { match = true; targetUid = e.targetUid; }
+          else if (p.on === "allyBreak" && e.t === "break" && teamOf(e.src) === u.team) { match = true; targetUid = e.dst; }
+          else if (p.on === "selfHit" && e.t === "damage" && e.kind === "hit" && e.dst === u.uid && teamOf(e.src) !== u.team) { match = true; targetUid = e.src; }
+          else if (p.on === "enemyKilled" && e.t === "death" && teamOf(e.by) === u.team && teamOf(e.uid) !== u.team) { match = true; }
+          if (!match) continue;
+          const used = u.passiveUses[p.id] ?? 0;
+          if (p.limitPerTurn > 0 && used >= p.limitPerTurn) continue;
+          if (p.when && !evalBool(p.when, unitScope(state, u))) continue;
+          u.passiveUses[p.id] = used + 1;
+          queue.push({ uid: u.uid, passiveId: p.id, targetUid });
+        }
+      }
+    }
+  };
+
+  scan(from, state.events.length);
+  for (let budget = MAX_FOLLOWUPS_PER_ACTION; queue.length && budget > 0; budget--) {
+    if (checkEnd(state)) return;
+    const q = queue.shift()!;
+    const u = unit(state, q.uid);
+    if (!u.alive) continue;
+    const def = defOf(setup, u);
+    const p = def.passives!.find((x) => x.id === q.passiveId)!;
+    const skill = def.skills.find((s) => s.id === p.skillId);
+    if (!skill) throw new BattleError(`「${u.name}」的被動「${p.name}」指向不存在的技能 ${p.skillId}`);
+    state.events.push({ t: "trigger", uid: u.uid, passiveId: p.id, passiveName: p.name, targetUid: q.targetUid });
+    const start = state.events.length;
+    execute(setup, state, u, skill, q.targetUid);
+    scan(start, state.events.length);
+  }
 }
 
 // ---------------------------------------------------------------------------

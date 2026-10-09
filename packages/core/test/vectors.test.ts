@@ -213,10 +213,19 @@ function battleVectors() {
     { id: "boss/seed-7", enemies: ["colossus"], seed: 7 },
     // Fragile enemies: kills mid-skill exercise the "dead chosen target is not replaced" rule.
     { id: "fragile/seed-3", enemies: ["bat", "bat", "bat"], seed: 3, batHp: 1500 },
+    { id: "passives/seed-5", enemies: ["bat", "golem", "bat", "sentinel"], seed: 5, batHp: 6000 },
   ].map(({ id, enemies, seed, batHp }: { id: string; enemies: string[]; seed: number | string; batHp?: number }) => {
     const p = structuredClone(project);
     p.battle.encounter.enemies = enemies;
     if (batHp) p.battle.units.find((u) => u.id === "bat")!.stats.hp = batHp;
+    if (id.startsWith("passives/")) {
+      // Every trigger kind + chains: yoru's allyBreak can fire off homura's ember follow-up,
+      // and akari gets an enemyKilled follow-up.
+      p.battle.encounter.allies = ["homura", "shimo", "yoru", "akari"];
+      const akari = p.battle.units.find((u) => u.id === "akari")!;
+      akari.skills.push({ id: "bless", name: "祝福", type: "followup", spDelta: 0, energyGain: 5, targeting: "none", effects: [{ kind: "heal", target: "allAllies", scale: "atk", multiplier: 0.1, flat: 50 }] });
+      akari.passives = [{ id: "bless", name: "祝福", on: "enemyKilled", skillId: "bless", limitPerTurn: 0 }];
+    }
     const setup = battleSetupOf(p);
     const end = autoPlay(setup, createBattle(setup, seed), p.battle.policy);
     return {

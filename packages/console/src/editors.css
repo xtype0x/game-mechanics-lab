@@ -1,0 +1,64 @@
+/* =================== M4: editors =================== */
+.editor-layout { grid-template-columns: minmax(420px, 7fr) minmax(340px, 5fr); }
+.unit-list { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow: auto; }
+.unit-item { display: flex; align-items: center; gap: 8px; text-align: left; background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; color: inherit; font: inherit; flex-wrap: wrap; }
+.unit-item.on { border-color: var(--accent); background: var(--accent-soft); }
+.unit-item .muted.small { flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-head { display: flex; align-items: center; gap: 10px; }
+.editor-head h2 { font-size: 18px; }
+.issue-list { display: flex; flex-direction: column; gap: 4px; }
+.grow { flex: 1; min-width: 120px; }
+
+.skill-list { display: flex; flex-direction: column; gap: 6px; }
+.skill-card { border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
+.skill-card.open { border-color: var(--accent); }
+.skill-card.has-issue { border-color: var(--err); }
+.skill-head { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 8px 10px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.skill-head .muted.small { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.skill-body { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 10px; }
+.effect-list { display: flex; flex-direction: column; gap: 6px; }
+.effect-row { border: 1px dashed var(--line-strong); border-radius: 6px; padding: 8px; background: var(--panel); display: flex; flex-direction: column; gap: 8px; }
+.effect-top { display: flex; align-items: center; gap: 8px; }
+.passive-list { display: flex; flex-direction: column; gap: 8px; }
+.passive-card { border: 1px solid var(--line); border-radius: 6px; padding: 10px; background: var(--panel-2); display: flex; flex-direction: column; gap: 8px; }
+
+.ai-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.ai-row { display: grid; grid-template-columns: minmax(110px, 1fr) 140px minmax(180px, 2fr) auto; gap: 6px; align-items: start; }
+.inline-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+
+.lineup { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.lineup-slot { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--panel-2); min-width: 120px; }
+.lineup-slot .row-gap { margin-top: 4px; }
+
+.snap-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.snap-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; align-items: center; }
+.table.diff td { word-break: break-all; }
+
+.detail-strip { margin: 12px 16px 0; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 14px; }
+.compat-strip { margin: 12px 16px 0; background: var(--warn-soft); color: var(--warn); border-radius: var(--radius); padding: 8px 14px; font-size: 13px; }
+.tool-detail.compact { padding: 8px 0; max-width: none; }
+.tool-detail.compact dl { grid-template-columns: 70px 1fr; font-size: 13px; }
+.info-btn { font-size: 16px; }
+.info-btn:hover { color: var(--accent) !important; }
+.incompat { color: var(--warn); }
+.lib-meta select { font-size: 12px; padding: 3px 6px; }
+
+.template-pop {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 25; width: min(380px, 92vw);
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.2); padding: 12px; display: flex; flex-direction: column; gap: 8px;
+}
+.template-pop p { margin: 0; }
+
+.ev.trigger { color: var(--c4); font-size: 12px; margin-top: 2px; }
+.ev.followup { font-weight: 600; color: var(--c4); }
+
+@media (max-width: 1100px) {
+  .editor-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 820px) {
+  .ai-row { grid-template-columns: 1fr 1fr; }
+  .ai-row > :nth-child(3) { grid-column: 1 / -1; }
+  .snap-row { grid-template-columns: 1fr auto auto; }
+  .snap-row > .muted { display: none; }
+}

@@ -83,6 +83,33 @@ export interface AiRule {
   weight: number;
 }
 
+/** What makes a passive fire (docs/spec/battle.md §12). */
+export type TriggerEvent =
+  | "allyUltimate" // a unit on the holder's team (including the holder) used an ultimate
+  | "allyBreak" // a unit on the holder's team broke an opponent's toughness
+  | "selfHit" // the holder took hit damage from an opponent's action
+  | "enemyKilled"; // a unit on the holder's team killed an opponent
+
+export interface PassiveDef {
+  id: string;
+  name: string;
+  on: TriggerEvent;
+  /** Skill of this unit to cast as a follow-up. */
+  skillId: string;
+  /** Extra condition over the AI scope (self.*, battle.*). */
+  when?: Expr;
+  /** Max activations between two of the holder's own turns; 0 = unlimited. */
+  limitPerTurn: number;
+  description?: string;
+}
+
+export interface EncounterPreset {
+  id: string;
+  name: string;
+  enemies: string[];
+  description?: string;
+}
+
 export interface UnitDef {
   id: string;
   name: string;
@@ -94,6 +121,7 @@ export interface UnitDef {
   skills: SkillDef[];
   /** Enemy behaviour. Allies controlled by the simulator use the ally policy instead. */
   ai?: AiRule[];
+  passives?: PassiveDef[];
   role?: string;
   description?: string;
 }
@@ -163,6 +191,8 @@ export interface UnitState {
   /** Remaining action value until this unit's next turn. */
   av: number;
   statuses: StatusInstance[];
+  /** Passive activations since the holder's last turn start. */
+  passiveUses: Record<string, number>;
 }
 
 export type BattleEvent =
@@ -171,6 +201,7 @@ export type BattleEvent =
   | { t: "recover"; uid: string }
   | { t: "skip"; uid: string; reason: string }
   | { t: "action"; uid: string; skillId: string; skillName: string; skillType: SkillType; targetUid?: string; time: number }
+  | { t: "trigger"; uid: string; passiveId: string; passiveName: string; targetUid?: string }
   | { t: "damage"; src: string; dst: string; amount: number; crit: boolean; kind: "hit" | "break" | "dot"; hpAfter: number; skillId?: string }
   | { t: "toughness"; dst: string; before: number; after: number }
   | { t: "break"; src: string; dst: string }

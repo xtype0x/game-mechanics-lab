@@ -1,4 +1,4 @@
-import { loadProject, newProject, type Project } from "@ggt/core";
+import { PROJECT_TEMPLATES, loadProject, newProject, type Project } from "@ggt/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "ggt.project";
@@ -56,7 +56,10 @@ export function useProject() {
     setProject(loaded);
   }, []);
 
-  const reset = useCallback(() => setProject(newProject()), []);
+  const reset = useCallback((templateId = "weakness-break") => {
+    const t = PROJECT_TEMPLATES.find((x) => x.id === templateId) ?? PROJECT_TEMPLATES[0]!;
+    setProject(t.create(`${t.name} 專案`));
+  }, []);
 
   return { project, update, setProject, exportFile, importFile, reset, saveState };
 }
