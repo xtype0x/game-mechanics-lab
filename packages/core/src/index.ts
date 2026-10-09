@@ -5,3 +5,7 @@ export * from "./damage";
 export * from "./registry";
 export * from "./project";
 export * from "./library/damage-components";
+export * from "./battle/types";
+export * from "./battle/engine";
+export * from "./battle/sim";
+export * from "./library/battle-content";

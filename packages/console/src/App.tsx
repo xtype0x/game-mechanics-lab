@@ -3,6 +3,11 @@ import { useMemo, useRef, useState, type ComponentType } from "react";
 import { Composer } from "./tools/Composer";
 import { CritDistribution } from "./tools/CritDistribution";
 import { DamageBreakdown } from "./tools/DamageBreakdown";
+import { ActionOrder } from "./tools/battle/ActionOrder";
+import { BatchSim } from "./tools/battle/BatchSim";
+import { BattleStepper } from "./tools/battle/BattleStepper";
+import { BreakCurves, EnergyCurves } from "./tools/battle/BattleCurves";
+import { StatusEditor } from "./tools/battle/StatusEditor";
 import { Badge } from "./ui";
 import { useProject, type Updater } from "./useProject";
 import type { Project } from "@ggt/core";
@@ -11,6 +16,12 @@ const IMPLEMENTED: Record<string, ComponentType<{ project: Project; update: Upda
   "damage.breakdown": DamageBreakdown,
   "damage.composer": Composer,
   "damage.crit-dist": CritDistribution,
+  "action.order": ActionOrder,
+  "action.energy": EnergyCurves,
+  "status.break": BreakCurves,
+  "status.effects": StatusEditor,
+  "sim.step": BattleStepper,
+  "sim.batch": BatchSim,
 };
 
 const STATUS_TONE: Record<ToolStatus, "ok" | "warn" | "info" | "muted"> = { available: "ok", experimental: "warn", researching: "info", planned: "muted" };

@@ -1,12 +1,24 @@
 /**
  * Project file format. Always carries schemaVersion; loadProject migrates older versions forward.
  */
-import type { DamageConfig, Scenario } from "./damage";
+import type { BattleSetup } from "./battle/engine";
+import type { AllyPolicy, BattleRules, EncounterDef, StatusDef, UnitDef } from "./battle/types";
+import { DAMAGE_COMPONENTS } from "./library/damage-components";
+import { composeRules, type DamageConfig, type Scenario } from "./damage";
 import { validateExpr } from "./expr";
 import { configFromTemplate, defaultScenario } from "./library/damage-components";
+import { DEFAULT_BATTLE_RULES, DEFAULT_ENCOUNTER, DEFAULT_POLICY_CONFIG, DEFAULT_STATUSES, DEFAULT_UNITS } from "./library/battle-content";
 
-export const SCHEMA_VERSION = 1;
-export const RULES_VERSION = "0.3.0";
+export const SCHEMA_VERSION = 2;
+export const RULES_VERSION = "0.4.0";
+
+export interface BattleConfig {
+  rules: BattleRules;
+  units: UnitDef[];
+  statuses: StatusDef[];
+  encounter: EncounterDef;
+  policy: AllyPolicy;
+}
 
 export interface Project {
   schemaVersion: number;
@@ -17,6 +29,13 @@ export interface Project {
     config: DamageConfig;
     scenarios: { A: Scenario; B: Scenario };
   };
+  battle: BattleConfig;
+}
+
+export function defaultBattleConfig(): BattleConfig {
+  return JSON.parse(
+    JSON.stringify({ rules: DEFAULT_BATTLE_RULES, units: DEFAULT_UNITS, statuses: DEFAULT_STATUSES, encounter: DEFAULT_ENCOUNTER, policy: DEFAULT_POLICY_CONFIG }),
+  ) as BattleConfig;
 }
 
 export function newProject(name = "未命名專案"): Project {
@@ -29,6 +48,18 @@ export function newProject(name = "未命名專案"): Project {
     name,
     seed: 12345,
     damage: { config: configFromTemplate("tpl.weakness-break"), scenarios: { A: defaultScenario("方案 A"), B: b } },
+    battle: defaultBattleConfig(),
+  };
+}
+
+/** The battle uses the project's damage formula, so edits in the composer flow into simulations. */
+export function battleSetupOf(p: Project): BattleSetup {
+  return {
+    damage: composeRules(p.damage.config, DAMAGE_COMPONENTS),
+    rules: p.battle.rules,
+    statuses: p.battle.statuses,
+    units: p.battle.units,
+    encounter: p.battle.encounter,
   };
 }
 
@@ -37,7 +68,10 @@ export class ProjectError extends Error {}
 type Migration = (p: Record<string, unknown>) => Record<string, unknown>;
 
 /** MIGRATIONS[n] upgrades schemaVersion n to n + 1. */
-const MIGRATIONS: Record<number, Migration> = {};
+const MIGRATIONS: Record<number, Migration> = {
+  // v1 → v2: battle section added (M3). Older projects get the default roster.
+  1: (p) => ({ ...p, battle: defaultBattleConfig() }),
+};
 
 export function loadProject(raw: unknown): Project {
   if (raw === null || typeof raw !== "object") throw new ProjectError("檔案內容不是專案物件");
@@ -73,6 +107,13 @@ function validateProject(p: Record<string, unknown>): string[] {
     const s = sc?.[key];
     if (!s || typeof s !== "object" || !s.skill || !Array.isArray(s.skill.hits)) errs.push(`damage.scenarios.${key} 格式錯誤`);
     else for (const m of s.modifiers ?? []) if (m.condition) errs.push(...validateExpr(m.condition, `modifier.${m.id}`));
+  }
+  const b = p.battle as BattleConfig | undefined;
+  if (!b || typeof b !== "object") return [...errs, "缺少 battle"];
+  if (!b.rules || !Array.isArray(b.units) || !Array.isArray(b.statuses) || !b.encounter) errs.push("battle 格式錯誤");
+  else {
+    errs.push(...validateExpr(b.rules.breakDamage, "battle.rules.breakDamage"));
+    for (const u of b.units) for (const r of u.ai ?? []) if (r.when) errs.push(...validateExpr(r.when, `ai.${u.id}.${r.skillId}`));
   }
   return errs;
 }

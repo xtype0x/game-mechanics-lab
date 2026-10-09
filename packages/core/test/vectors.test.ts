@@ -13,8 +13,14 @@ import {
   DAMAGE_TEMPLATES,
   RULES_VERSION,
   Rng,
+  DEFAULT_BATTLE_RULES,
   analyzeDamage,
+  autoPlay,
+  battleSetupOf,
   checkCompat,
+  createBattle,
+  newProject,
+  predictTimeline,
   composeRules,
   sampleDamage,
   type DamageConfig,
@@ -191,7 +197,38 @@ function damageVectors() {
   return { rulesVersion: RULES_VERSION, components: DAMAGE_COMPONENTS, templates: DAMAGE_TEMPLATES, cases, compat };
 }
 
-const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors };
+function battleVectors() {
+  const timeline = [
+    { cycles: 3, units: [{ uid: "A", name: "A", team: "ally" as const, slot: 0, spd: 100 }, { uid: "B", name: "B", team: "enemy" as const, slot: 0, spd: 150 }] },
+    { cycles: 4, units: [{ uid: "A1", name: "A1", team: "ally" as const, slot: 0, spd: 134 }, { uid: "A2", name: "A2", team: "ally" as const, slot: 1, spd: 105 }, { uid: "E1", name: "E1", team: "enemy" as const, slot: 0, spd: 83 }] },
+  ].map((c) => {
+    const rules = { avBase: DEFAULT_BATTLE_RULES.avBase, firstCycleAv: DEFAULT_BATTLE_RULES.firstCycleAv, cycleAv: DEFAULT_BATTLE_RULES.cycleAv };
+    return { input: { rules, ...c }, expected: predictTimeline(rules, c.units, c.cycles) };
+  });
+
+  const project = newProject();
+  const battles = [
+    { id: "normal/seed-1", enemies: ["bat", "golem", "bat"], seed: 1 },
+    { id: "sentinel/seed-abc", enemies: ["sentinel", "golem", "sentinel"], seed: "abc" },
+    { id: "boss/seed-7", enemies: ["colossus"], seed: 7 },
+    // Fragile enemies: kills mid-skill exercise the "dead chosen target is not replaced" rule.
+    { id: "fragile/seed-3", enemies: ["bat", "bat", "bat"], seed: 3, batHp: 1500 },
+  ].map(({ id, enemies, seed, batHp }: { id: string; enemies: string[]; seed: number | string; batHp?: number }) => {
+    const p = structuredClone(project);
+    p.battle.encounter.enemies = enemies;
+    if (batHp) p.battle.units.find((u) => u.id === "bat")!.stats.hp = batHp;
+    const setup = battleSetupOf(p);
+    const end = autoPlay(setup, createBattle(setup, seed), p.battle.policy);
+    return {
+      id,
+      input: { damageConfig: p.damage.config, battle: p.battle, seed },
+      expected: { result: end.result, cycle: end.cycle, turns: end.turns, time: end.time, sp: end.sp, units: end.units, events: end.events },
+    };
+  });
+  return { rulesVersion: RULES_VERSION, timeline, battles };
+}
+
+const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors };
 
 describe("test vectors", () => {
   for (const [name, gen] of Object.entries(SUITES)) {

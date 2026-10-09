@@ -73,7 +73,7 @@ export interface DamageConfig {
   customFlags?: FlagDef[];
 }
 
-export type SkillType = "basic" | "skill" | "ultimate" | "followup";
+export type SkillType = "basic" | "skill" | "ultimate" | "followup" | "dot";
 
 export interface Skill {
   name: string;
