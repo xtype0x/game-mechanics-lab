@@ -5,7 +5,7 @@
  * from the three RNG streams stored in the state, so (setup, seed, actions) fully determines a battle.
  */
 import { computeHit, critChanceOf, resolveStats, type DamageRules, type Scenario } from "../damage";
-import { evalBool, evalNumber, objectScope, type Scope } from "../expr";
+import { evalBool, evalNumber, objectScope, type Scope, type Value } from "../expr";
 import { applyRounding, resolveValue, type Modifier } from "../modifier";
 import { Rng } from "../rng";
 import type {
@@ -17,6 +17,8 @@ import type {
   DamageScale,
   EncounterDef,
   Effect,
+  Num,
+  PassiveDef,
   PhaseDef,
   SkillDef,
   StatusDef,
@@ -94,11 +96,14 @@ export function createBattle(setup: BattleSetup, seed: number | string): BattleS
       crit: new Rng(seed, "battle.crit").snapshot(),
       status: new Rng(seed, "battle.status").snapshot(),
       ai: new Rng(seed, "battle.ai").snapshot(),
+      proc: new Rng(seed, "battle.proc").snapshot(),
     },
     phase: "await",
     events: [{ t: "cycle", cycle: 1, time: 0 }],
   };
   for (const u of state.units) u.av = fullAv(setup, u);
+  // battleStart passives run before the first turn; nothing happens when no unit has one (spec §16.8).
+  if (state.units.some((u) => (defOf(setup, u).passives ?? []).some((p) => p.on === "battleStart"))) processTriggers(setup, state, 0, true);
   return run(setup, state);
 }
 
@@ -136,7 +141,7 @@ function statusMods(setup: BattleSetup, u: UnitState, side: "attacker" | "defend
       let k = 1;
       if (m.when || m.scaleBy) {
         if (!ctx) return;
-        scope ??= unitScope(ctx.state, u, ctx.other);
+        scope ??= unitScope(setup, ctx.state, u, ctx.other);
         if (m.when && !evalBool(m.when, scope)) return;
         if (m.scaleBy && (m.op === "add" || m.op === "pct")) k = evalNumber(m.scaleBy, scope);
       }
@@ -467,7 +472,7 @@ const NO_TARGET = { exists: false, isFoe: false, hpPct: 0, broken: false, energy
  * Scope for AI rules and passive conditions. "allies"/"foes" are relative to u's team. `subject` is the
  * passive's trigger subject (spec §14.1); AI rules have none, so target.* reads as "no target".
  */
-function unitScope(state: BattleState, u: UnitState, subject?: UnitState): Scope {
+function unitScope(setup: BattleSetup, state: BattleState, u: UnitState, subject?: UnitState, extra?: Record<string, Value>): Scope {
   const foeTeam = u.team === "ally" ? "enemy" : "ally";
   const base = objectScope({
     self: unitVars(state, u),
@@ -476,13 +481,33 @@ function unitScope(state: BattleState, u: UnitState, subject?: UnitState): Scope
   });
   // Dynamic keys (spec §13.11, §14.1): unknown counters and absent statuses read as 0.
   return (path) => {
+    if (extra && Object.prototype.hasOwnProperty.call(extra, path)) return extra[path];
     for (const [prefix, who] of [["self.", u], ["target.", subject]] as const) {
       if (!path.startsWith(prefix)) continue;
       const rest = path.slice(prefix.length);
       if (rest.startsWith("counter.")) return who?.counters[rest.slice(8)] ?? 0;
       if (rest.startsWith("status.")) return who?.statuses.find((s) => s.statusId === rest.slice(7))?.stacks ?? 0;
+      // Rules 0.9 (spec §16.7): tag sums and buff/debuff counts.
+      if (rest.startsWith("tag.")) {
+        const tag = rest.slice(4);
+        return who ? who.statuses.reduce((a, s) => (statusDef(setup, s.statusId).tags?.includes(tag) ? a + s.stacks : a), 0) : 0;
+      }
+      if (rest === "buffs" || rest === "debuffs") {
+        const kind = rest === "buffs" ? "buff" : "debuff";
+        return who ? who.statuses.filter((s) => statusDef(setup, s.statusId).kind === kind).length : 0;
+      }
     }
     if (path.startsWith("battle.count.")) return alive(state).filter((x) => x.defId === path.slice(13)).length;
+    if (path.startsWith("battle.holders.")) {
+      const id = path.slice(15);
+      return fielded(state).filter((x) => x.statuses.some((s) => s.statusId === id)).length;
+    }
+    if (path.startsWith("battle.maxStacks.")) {
+      const id = path.slice(17);
+      let best = 0;
+      for (const x of alive(state)) for (const s of x.statuses) if (s.statusId === id && s.stacks > best) best = s.stacks;
+      return best;
+    }
     return base(path);
   };
 }
@@ -490,7 +515,7 @@ function unitScope(state: BattleState, u: UnitState, subject?: UnitState): Scope
 function enemyAction(setup: BattleSetup, state: BattleState, u: UnitState): { skill: SkillDef; targetUid?: string } {
   const def = defOf(setup, u);
   const rng = Rng.fromState(state.rng.ai);
-  const scope = unitScope(state, u);
+  const scope = unitScope(setup, state, u);
   const rules = (def.ai ?? []).filter((r) => r.weight > 0 && (!r.when || evalBool(r.when, scope)) && def.skills.some((s) => s.id === r.skillId));
   let skill = def.skills[0]!;
   const queued = u.nextSkill !== undefined ? def.skills.find((s) => s.id === u.nextSkill) : undefined;
@@ -541,12 +566,55 @@ interface QueuedTrigger {
   targetUid?: string;
 }
 
-function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
+/** A number or formula as a plain number; a non-finite formula result counts as 0 (spec §16.1). */
+function numOf(n: Num, scope: Scope): number {
+  if (typeof n === "number") return n;
+  const v = evalNumber(n, scope);
+  return Number.isFinite(v) ? v : 0;
+}
+
+/** Probability gate on the proc stream: p ≥ 1 passes without a draw, otherwise exactly one draw (spec §16.3). */
+function procPasses(state: BattleState, p: number): boolean {
+  if (p >= 1) return true;
+  const rng = Rng.fromState(state.rng.proc);
+  const ok = rng.chance(p);
+  state.rng.proc = rng.snapshot();
+  return ok;
+}
+
+/** Whether the actor of an `action` event satisfies PassiveDef.actor relative to the holder (spec §16.8). */
+function actorMatches(rel: PassiveDef["actor"], holder: UnitState, actorTeam: string | undefined, actorUid: string): boolean {
+  switch (rel ?? "any") {
+    case "self": return actorUid === holder.uid;
+    case "ally": return actorTeam === holder.team;
+    case "otherAlly": return actorTeam === holder.team && actorUid !== holder.uid;
+    case "foe": return actorTeam !== holder.team;
+    case "any": return true;
+  }
+}
+
+/** `battleStart` true: seed the queue from battleStart passives instead of scanning events (spec §16.8). */
+function processTriggers(setup: BattleSetup, state: BattleState, from: number, battleStart = false) {
   const queue: QueuedTrigger[] = [];
   const teamOf = (uid: string) => state.units.find((u) => u.uid === uid)?.team;
   const holders = () => [...alive(state, "ally"), ...alive(state, "enemy")].sort((a, b) => (a.team === b.team ? a.slot - b.slot : a.team === "ally" ? -1 : 1));
 
+  /** limitPerTurn → when → chance → count and queue (spec §12.1, §16.3). */
+  const tryQueue = (u: UnitState, p: PassiveDef, targetUid: string | undefined, subject: string | undefined) => {
+    const used = u.passiveUses[p.id] ?? 0;
+    if (p.limitPerTurn > 0 && used >= p.limitPerTurn) return;
+    if (p.when || p.chance !== undefined) {
+      const scope = unitScope(setup, state, u, subject === undefined ? undefined : state.units.find((x) => x.uid === subject));
+      if (p.when && !evalBool(p.when, scope)) return;
+      if (p.chance !== undefined && !procPasses(state, numOf(p.chance, scope))) return;
+    }
+    u.passiveUses[p.id] = used + 1;
+    queue.push({ uid: u.uid, passiveId: p.id, targetUid });
+  };
+
   const scan = (start: number, end: number) => {
+    // allyDamaged: one match per passive and victim within this scan range (spec §16.8).
+    const damaged = new Set<string>();
     for (let k = start; k < end; k++) {
       const e = state.events[k]!;
       for (const u of holders()) {
@@ -563,19 +631,29 @@ function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
           else if (p.on === "phaseChange" && e.t === "phase" && e.uid === u.uid) { match = true; }
           else if (p.on === "counterChange" && e.t === "counter" && e.uid === u.uid) { match = true; }
           else if (p.on === "allyHit" && e.t === "damage" && e.kind === "hit" && teamOf(e.src) === u.team && teamOf(e.dst) !== u.team) { match = true; targetUid = e.dst; }
+          // Rules 0.9 triggers (spec §16.8).
+          else if (p.on === "action" && e.t === "action" && actorMatches(p.actor, u, teamOf(e.uid), e.uid)
+            && (!p.skillTypes || p.skillTypes.includes(e.skillType)) && (!p.skillIds || p.skillIds.includes(e.skillId))
+            && (p.actorDefId === undefined || state.units.find((x) => x.uid === e.uid)?.defId === p.actorDefId)) { match = true; targetUid = e.targetUid; }
+          else if (p.on === "allyDamaged" && e.t === "damage" && e.kind === "hit" && teamOf(e.dst) === u.team && teamOf(e.src) !== u.team) {
+            const key = `${u.uid}|${p.id}|${e.dst}`;
+            if (!damaged.has(key)) { damaged.add(key); match = true; targetUid = e.src; subject = e.dst; }
+          }
+          else if (p.on === "unitEnter" && e.t === "summon") { match = true; subject = e.uid; }
+          else if (p.on === "unitLeave" && (e.t === "death" || e.t === "dismiss")) { match = true; subject = e.uid; }
+          else if (p.on === "revived" && e.t === "revive") { match = true; subject = e.uid; }
           if (!match) continue;
+          // action: the condition subject is the action's target, like the chosen target (spec §16.8).
           subject ??= targetUid;
-          const used = u.passiveUses[p.id] ?? 0;
-          if (p.limitPerTurn > 0 && used >= p.limitPerTurn) continue;
-          if (p.when && !evalBool(p.when, unitScope(state, u, subject === undefined ? undefined : state.units.find((x) => x.uid === subject)))) continue;
-          u.passiveUses[p.id] = used + 1;
-          queue.push({ uid: u.uid, passiveId: p.id, targetUid });
+          tryQueue(u, p, targetUid, subject);
         }
       }
     }
   };
 
-  scan(from, state.events.length);
+  if (battleStart) {
+    for (const u of holders()) for (const p of defOf(setup, u).passives ?? []) if (p.on === "battleStart") tryQueue(u, p, undefined, undefined);
+  } else scan(from, state.events.length);
   for (let budget = MAX_FOLLOWUPS_PER_ACTION; queue.length && budget > 0; budget--) {
     if (checkEnd(setup, state)) return;
     const q = queue.shift()!;
@@ -596,7 +674,7 @@ function processTriggers(setup: BattleSetup, state: BattleState, from: number) {
 // Skill resolution
 // ---------------------------------------------------------------------------
 
-function resolveTargets(setup: BattleSetup, state: BattleState, actor: UnitState, mode: TargetMode, chosen: string | undefined): { main: UnitState[]; adjacent: UnitState[] } {
+function resolveTargets(setup: BattleSetup, state: BattleState, actor: UnitState, mode: TargetMode, chosen: string | undefined, victim?: UnitState): { main: UnitState[]; adjacent: UnitState[] } {
   const { foes, friends } = sidesOf(setup, state, actor);
   // A chosen target that died earlier in this action is not replaced: later effects on it are skipped.
   const chosenDead = chosen !== undefined && state.units.some((u) => u.uid === chosen && !u.alive);
@@ -613,6 +691,8 @@ function resolveTargets(setup: BattleSetup, state: BattleState, actor: UnitState
     case "self": return { main: [actor], adjacent: [] };
     case "ally": { const t = pick(friends, actor); return { main: t ? [t] : [], adjacent: [] }; }
     case "allAllies": return { main: friends, adjacent: [] };
+    // Only meaningful inside a damage effect's onHit; elsewhere there is no victim (spec §16.5).
+    case "victim": return { main: victim?.alive ? [victim] : [], adjacent: [] };
   }
 }
 
@@ -627,22 +707,82 @@ function execute(setup: BattleSetup, state: BattleState, actor: UnitState, skill
   if (skill.type === "ultimate") setEnergy(state, actor, 0);
   setEnergy(state, actor, actor.energy + skill.energyGain);
 
-  const hitByThisAction = new Set<UnitState>();
-  const element = skill.element ?? actor.element;
-  for (const eff of skill.effects) {
-    if (eff.kind === "summon" || eff.kind === "dismiss" || eff.kind === "sp") {
-      applyUntargeted(setup, state, actor, eff);
-      continue;
-    }
-    const { main, adjacent } = resolveTargets(setup, state, actor, eff.target, chosen);
-    const all: [UnitState, boolean][] = [...main.map((u) => [u, false] as [UnitState, boolean]), ...adjacent.map((u) => [u, true] as [UnitState, boolean])];
-    for (const [target, isAdj] of all) {
-      if (!target.alive) continue;
-      applyEffect(setup, state, actor, skill, element, eff, target, isAdj);
-      if (eff.kind === "damage" && target.team !== actor.team) hitByThisAction.add(target);
-    }
+  const ctx: ExecCtx = { actor, skill, element: skill.element ?? actor.element, chosen, hitBy: new Set<UnitState>() };
+  for (const eff of skill.effects) runEffect(setup, state, ctx, eff);
+  for (const t of ctx.hitBy) if (t.alive && t.team === "ally") setEnergy(state, t, t.energy + setup.rules.energyOnHitTaken);
+}
+
+/** What the effects of one skill execution share (spec §5 step 4, §16.1). */
+interface ExecCtx {
+  actor: UnitState;
+  skill: SkillDef;
+  element: string;
+  chosen: string | undefined;
+  /** The "hit set": opposing units that took a damage effect in this action, in insertion order. */
+  hitBy: Set<UnitState>;
+}
+
+/** The hit being processed while an onHit rider runs (spec §16.5). */
+interface HitInfo {
+  victim: UnitState;
+  index: number;
+  isLast: boolean;
+  crit: boolean;
+  killed: boolean;
+  broke: boolean;
+  amount: number;
+}
+
+/** Evaluates a Num field in the effect scope; created only for effects that pass `when` and `chance`. */
+type NumEval = (n: Num) => number;
+
+/**
+ * `when`, then the proc gate, for one target (spec §16.2, §16.3). Returns the evaluator for the effect's Num
+ * fields, or undefined when the effect is skipped for this target. The scope is built lazily, so effects
+ * with plain numbers and no gates cost nothing extra.
+ */
+function gateEffect(
+  setup: BattleSetup, state: BattleState, ctx: ExecCtx, eff: Effect, target: UnitState | undefined,
+  pos: { targets: number; index: number; adjacent: boolean }, hit: HitInfo | undefined,
+): NumEval | undefined {
+  let scope: Scope | undefined;
+  const sc = (): Scope => {
+    if (scope) return scope;
+    const extra: Record<string, Value> = { "effect.targets": pos.targets, "effect.index": pos.index, "effect.adjacent": pos.adjacent, "action.hitCount": ctx.hitBy.size };
+    if (hit) Object.assign(extra, { "hit.index": hit.index, "hit.isLast": hit.isLast, "hit.crit": hit.crit, "hit.killed": hit.killed, "hit.broke": hit.broke, "hit.amount": hit.amount });
+    return (scope = unitScope(setup, state, ctx.actor, target, extra));
+  };
+  if (eff.when && !evalBool(eff.when, sc())) return undefined;
+  if (eff.kind !== "status" && eff.chance !== undefined && !procPasses(state, numOf(eff.chance, sc()))) return undefined;
+  return (n) => (typeof n === "number" ? n : numOf(n, sc()));
+}
+
+/** One effect of a skill (or onHit rider): decide targets, then gate and apply per target. */
+function runEffect(setup: BattleSetup, state: BattleState, ctx: ExecCtx, eff: Effect, hit?: HitInfo) {
+  const { actor } = ctx;
+  if (eff.kind === "summon" || eff.kind === "dismiss" || eff.kind === "sp") {
+    const ev = gateEffect(setup, state, ctx, eff, undefined, { targets: 0, index: 0, adjacent: false }, hit);
+    if (ev) applyUntargeted(setup, state, actor, eff, ev);
+    return;
   }
-  for (const t of hitByThisAction) if (t.alive && t.team === "ally") setEnergy(state, t, t.energy + setup.rules.energyOnHitTaken);
+  const { main, adjacent } = resolveTargets(setup, state, actor, eff.target, ctx.chosen, hit?.victim);
+  const all: [UnitState, boolean][] = [...main.map((u) => [u, false] as [UnitState, boolean]), ...adjacent.map((u) => [u, true] as [UnitState, boolean])].filter(([u]) => u.alive);
+  for (let index = 0; index < all.length; index++) {
+    const [target, isAdj] = all[index]!;
+    if (!target.alive) continue;
+    const ev = gateEffect(setup, state, ctx, eff, target, { targets: all.length, index, adjacent: isAdj }, hit);
+    if (!ev) continue;
+    applyEffect(setup, state, ctx, eff, target, isAdj, ev, hit !== undefined);
+    if (eff.kind === "damage" && target.team !== actor.team) ctx.hitBy.add(target);
+  }
+}
+
+/** Sets a counter, with an event when it changed (spec §13.9). */
+function setCounter(state: BattleState, u: UnitState, key: string, after: number) {
+  const before = u.counters[key] ?? 0;
+  if (after === before) return;
+  u.counters[key] = after;
+  state.events.push({ t: "counter", uid: u.uid, key, before, after });
 }
 
 function setEnergy(state: BattleState, u: UnitState, value: number) {
@@ -651,52 +791,66 @@ function setEnergy(state: BattleState, u: UnitState, value: number) {
   if (u.energy !== before) state.events.push({ t: "energy", uid: u.uid, before, after: u.energy });
 }
 
-function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, skill: SkillDef, element: string, eff: Effect, target: UnitState, isAdj: boolean) {
+function applyEffect(setup: BattleSetup, state: BattleState, ctx: ExecCtx, eff: Effect, target: UnitState, isAdj: boolean, ev: NumEval, inRider: boolean) {
+  const { actor, skill, element } = ctx;
   switch (eff.kind) {
     case "damage": {
       const hits = eff.hits ?? [1];
-      const multiplier = isAdj ? (eff.adjMultiplier ?? 0) : eff.multiplier;
-      const toughness = isAdj ? (eff.adjToughness ?? 0) : eff.toughness;
-      const crng = Rng.fromState(state.rng.crit);
+      // Evaluated once, before the first hit (spec §16.1).
+      const multiplier = ev(isAdj ? (eff.adjMultiplier ?? 0) : eff.multiplier);
+      const toughness = ev(isAdj ? (eff.adjToughness ?? 0) : eff.toughness);
       for (let i = 0; i < hits.length && target.alive; i++) {
         const sc = scenarioFor(setup, state, scaledAttacker(setup, state, actor, target, eff.scale), target, { name: skill.name, type: skill.type, element, multiplier, hits });
         const stats = resolveStats(setup.damage, sc);
         const p = critChanceOf(setup.damage, sc, stats);
-        // One crit draw per hit, always consumed (spec battle.md §5).
+        // One crit draw per hit, always consumed (spec battle.md §5). The stream is stored right after the draw
+        // because onHit riders may draw from it too.
+        const crng = Rng.fromState(state.rng.crit);
         const crit = crng.chance(p);
+        state.rng.crit = crng.snapshot();
         const hit = computeHit(setup.damage, sc, stats, i, crit);
+        const evStart = state.events.length;
         dealDamage(setup, state, actor.uid, target, hit.damage, crit, "hit", skill.id);
         if (target.alive) reduceToughness(setup, state, actor, target, element, toughness * hits[i]!);
+        if (eff.onHit?.length && !inRider) {
+          const evs = state.events.slice(evStart);
+          const info: HitInfo = {
+            victim: target, index: i, isLast: i === hits.length - 1, crit,
+            killed: evs.some((x) => x.t === "death" && x.uid === target.uid),
+            broke: evs.some((x) => x.t === "break" && x.dst === target.uid),
+            amount: (evs[0] as Extract<BattleEvent, { t: "damage" }>).amount,
+          };
+          for (const r of eff.onHit) runEffect(setup, state, ctx, r, info);
+        }
       }
-      state.rng.crit = crng.snapshot();
       break;
     }
     case "heal": {
       const base = eff.scale === "atk" ? unitStat(setup, actor, "atk") : target.maxHp;
       // Heal bonuses (spec §5.4): both default to 0, leaving the amount unchanged.
       const factor = (1 + unitStat(setup, actor, "healBonus")) * (1 + unitStat(setup, target, "healTaken"));
-      const amount = applyRounding((base * eff.multiplier + eff.flat) * factor, setup.rules.rounding);
+      const amount = applyRounding((base * ev(eff.multiplier) + ev(eff.flat)) * factor, setup.rules.rounding);
       const before = target.hp;
       target.hp = Math.min(target.maxHp, target.hp + amount);
       state.events.push({ t: "heal", src: actor.uid, dst: target.uid, amount: target.hp - before });
       break;
     }
     case "status":
-      applyStatus(setup, state, actor, target, eff.statusId, eff.chance);
+      applyStatus(setup, state, actor, target, eff.statusId, ev(eff.chance));
       break;
     case "advance": {
       const before = target.av;
-      target.av = Math.max(0, target.av - fullAv(setup, target) * eff.amount);
+      target.av = Math.max(0, target.av - fullAv(setup, target) * ev(eff.amount));
       state.events.push({ t: "advance", uid: target.uid, before, after: target.av });
       break;
     }
     case "energy":
-      setEnergy(state, target, target.energy + eff.amount);
+      setEnergy(state, target, target.energy + ev(eff.amount));
       break;
     case "dispel": {
       const matching = target.statuses.filter((s) => {
         const d = statusDef(setup, s.statusId);
-        return d.kind === eff.statusKind && d.dispellable !== false;
+        return d.kind === eff.statusKind && d.dispellable !== false && (eff.tag === undefined || !!d.tags?.includes(eff.tag));
       });
       // Most recent first (spec §13.7).
       const removed = (eff.count > 0 ? matching.slice(-eff.count) : matching).reverse();
@@ -707,13 +861,16 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
       });
       break;
     }
-    case "detonate":
+    case "detonate": {
+      const ratio = ev(eff.ratio);
       for (const inst of [...target.statuses]) {
         const def = statusDef(setup, inst.statusId);
         if (!def.dot || !target.alive || (eff.statusId !== undefined && inst.statusId !== eff.statusId)) continue;
-        dealDamage(setup, state, inst.sourceUid, target, dotDamage(setup, state, target, inst, def, eff.ratio), false, "dot");
+        if (eff.tag !== undefined && !def.tags?.includes(eff.tag)) continue;
+        dealDamage(setup, state, inst.sourceUid, target, dotDamage(setup, state, target, inst, def, ratio), false, "dot");
       }
       break;
+    }
     case "queueSkill":
       if (defOf(setup, target).skills.some((s) => s.id === eff.skillId)) {
         target.nextSkill = eff.skillId;
@@ -721,12 +878,44 @@ function applyEffect(setup: BattleSetup, state: BattleState, actor: UnitState, s
       }
       break;
     case "counter": {
-      const before = target.counters[eff.key] ?? 0;
-      const after = eff.op === "add" ? before + eff.value : eff.value;
-      if (after !== before) {
-        target.counters[eff.key] = after;
-        state.events.push({ t: "counter", uid: target.uid, key: eff.key, before, after });
+      const value = ev(eff.value);
+      setCounter(state, target, eff.key, eff.op === "add" ? (target.counters[eff.key] ?? 0) + value : value);
+      break;
+    }
+    case "hpCost": {
+      const before = target.hp;
+      const ratio = ev(eff.ratio);
+      if (eff.op === "set") target.hp = Math.min(target.maxHp, Math.max(1, applyRounding(target.maxHp * ratio, setup.rules.rounding)));
+      else {
+        // The floor is at least 1 and the amount at least 0: a cost never kills or heals (spec §16.4).
+        const amount = Math.max(0, applyRounding((eff.basis === "hp" ? target.hp : target.maxHp) * ratio, setup.rules.rounding));
+        target.hp = Math.max(Math.min(target.hp, Math.max(1, eff.floor ?? 1)), target.hp - amount);
       }
+      if (target.hp !== before) state.events.push({ t: "hp", uid: target.uid, before, after: target.hp });
+      if (eff.storeAs !== undefined) setCounter(state, target, eff.storeAs, (target.counters[eff.storeAs] ?? 0) + (before - target.hp));
+      break;
+    }
+    case "statusAdjust": {
+      const inst = target.statuses.find((s) => s.statusId === eff.statusId);
+      if (!inst) break;
+      const def = statusDef(setup, eff.statusId);
+      if (eff.op === "turns" && def.duration === 0) break;
+      const value = ev(eff.value);
+      const old = inst.stacks;
+      let removed = false;
+      preservingDistance(setup, target, () => {
+        if (eff.op === "turns") {
+          inst.turnsLeft += value;
+          removed = inst.turnsLeft <= 0;
+        } else {
+          inst.stacks = Math.min(def.maxStacks, Math.max(0, eff.op === "add" ? inst.stacks + value : value));
+          removed = inst.stacks <= 0;
+        }
+        if (!removed) return;
+        target.statuses = target.statuses.filter((s) => s !== inst);
+        state.events.push({ t: "status", src: actor.uid, dst: target.uid, statusId: eff.statusId, result: "consumed" });
+      });
+      if (eff.storeAs !== undefined) setCounter(state, actor, eff.storeAs, old - (removed ? 0 : inst.stacks));
       break;
     }
     case "summon":
@@ -752,11 +941,11 @@ function scaleValue(setup: BattleSetup, u: UnitState, scale: DamageScale): numbe
   return scale === "hp" ? u.maxHp : unitStat(setup, u, scale);
 }
 
-function applyUntargeted(setup: BattleSetup, state: BattleState, actor: UnitState, eff: UntargetedEffect) {
+function applyUntargeted(setup: BattleSetup, state: BattleState, actor: UnitState, eff: UntargetedEffect, ev: NumEval) {
   switch (eff.kind) {
     case "sp": {
       const before = state.sp;
-      state.sp = Math.min(setup.rules.spMax, Math.max(0, state.sp + eff.amount));
+      state.sp = Math.min(setup.rules.spMax, Math.max(0, state.sp + ev(eff.amount)));
       state.events.push({ t: "sp", before, after: state.sp });
       break;
     }
@@ -895,6 +1084,7 @@ function reduceToughness(setup: BattleSetup, state: BattleState, actor: UnitStat
 }
 
 function applyStatus(setup: BattleSetup, state: BattleState, actor: UnitState, target: UnitState, statusId: string, chance: number) {
+  // `chance` has been evaluated already (a formula result counts as 0 when not finite).
   const def = statusDef(setup, statusId);
   let p = chance;
   if (def.kind === "debuff" && target.team !== actor.team) {

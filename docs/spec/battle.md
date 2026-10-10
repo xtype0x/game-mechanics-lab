@@ -1,6 +1,6 @@
 # 回合戰鬥規格
 
-規則版本 0.8.0（§13 擴充機制、§14 觸發對象、支配與行動條事件、§15 條件式修正、受控判負與依目標生命的傷害）。
+規則版本 0.9.0（§13 擴充機制、§14 觸發對象、支配與行動條事件、§15 條件式修正、受控判負與依目標生命的傷害、§16 表達式數值、效果條件、生命消耗、命中附帶與更多觸發）。
 
 戰鬥直接使用專案的傷害規則（damage.md）計算每段命中。所有狀態都是純 JSON；給定（設定, 種子, 行動序列）結果完全確定。
 
@@ -15,7 +15,7 @@
 1. 依 `allies` 再 `enemies` 的順序建立單位：`uid` = `A<i+1>`／`E<i+1>`，`slot` = i。
 2. `hp = maxHp = stats.hp ?? 1`；`energy = stats.startEnergy ?? 0`；`maxEnergy = stats.maxEnergy ?? 0`；`toughness = maxToughness = stats.toughness ?? 0`；`broken = false`；`statuses = []`；`passiveUses = {}`；`phase = 1`；`counters = {}`。
 3. `sp = spStart`，`time = 0`，`cycle = 1`，`turns = 0`，事件 `[{cycle:1, time:0}]`。
-4. 亂數流：`Rng(seed, "battle.crit")`、`Rng(seed, "battle.status")`、`Rng(seed, "battle.ai")`。
+4. 亂數流：`Rng(seed, "battle.crit")`、`Rng(seed, "battle.status")`、`Rng(seed, "battle.ai")`，以及規則 0.9 起的 `Rng(seed, "battle.proc")`（§16.3；沒有使用機率閘門的內容不會抽它）。
 5. 每個單位 `av = fullAv(u)`，然後執行主迴圈（§4）。
 
 ## 3. 數值
@@ -392,3 +392,84 @@ AI 與被動條件可用：§6 的固定變數、`self.phase`、`self.shield`、
 
 ### 15.3 依目標生命的傷害
 傷害效果 `scale` 可為 `"targetMaxHp"` 或 `"targetHp"`：每段命中建立情境時，攻擊方 `atk` 取目標的 `maxHp`／目前 `hp`（該段命中**之前**的值），並照 §13.4 去掉攻擊方 `stat:attacker.atk` 修正。其他乘區（防禦、抗性、暴擊等）照常計算。護盾的 `scale` 不接受這兩個值。
+
+## 16. 表達式數值、效果條件、生命消耗、命中附帶與更多觸發（規則 v0.9）
+
+以下欄位全部選填；不使用時行為與 v0.8 完全相同（既有向量的事件逐筆不變）。這些是通用機制，用來拆解各種角色技能，不寫入任何特定遊戲的規則。
+
+### 16.1 數值可為表達式
+`Num = number | Expr`。下列欄位接受 `Num`：
+- `damage`：`multiplier`、`adjMultiplier`、`toughness`、`adjToughness`
+- `heal`：`multiplier`、`flat`；`advance.amount`；`energy.amount`；`counter.value`；`detonate.ratio`；`status.chance`
+- `sp.amount`；§16.4 的 `hpCost.ratio`、§16.6 的 `statusAdjust.value`
+
+**效果 scope**：§14.1 的被動 scope，`self` 為行動者，`target` 為**目前處理的目標**（不受支配影響地判斷 `isFoe`），另加：
+- `effect.targets`：本效果決定的目標總數（主目標＋相鄰目標，決定目標當下存活者）；
+- `effect.index`：目前目標在該列表中的位置（從 0 起，主目標在前）；
+- `effect.adjacent`：目前目標是否為相鄰目標；
+- `action.hitCount`：本行動至今「被擊中集合」（§5 步驟 4）的單位數；
+- 在命中附帶效果中（§16.5）另有 `hit.*`。
+沒有目標的效果（`summon`／`dismiss`／`sp`）求值時 `target` 為無對象、`effect.targets = 0`、`effect.index = 0`。命中附帶效果（§16.5）自己的 `effect.*` 指的是該附帶效果自己的目標列表。
+
+**求值時機**：對每個目標，在套用該效果**之前**求值一次（傷害效果所有段數共用同一個值，以第一段之前的狀態求值）。結果不是有限數時視為 0；之後照各效果原有的夾限（例如傷害公式的最低傷害、能量上限）。求值不抽亂數。
+
+### 16.2 效果條件
+`Effect.when?: Expr`（效果 scope）。對每個目標在 §16.1 求值之前判定；為假時略過該目標：不求數值、不抽亂數、不算入被擊中集合。沒有目標的效果判定一次。
+
+### 16.3 機率閘門
+`Effect.chance?: Num` 用於 `status` 以外的效果（`status` 效果的 `chance` 維持 §5.5 的意義）；`PassiveDef.chance?: Num`。
+- 新亂數流 `Rng(seed, "battle.proc")`，存在 `state.rng.proc`。
+- 效果：`when` 成立後、求數值前，`p = chance`；`p < 1` 時抽一次 `procRng.chance(p)`，失敗略過該目標；`p ≥ 1` 不抽。
+- 被動：§12.1 第 2 步（`when`）通過後抽，失敗則不入列、**不**計入 `passiveUses`。scope 同被動條件。
+
+### 16.4 生命消耗與設定
+`{kind: "hpCost", target, op: "lose" | "set", basis: "maxHp" | "hp", ratio: Num, floor?: number, storeAs?: string}`
+- `lose`：`amount = max(0, rounding(basis 值 × ratio))`，`hp = max(min(hp, floor), hp − amount)`（`floor` 預設 1，小於 1 時視為 1；消耗不會讓單位倒下，也不會回復生命）。
+- `set`：`hp = min(maxHp, max(1, rounding(maxHp × ratio)))`（`basis` 不使用）。
+- 不經過護盾、傷害公式與 `damage` 事件；`hp` 有變化時加入 `{t: "hp", uid, before, after}` 事件。
+- `storeAs`：把實際減少量（`before − after`，`set` 時可為負）**加**到目標的計數器 `storeAs`（照 §13.9 加入 `counter` 事件）。
+
+### 16.5 命中附帶效果
+傷害效果 `onHit?: Effect[]`：第 i 段處理完傷害與削韌（§5.2 第 4、5 步）後，**依序**執行這些效果，即使該段讓目標倒下。
+- 新目標模式 `victim`：本段的受害者（已倒下時照一般規則略過）。在命中附帶效果以外使用 `victim` 時目標為空。其他模式照 §5.1，`chosen` 與外層技能相同。
+- 變數：`hit.index`（第幾段，從 0 起）、`hit.isLast`、`hit.crit`、`hit.killed`（本段讓受害者倒下，即從本段傷害開始到削韌、擊破傷害結束之間產生了該受害者的 `death` 事件；被復活或進入下一階段不算）、`hit.broke`（本段造成擊破，即同一範圍內產生了 `break` 事件）、`hit.amount`（本段傷害事件的 amount）。
+- 附帶效果中的傷害效果不能再有 `onHit`（驗證錯誤）。附帶的傷害照常算入被擊中集合。
+
+### 16.6 調整狀態
+`{kind: "statusAdjust", target, statusId, op: "add" | "set" | "turns", value: Num, storeAs?: string}`。目標沒有該狀態時無效果。在保距離規則內：
+- `add`／`set`：`stacks = clamp(add ? stacks + value : value, 0, maxStacks)`；結果為 0 時移除實例。
+- `turns`：`duration == 0`（永久）時整個效果無效（含 `storeAs`）；否則 `turnsLeft += value`，結果 ≤ 0 時移除實例。
+- 層數或回合有變化時不加事件；**移除**時加入 status 事件，`result: "consumed"`（src = 行動者）。
+- `storeAs`：把「原層數 − 新層數」**設**到**行動者**的計數器 `storeAs`（§13.9，值不變時不加事件）。移除時新層數視為 0（`turns` 把回合扣到 ≤ 0 而移除時，等於原層數）；`turns` 沒有移除時層數不變，結果為 0。目標沒有該狀態時整個效果無效（含 `storeAs`）。
+
+### 16.7 狀態標籤與查詢
+`StatusDef.tags?: string[]`。單位變數（`self.*`、`target.*`，§14.1）新增：
+- `tag.<標籤>`：該單位所有帶此標籤的狀態實例層數總和；
+- `buffs`、`debuffs`：該單位的增益／減益實例數。
+場上變數：
+- `battle.holders.<狀態 ID>`：存活戰鬥單位（不含事件單位）中持有該狀態者的數量；
+- `battle.maxStacks.<狀態 ID>`：存活單位中該狀態的最高層數（沒有時為 0）。
+`dispel` 與 `detonate` 可加 `tag?: string`，只處理帶該標籤的狀態。驗證：查詢的狀態 ID 必須存在；標籤至少被一個狀態宣告，否則提醒。
+
+### 16.8 新觸發
+§12.1 的比對表新增：
+
+| on | 事件條件 | 追加攻擊的 chosen | 觸發對象 `target.*` |
+|---|---|---|---|
+| battleStart | 見下 | 無 | 無對象 |
+| action | `action`；行動者符合 `actor`；（有時）skillType 在 `skillTypes`、skillId 在 `skillIds`、行動者 defId 為 `actorDefId` | 該行動的 targetUid | 該行動的 targetUid |
+| allyDamaged | `damage`，kind 為 hit，dst 與持有者同隊（含自己）、src 與持有者異隊；**同一次掃描範圍內，同一被動對同一受害者只比對一次** | 攻擊者（src） | 受害者（dst） |
+| unitEnter | `summon` | 無 | 新單位 |
+| unitLeave | `death` 或 `dismiss` | 無 | 離場的單位（已不存活） |
+| revived | `revive` | 無 | 復活的單位 |
+
+- `PassiveDef.actor?: "self" | "ally" | "otherAlly" | "foe" | "any"`（只用於 `action`，預設 `"any"`）：`ally` 含自己、`otherAlly` 不含自己；隊伍依原本隊伍判斷。`skillTypes` 也適用於 `action`。
+- 「同一次掃描範圍」：頂層行動的事件，或一個追加攻擊的事件（§12.2 每次 `scan` 呼叫）。
+- **battleStart**：§2 第 5 步之後、主迴圈之前，若任何單位有 battleStart 被動：依 §12.1 的持有者順序與被動定義順序直接比對（`when`／`chance`／`limitPerTurn` 照常），入列後依 §12.2 執行佇列（含連鎖掃描與 20 次上限）。之後若 `checkEnd` 成立則結束，否則進入主迴圈。沒有 battleStart 被動時不做任何事（既有向量不變）。
+- 持有者本身離場時不在掃描的持有者列表中，所以不會以 `unitLeave` 觸發自己的被動。`unitLeave` 的對象是「已不存活」的單位：`dismiss` 離場者不會把 `hp` 歸零，求值時只有 `rank` 為 −1 與狀態已清除是保證的。
+- `allyDamaged` 的去重 key 是（持有者、被動、受害者），在比對成立或失敗之前就登記，所以之後被 `limitPerTurn`／`when`／`chance` 擋下也不會讓同一範圍內的後續命中再比對一次。
+- 同一個掃描範圍內，`action` 觸發也會比對追加攻擊自己的 `action` 事件；建議用 `skillTypes` 排除 `followup`，或設定 `limitPerTurn`。
+- 持續傷害與回合開始的事件仍不掃描（§12）。
+
+### 16.9 事件
+§10 新增：`hp`（uid, before, after；§16.4）；status 事件的 result 新增 `consumed`（§16.6）。

@@ -31,6 +31,8 @@ import {
   parseExpr,
   PROJECT_TEMPLATES,
   type Scenario,
+  type Effect,
+  type SkillDef,
   GACHA_RULES_VERSION,
   Gacha,
   DEMO_MODULES,
@@ -285,7 +287,102 @@ function battleVectors() {
       expected: { result: end.result, cycle: end.cycle, turns: end.turns, time: end.time, sp: end.sp, units: end.units, events: end.events },
     };
   });
-  return { rulesVersion: RULES_VERSION, timeline, battles: [...battles, ...extBattles] };
+  // Rules 0.9 (battle.md §16): formula values, effect conditions and proc gates, HP cost, hit riders, status
+  // adjustment, tags and the new triggers. Each case builds on an existing template and adds its own content.
+  const v09 = (id: string, seed: number | string, base: ReturnType<typeof newProject>, build: (p: ReturnType<typeof newProject>) => void) => {
+    const p = structuredClone(base);
+    build(p);
+    const setup = battleSetupOf(p);
+    const end = autoPlay(setup, createBattle(setup, seed), p.battle.policy);
+    return {
+      id,
+      input: { damageConfig: p.damage.config, battle: p.battle, seed },
+      expected: { result: end.result, cycle: end.cycle, turns: end.turns, time: end.time, sp: end.sp, units: end.units, events: end.events },
+    };
+  };
+  const note = (key: string, effects: Effect[] = [{ kind: "counter", target: "self", key, op: "add", value: 1 }]): SkillDef => ({ id: key, name: key, type: "followup", spDelta: 0, energyGain: 0, targeting: "none", effects });
+  const v09Battles = [
+    // Formulas (effect.index/adjacent/targets, action.hitCount, tag/counter/status variables), when, proc chance,
+    // hpCost + storeAs, onHit riders (hit.*, victim), statusAdjust, battleStart/action/allyDamaged passives.
+    v09("v09/formulas-seed-5", 5, project, (p) => {
+      const b = p.battle;
+      b.statuses.push(
+        { id: "focus", name: "專注", kind: "buff", duration: 0, maxStacks: 3, modifiers: [], tags: ["power"] },
+        { id: "mark", name: "印記", kind: "debuff", duration: 2, maxStacks: 2, modifiers: [{ target: "stat:vulnerability", op: "add", value: 0.1 }], tags: ["mark"] },
+      );
+      b.encounter = { allies: ["homura", "shimo", "yoru", "akari"], enemies: ["bat", "golem", "bat", "golem"] };
+      const unit = (id: string) => b.units.find((u) => u.id === id)!;
+      const homura = unit("homura");
+      homura.skills.find((s) => s.id === "basic")!.effects = [
+        { kind: "hpCost", target: "self", op: "lose", basis: "maxHp", ratio: 0.02, when: parseExpr("self.hpPct > 0.1"), storeAs: "spent" },
+        { kind: "damage", target: "enemy", multiplier: parseExpr("1 + 0.25 * self.tag.power + 0.01 * self.counter.combo"), toughness: 10, hits: [0.5, 0.5],
+          onHit: [
+            { kind: "counter", target: "self", key: "combo", op: "add", value: parseExpr("1 + hit.index") },
+            { kind: "energy", target: "self", amount: parseExpr("if(hit.crit, 5, 0)") },
+            { kind: "status", target: "victim", statusId: "mark", chance: parseExpr("if(hit.isLast, 0.5, 0)") },
+            { kind: "damage", target: "victim", multiplier: 0.1, toughness: 0, when: parseExpr("hit.killed || hit.broke") },
+          ] },
+        { kind: "status", target: "self", statusId: "focus", chance: 1, when: parseExpr("self.tag.power < 2") },
+        { kind: "energy", target: "self", amount: 5, chance: 0.5 },
+      ];
+      homura.skills.find((s) => s.id === "skill")!.effects = [
+        { kind: "hpCost", target: "self", op: "lose", basis: "hp", ratio: 0.01, floor: 500, storeAs: "spent" },
+        { kind: "damage", target: "blast", multiplier: parseExpr("2 - 0.5 * effect.index"), adjMultiplier: parseExpr("0.8 + 0.1 * effect.index"), toughness: 20, adjToughness: 10, hits: [0.3, 0.3, 0.4] },
+        { kind: "statusAdjust", target: "self", statusId: "focus", op: "add", value: -1, storeAs: "focusUsed", when: parseExpr("self.status.focus > 0") },
+        { kind: "heal", target: "allAllies", scale: "atk", multiplier: parseExpr("0.05 * effect.targets"), flat: parseExpr("10 * action.hitCount") },
+      ];
+      homura.skills.push(note("open", [{ kind: "status", target: "self", statusId: "focus", chance: 1 }]));
+      homura.passives = [...(homura.passives ?? []), { id: "open", name: "開場", on: "battleStart", skillId: "open", limitPerTurn: 0 }];
+      const shimo = unit("shimo");
+      shimo.skills.push(note("cheer", [{ kind: "energy", target: "self", amount: parseExpr("2 + battle.turn") }]));
+      shimo.passives = [{ id: "cheer", name: "聲援", on: "action", actor: "otherAlly", skillTypes: ["skill", "ultimate"], skillId: "cheer", limitPerTurn: 1 }];
+      const akari = unit("akari");
+      akari.skills.push(note("tend", [{ kind: "heal", target: "allAllies", scale: "maxHp", multiplier: 0.03, flat: 0 }]));
+      akari.passives = [...(akari.passives ?? []), { id: "tend", name: "照料", on: "allyDamaged", skillId: "tend", limitPerTurn: 1, when: parseExpr("target.hpPct < 0.9"), chance: 0.5 }];
+    }),
+    // New triggers on the boss encounter: unitEnter (pillars), unitLeave (deaths, dismissals), revived (undying),
+    // action by a named foe, allyDamaged, battleStart, plus a tag-filtered dispel.
+    v09("v09/triggers-seed-23", 23, ext, (p) => {
+      const b = p.battle;
+      const unit = (id: string) => b.units.find((u) => u.id === id)!;
+      b.statuses.push({ id: "scorch", name: "灼痕", kind: "debuff", duration: 2, maxStacks: 3, modifiers: [], tags: ["burn"] });
+      const akari = unit("akari");
+      akari.skills.push(note("entered"), note("gone"), note("rose"));
+      akari.passives = [
+        ...(akari.passives ?? []),
+        { id: "entered", name: "entered", on: "unitEnter", skillId: "entered", limitPerTurn: 0 },
+        { id: "gone", name: "gone", on: "unitLeave", skillId: "gone", limitPerTurn: 0, when: parseExpr("target.isFoe") },
+        { id: "rose", name: "rose", on: "revived", skillId: "rose", limitPerTurn: 0 },
+      ];
+      const iwamori = unit("iwamori");
+      iwamori.skills.push(note("brace", [{ kind: "status", target: "self", statusId: "ward", chance: 1 }]));
+      iwamori.passives = [...(iwamori.passives ?? []), { id: "brace", name: "brace", on: "allyDamaged", skillId: "brace", limitPerTurn: 1 }];
+      const shimo = unit("shimo");
+      shimo.skills.push(note("watch", [{ kind: "energy", target: "self", amount: parseExpr("1 + battle.holders.scorch") }]));
+      shimo.passives = [...(shimo.passives ?? []), { id: "watch", name: "watch", on: "action", actor: "foe", actorDefId: "lantern", skillTypes: ["skill"], skillId: "watch", limitPerTurn: 2 }];
+      const raimei = unit("raimei");
+      raimei.skills.push(note("prime", [{ kind: "status", target: "enemy", statusId: "scorch", chance: 1 }]));
+      raimei.passives = [...(raimei.passives ?? []), { id: "prime", name: "prime", on: "battleStart", skillId: "prime", limitPerTurn: 0 }];
+      raimei.skills.find((s) => s.id === "skill")!.effects.push({ kind: "dispel", target: "enemy", statusKind: "debuff", count: 1, tag: "burn", when: parseExpr("target.tag.burn >= 2") });
+    }),
+    // Dream encounter: consuming marks with statusAdjust (+ storeAs), formulas over battle.holders / counters,
+    // a tag-filtered dispel of the control status.
+    v09("v09/marks-seed-31", 31, ext, (p) => {
+      const b = p.battle;
+      const unit = (id: string) => b.units.find((u) => u.id === id)!;
+      b.statuses.find((s) => s.id === "daze")!.tags = ["control"];
+      b.statuses.find((s) => s.id === "galeMark")!.tags = ["mark"];
+      b.encounter = { allies: ["kasumi", "iwamori", "shimo", "akari"], enemies: [...b.encounters.find((e) => e.id === "dream")!.enemies] };
+      const chase = unit("kasumi").skills.find((s) => s.id === "chase")!;
+      chase.effects = [
+        { kind: "damage", target: "enemy", multiplier: parseExpr("0.5 + 0.1 * battle.holders.galeMark + 0.05 * self.counter.popped"), toughness: 5 },
+        { kind: "statusAdjust", target: "enemy", statusId: "galeMark", op: "set", value: 0, storeAs: "popped", when: parseExpr("target.tag.mark >= 1 && effect.targets > 0") },
+      ];
+      const ult = unit("iwamori").skills.find((s) => s.id === "ult")!;
+      for (const e of ult.effects) if (e.kind === "dispel") e.tag = "control";
+    }),
+  ];
+  return { rulesVersion: RULES_VERSION, timeline, battles: [...battles, ...extBattles, ...v09Battles] };
 }
 
 function gachaVectors() {

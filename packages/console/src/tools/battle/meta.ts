@@ -85,6 +85,8 @@ export const EFFECT_KINDS: { value: Effect["kind"]; label: string }[] = [
   { value: "queueSkill", label: "指定下次行動" },
   { value: "counter", label: "計數器" },
   { value: "sp", label: "技能點" },
+  { value: "hpCost", label: "生命消耗／設定" },
+  { value: "statusAdjust", label: "調整狀態層數" },
 ];
 
 /** Effect kinds grouped for the "add effect" buttons. */
@@ -116,6 +118,12 @@ export const TRIGGERS: { value: PassiveDef["on"]; label: string }[] = [
   { value: "phaseChange", label: "自己進入新階段時" },
   { value: "counterChange", label: "自己的計數器變化時" },
   { value: "allyHit", label: "隊友（含自己）每次命中敵人時" },
+  { value: "battleStart", label: "戰鬥開始時" },
+  { value: "action", label: "有人行動後（可篩選行動者與技能）" },
+  { value: "allyDamaged", label: "隊友（含自己）受到攻擊時（每名受害者一次）" },
+  { value: "unitEnter", label: "有單位被召喚時" },
+  { value: "unitLeave", label: "有單位倒下或離場時" },
+  { value: "revived", label: "有單位復活時" },
 ];
 
 /** Who target.* refers to in a passive condition, per trigger (spec §14.1). */
@@ -128,6 +136,12 @@ export const TRIGGER_SUBJECT: Record<PassiveDef["on"], string> = {
   phaseChange: "無",
   counterChange: "無",
   allyHit: "被命中的敵人",
+  battleStart: "無",
+  action: "該行動的目標",
+  allyDamaged: "受到攻擊的隊友",
+  unitEnter: "新召喚的單位",
+  unitLeave: "離場的單位",
+  revived: "復活的單位",
 };
 
 export function defaultEffect(kind: Effect["kind"], statusId: string, ctx: { unitId?: string; skillId?: string } = {}): Effect {
@@ -144,6 +158,8 @@ export function defaultEffect(kind: Effect["kind"], statusId: string, ctx: { uni
     case "status": return { kind, target: "enemy", statusId, chance: 1 };
     case "advance": return { kind, target: "ally", amount: 0.25 };
     case "energy": return { kind, target: "self", amount: 10 };
+    case "hpCost": return { kind, target: "self", op: "lose", basis: "maxHp", ratio: 0.1 };
+    case "statusAdjust": return { kind, target: "self", statusId, op: "add", value: -1 };
   }
 }
 

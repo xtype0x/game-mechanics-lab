@@ -304,7 +304,7 @@ function Roster({ project, save, mods, level, mutate }: HubProps) {
 function describeSkill(s: UnitDef["skills"][number]): string {
   return s.effects.map((e) => {
     switch (e.kind) {
-      case "damage": return `${{ enemy: "單體", blast: "擴散", allEnemies: "全體", self: "自身", ally: "隊友", allAllies: "全隊" }[e.target]} ${Math.round(e.multiplier * 100)}% 傷害`;
+      case "damage": return `${{ enemy: "單體", blast: "擴散", allEnemies: "全體", self: "自身", ally: "隊友", allAllies: "全隊", victim: "受害者" }[e.target]} ${typeof e.multiplier === "number" ? `${Math.round(e.multiplier * 100)}%` : "依公式"} 傷害`;
       case "heal": return "治療";
       case "status": return "施加狀態";
       case "advance": return "行動提前";

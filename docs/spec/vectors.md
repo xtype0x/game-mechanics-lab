@@ -7,7 +7,7 @@
 | rng.json | `cases`：每組 (seed, stream) 的前 16 個 uint32。`derived`：在同一個產生器上依序呼叫 next／chance／int 的結果 |
 | expr.json | `cases`：文字、JSON 樹、在 `variables` 下的值。`errors`：求值必須失敗的 JSON 樹 |
 | damage.json | `components`、`templates`：內建定義。`cases`：輸入（config、scenario）與預期輸出；`m6/` 開頭的案例來自只用資料擴充的範例專案。`compat`：組合設定與預期狀態、錯誤數、警告數 |
-| battle.json | `timeline`：速度 → 行動順序預測。`battles`：完整輸入（damageConfig、battle、seed）與自動戰鬥（§7.3 策略）結束時的狀態與完整事件紀錄。`ext/` 開頭的案例涵蓋 battle.md §13 的所有擴充事件；`ext/dream-seed-19` 涵蓋 §14（`allyHit`、`target.*` 條件、`battle.count`、支配、行動條事件倒數）與 §15.1、§15.3；`ext/dream-pair-seed-40` 以 §15.2 受控判負結束 |
+| battle.json | `timeline`：速度 → 行動順序預測。`battles`：完整輸入（damageConfig、battle、seed）與自動戰鬥（§7.3 策略）結束時的狀態與完整事件紀錄。`ext/` 開頭的案例涵蓋 battle.md §13 的所有擴充事件；`ext/dream-seed-19` 涵蓋 §14（`allyHit`、`target.*` 條件、`battle.count`、支配、行動條事件倒數）與 §15.1、§15.3；`ext/dream-pair-seed-40` 以 §15.2 受控判負結束；`v09/` 開頭的案例涵蓋 §16（`v09/formulas-seed-5`：表達式數值、`when`／`chance`（proc 流）、`hpCost`、`onHit` 與 `victim`、`statusAdjust`、`battleStart`／`action`／`allyDamaged` 被動；`v09/triggers-seed-23`：`unitEnter`／`unitLeave`／`revived`、有 `actorDefId` 的 `action`、標籤驅散；`v09/marks-seed-31`：以 `statusAdjust` 消耗標記、`battle.holders`） |
 
 | gacha.json | `banners`：三個卡池（DEMO 簡易池、限定池、手算用的 mini 池）。`pulls`：每個卡池、兩個種子（亂數流 `gacha.pulls`）的逐抽結果與最終狀態。`distributions`：目標的抽數分布 `pmf`、`mean`、`tail` 與保證上限 `worstCase`。`longRun`：各稀有度長期比例。`disclosure`：機率公示表。分析結果容許誤差見 `tolerance`（gacha.md §4） |
 | gacha2.json | `models`：三個預設與一個所有模組並用的組合模型。`pulls`：逐抽結果（亂數流 `gacha2.pulls`，每 50 抽嘗試一次兌換）與最終狀態。`contexts`：`pullContext`。`distributions`：各種目標（含起始進度、不兌換）的 pmf、mean、tail、保證上限、變異數與百分位。`copies`：150 抽後的份數分布。`longRun`。`cost`：儲值表、購買組合、`currencyFor`、`spend`。容許誤差見 `tolerance` |

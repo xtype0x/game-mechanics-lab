@@ -1,4 +1,4 @@
-import type { BattleIssue, DepRef, Effect, PassiveDef, SkillDef, SkillType, StatusDef, UnitDef } from "@ggt/core";
+import { printExpr, type BattleIssue, type DepRef, type Effect, type Num, type PassiveDef, type SkillDef, type SkillType, type StatusDef, type UnitDef } from "@ggt/core";
 import { useState } from "react";
 import { GoLink } from "../../nav";
 import { Badge, Field, NumberField, Section } from "../../ui";
@@ -130,7 +130,7 @@ export function SkillList({ unit, units, edit, statuses, issues, refs, open, set
 }
 
 const VIA_LABEL: Record<DepRef["via"], string> = {
-  applies: "施加", detonates: "引爆", summons: "召喚", dismisses: "移除", queues: "指定下次行動", casts: "被動施放", ai: "AI 規則", condition: "條件引用", roster: "出場",
+  applies: "施加", detonates: "引爆", adjusts: "調整層數", summons: "召喚", dismisses: "移除", queues: "指定下次行動", casts: "被動施放", ai: "AI 規則", condition: "條件引用", roster: "出場",
 };
 
 export function refLabel(r: DepRef, units: UnitDef[]): string {
@@ -142,23 +142,40 @@ export function refLabel(r: DepRef, units: UnitDef[]): string {
   return `${name}（${VIA_LABEL[r.via]}）`;
 }
 
+/** A number field that also shows formula values (rules 0.9 §16.1); formulas are edited in the project file. */
+function NumOrExpr({ value, onChange, percent, fallback }: { value: Num; onChange: (v: number) => void; percent?: boolean; fallback: number }) {
+  if (typeof value === "number") return <NumberField percent={percent} value={value} onChange={onChange} />;
+  const text = printExpr(value);
+  return (
+    <span className="row">
+      <Badge tone="info">表達式</Badge>
+      <code className="mono small" title={text}>{text}</code>
+      <button className="btn small" onClick={() => onChange(fallback)}>改為數字</button>
+    </span>
+  );
+}
+
+const numText = (n: Num, f: (x: number) => string) => (typeof n === "number" ? f(n) : "（公式）");
+
 function summarize(sk: SkillDef, statuses: StatusDef[], units: UnitDef[]): string {
   return sk.effects.map((e) => {
     const t = "target" in e ? TARGET_MODES.find((m) => m.value === e.target)?.label ?? e.target : "";
     const uname = (id: string) => units.find((u) => u.id === id)?.name ?? id;
     switch (e.kind) {
-      case "damage": return `${t} ${Math.round(e.multiplier * 100)}%${e.scale && e.scale !== "atk" ? `（${DAMAGE_EFFECT_SCALES.find((x) => x.value === e.scale)?.label}）` : ""}`;
+      case "damage": return `${t} ${numText(e.multiplier, (x) => `${Math.round(x * 100)}%`)}${e.scale && e.scale !== "atk" ? `（${DAMAGE_EFFECT_SCALES.find((x) => x.value === e.scale)?.label}）` : ""}`;
       case "heal": return `治療${t}`;
       case "status": return `${statuses.find((s) => s.id === e.statusId)?.name ?? e.statusId}→${t}`;
-      case "advance": return `${t}提前 ${Math.round(e.amount * 100)}%`;
-      case "energy": return `${t}能量 +${e.amount}`;
+      case "advance": return `${t}提前 ${numText(e.amount, (x) => `${Math.round(x * 100)}%`)}`;
+      case "energy": return `${t}能量 +${numText(e.amount, String)}`;
       case "dispel": return `驅散${t}${e.statusKind === "buff" ? "增益" : "減益"}`;
-      case "detonate": return `引爆${t}持續傷害 ×${e.ratio}`;
+      case "detonate": return `引爆${t}持續傷害 ×${numText(e.ratio, String)}`;
       case "summon": return `召喚 ${uname(e.unitId)}×${e.count}`;
       case "dismiss": return e.unitId ? `移除 ${uname(e.unitId)}` : "移除自己";
       case "queueSkill": return `${t}下次用 ${e.skillId}`;
-      case "counter": return `${e.key} ${e.op === "add" ? (e.value >= 0 ? "+" : "") + e.value : "= " + e.value}`;
-      case "sp": return `技能點 ${e.amount >= 0 ? "+" : ""}${e.amount}`;
+      case "counter": return `${e.key} ${typeof e.value !== "number" ? (e.op === "add" ? "+= " : "= ") + "（公式）" : e.op === "add" ? (e.value >= 0 ? "+" : "") + e.value : "= " + e.value}`;
+      case "sp": return `技能點 ${typeof e.amount !== "number" ? "（公式）" : (e.amount >= 0 ? "+" : "") + e.amount}`;
+      case "hpCost": return `${t}${e.op === "lose" ? "消耗生命" : "設定生命"}`;
+      case "statusAdjust": return `${t}調整「${statuses.find((s) => s.id === e.statusId)?.name ?? e.statusId}」`;
     }
   }).join("、");
 }
@@ -198,15 +215,15 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
       <div className="grid-fields">
         {e.kind === "damage" && (
           <>
-            <Field label="倍率"><NumberField percent value={e.multiplier} onChange={(v) => set("multiplier", v)} /></Field>
+            <Field label="倍率"><NumOrExpr percent fallback={1} value={e.multiplier} onChange={(v) => set("multiplier", v)} /></Field>
             <Field label="倍率依據" hint="非攻擊力時，攻擊力的增減益不會套用；目標生命於每段命中時讀取">
               <select value={e.scale ?? "atk"} onChange={(ev) => (ev.target.value === "atk" ? unset("scale") : set("scale", ev.target.value))}>
                 {DAMAGE_EFFECT_SCALES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </Field>
-            <Field label="削韌"><NumberField value={e.toughness} onChange={(v) => set("toughness", v)} /></Field>
-            {e.target === "blast" && <Field label="相鄰倍率"><NumberField percent value={e.adjMultiplier ?? 0} onChange={(v) => set("adjMultiplier", v)} /></Field>}
-            {e.target === "blast" && <Field label="相鄰削韌"><NumberField value={e.adjToughness ?? 0} onChange={(v) => set("adjToughness", v)} /></Field>}
+            <Field label="削韌"><NumOrExpr fallback={10} value={e.toughness} onChange={(v) => set("toughness", v)} /></Field>
+            {e.target === "blast" && <Field label="相鄰倍率"><NumOrExpr percent fallback={0} value={e.adjMultiplier ?? 0} onChange={(v) => set("adjMultiplier", v)} /></Field>}
+            {e.target === "blast" && <Field label="相鄰削韌"><NumOrExpr fallback={0} value={e.adjToughness ?? 0} onChange={(v) => set("adjToughness", v)} /></Field>}
             <Field label="分段比例" hint="例如 0.3, 0.3, 0.4；留空為單段">
               <input
                 className="mono"
@@ -231,18 +248,18 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
                 <option value="maxHp">目標生命上限</option>
               </select>
             </Field>
-            <Field label="比例"><NumberField percent value={e.multiplier} onChange={(v) => set("multiplier", v)} /></Field>
-            <Field label="固定值"><NumberField value={e.flat} onChange={(v) => set("flat", v)} /></Field>
+            <Field label="比例"><NumOrExpr percent fallback={1} value={e.multiplier} onChange={(v) => set("multiplier", v)} /></Field>
+            <Field label="固定值"><NumOrExpr fallback={0} value={e.flat} onChange={(v) => set("flat", v)} /></Field>
           </>
         )}
         {e.kind === "status" && (
           <>
             <Field label="狀態">{statusSelect(e.statusId, (v) => set("statusId", v))}</Field>
-            <Field label="基礎機率"><NumberField percent value={e.chance} onChange={(v) => set("chance", v)} /></Field>
+            <Field label="基礎機率"><NumOrExpr percent fallback={1} value={e.chance} onChange={(v) => set("chance", v)} /></Field>
           </>
         )}
-        {e.kind === "advance" && <Field label="提前比例" hint="完整行動值的百分比；100% 為立即行動"><NumberField percent value={e.amount} onChange={(v) => set("amount", v)} /></Field>}
-        {e.kind === "energy" && <Field label="能量"><NumberField value={e.amount} onChange={(v) => set("amount", v)} /></Field>}
+        {e.kind === "advance" && <Field label="提前比例" hint="完整行動值的百分比；100% 為立即行動"><NumOrExpr percent fallback={0.25} value={e.amount} onChange={(v) => set("amount", v)} /></Field>}
+        {e.kind === "energy" && <Field label="能量"><NumOrExpr fallback={10} value={e.amount} onChange={(v) => set("amount", v)} /></Field>}
         {e.kind === "dispel" && (
           <>
             <Field label="驅散種類">
@@ -257,7 +274,7 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
         {e.kind === "detonate" && (
           <>
             <Field label="狀態">{statusSelect(e.statusId ?? "", (v) => (v ? set("statusId", v) : unset("statusId")), true)}</Field>
-            <Field label="結算比例" hint="一跳傷害的倍數"><NumberField percent value={e.ratio} onChange={(v) => set("ratio", v)} /></Field>
+            <Field label="結算比例" hint="一跳傷害的倍數"><NumOrExpr percent fallback={1} value={e.ratio} onChange={(v) => set("ratio", v)} /></Field>
           </>
         )}
         {e.kind === "summon" && (
@@ -297,10 +314,12 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
                 <option value="set">設為</option>
               </select>
             </Field>
-            <Field label="數值"><NumberField value={e.value} onChange={(v) => set("value", v)} /></Field>
+            <Field label="數值"><NumOrExpr fallback={1} value={e.value} onChange={(v) => set("value", v)} /></Field>
           </>
         )}
-        {e.kind === "sp" && <Field label="技能點變化" hint="負值為消耗我方技能點"><NumberField value={e.amount} onChange={(v) => set("amount", Math.round(v))} /></Field>}
+        {e.kind === "sp" && <Field label="技能點變化" hint="負值為消耗我方技能點"><NumOrExpr fallback={-1} value={e.amount} onChange={(v) => set("amount", Math.round(v))} /></Field>}
+        {(e.kind === "hpCost" || e.kind === "statusAdjust") && <p className="muted small">此效果的欄位請在專案檔（JSON）中編輯。</p>}
+        {(e.when || (e.kind !== "status" && e.chance !== undefined) || (e.kind === "damage" && e.onHit?.length)) && <p className="muted small">此效果帶有條件、機率或命中附帶效果（規則 0.9），請在專案檔（JSON）中編輯。</p>}
       </div>
     </div>
   );

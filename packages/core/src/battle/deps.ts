@@ -4,6 +4,7 @@
  */
 import { collectRefs } from "../expr";
 import type { BattleConfig } from "../project";
+import { effectNums, flatEffects } from "./types";
 
 export type DepKind = "unit" | "skill" | "status" | "passive" | "encounter";
 
@@ -18,7 +19,7 @@ export interface DepRef {
   from: DepNode;
   to: DepNode;
   /** What kind of link this is (UI label key). */
-  via: "applies" | "detonates" | "summons" | "dismisses" | "queues" | "casts" | "ai" | "condition" | "roster";
+  via: "applies" | "detonates" | "adjusts" | "summons" | "dismisses" | "queues" | "casts" | "ai" | "condition" | "roster";
   /** Target does not exist. */
   broken: boolean;
 }
@@ -40,7 +41,7 @@ export function contentReferences(cfg: BattleConfig): DepRef[] {
   const conditionRefs = (from: DepNode, when: Parameters<typeof collectRefs>[0] | undefined) => {
     if (!when) return;
     for (const ref of collectRefs(when)) {
-      const status = /^(?:self|target)\.status\.(.+)$/.exec(ref)?.[1];
+      const status = /^(?:self|target)\.status\.(.+)$/.exec(ref)?.[1] ?? /^battle\.(?:holders|maxStacks)\.(.+)$/.exec(ref)?.[1];
       if (status !== undefined) push(from, { kind: "status", id: status }, "condition");
       else if (ref.startsWith("battle.count.")) push(from, { kind: "unit", id: ref.slice(13) }, "condition");
     }
@@ -55,8 +56,11 @@ export function contentReferences(cfg: BattleConfig): DepRef[] {
   for (const u of cfg.units) {
     for (const sk of u.skills) {
       const from: DepNode = { kind: "skill", id: sk.id, unitId: u.id };
-      for (const e of sk.effects) {
-        if (e.kind === "status") push(from, { kind: "status", id: e.statusId }, "applies");
+      for (const { effect: e } of flatEffects(sk.effects)) {
+        if (e.when) conditionRefs(from, e.when);
+        for (const [, v] of effectNums(e)) if (typeof v !== "number") conditionRefs(from, v);
+        if (e.kind === "statusAdjust") push(from, { kind: "status", id: e.statusId }, "adjusts");
+        else if (e.kind === "status") push(from, { kind: "status", id: e.statusId }, "applies");
         else if (e.kind === "detonate" && e.statusId !== undefined) push(from, { kind: "status", id: e.statusId }, "detonates");
         else if (e.kind === "summon") push(from, { kind: "unit", id: e.unitId }, "summons");
         else if (e.kind === "dismiss" && e.unitId !== undefined) push(from, { kind: "unit", id: e.unitId }, "dismisses");
@@ -67,6 +71,7 @@ export function contentReferences(cfg: BattleConfig): DepRef[] {
       const from: DepNode = { kind: "passive", id: p.id, unitId: u.id };
       push(from, { kind: "skill", id: p.skillId, unitId: u.id }, "casts");
       conditionRefs(from, p.when);
+      if (p.chance !== undefined && typeof p.chance !== "number") conditionRefs(from, p.chance);
     }
     for (const r of u.ai ?? []) {
       const from: DepNode = { kind: "unit", id: u.id };

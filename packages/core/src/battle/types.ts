@@ -9,6 +9,9 @@ import type { SkillType } from "../damage";
 
 export type Team = "ally" | "enemy";
 
+/** A number or a formula over the effect scope (spec §16.1). */
+export type Num = number | Expr;
+
 /** Who an effect lands on, relative to the actor and the chosen target. */
 export type TargetMode =
   | "enemy" // the chosen enemy
@@ -16,40 +19,76 @@ export type TargetMode =
   | "allEnemies"
   | "self"
   | "ally" // the chosen ally
-  | "allAllies";
+  | "allAllies"
+  | "victim"; // inside a damage effect's onHit: the unit that took this hit (§16.5); empty elsewhere
 
-export type Effect =
+/** Effect payloads. Every effect also accepts `when` / `chance` (see Effect). */
+type EffectCore =
   | {
       kind: "damage";
       target: TargetMode;
-      multiplier: number;
+      multiplier: Num;
       /** Multiplier for neighbours when target is "blast". */
-      adjMultiplier?: number;
+      adjMultiplier?: Num;
       hits?: number[];
-      toughness: number;
-      adjToughness?: number;
+      toughness: Num;
+      adjToughness?: Num;
       /** Stat the multiplier scales with (§13.4); targetMaxHp / targetHp use the victim (§15.3). Default "atk". */
       scale?: DamageEffectScale;
+      /** Effects run after each hit's damage and toughness, even if it killed the victim (§16.5). No nesting. */
+      onHit?: Effect[];
     }
-  | { kind: "heal"; target: TargetMode; scale: "atk" | "maxHp"; multiplier: number; flat: number }
-  | { kind: "status"; target: TargetMode; statusId: string; chance: number }
-  | { kind: "advance"; target: TargetMode; amount: number }
-  | { kind: "energy"; target: TargetMode; amount: number }
+  | { kind: "heal"; target: TargetMode; scale: "atk" | "maxHp"; multiplier: Num; flat: Num }
+  | { kind: "status"; target: TargetMode; statusId: string; chance: Num }
+  | { kind: "advance"; target: TargetMode; amount: Num }
+  | { kind: "energy"; target: TargetMode; amount: Num }
   // --- Extension effects (docs/spec/battle.md §13) ---
   /** Removes the most recent `count` dispellable statuses of one kind (0 = all). */
-  | { kind: "dispel"; target: TargetMode; statusKind: "buff" | "debuff"; count: number }
+  | { kind: "dispel"; target: TargetMode; statusKind: "buff" | "debuff"; count: number; tag?: string }
   /** Immediately deals the target's DoT ticks × ratio (optionally only one status). */
-  | { kind: "detonate"; target: TargetMode; ratio: number; statusId?: string }
+  | { kind: "detonate"; target: TargetMode; ratio: Num; statusId?: string; tag?: string }
   /** Sets the target's next enemy-AI action. Ignored for targets without that skill. */
   | { kind: "queueSkill"; target: TargetMode; skillId: string }
   /** Changes a named per-unit counter. */
-  | { kind: "counter"; target: TargetMode; key: string; op: "add" | "set"; value: number }
+  | { kind: "counter"; target: TargetMode; key: string; op: "add" | "set"; value: Num }
   /** Adds units of `unitId` to the actor's team. */
   | { kind: "summon"; unitId: string; count: number }
   /** Removes units without a kill: all alive units of `unitId` on the actor's team, or the actor itself. */
   | { kind: "dismiss"; unitId?: string }
   /** Changes the shared skill points (the ally pool) by amount. */
-  | { kind: "sp"; amount: number };
+  | { kind: "sp"; amount: Num }
+  // --- Rules 0.9 (docs/spec/battle.md §16) ---
+  /** Loses or sets HP without damage rules; "lose" never drops below `floor` (default 1). */
+  | { kind: "hpCost"; target: TargetMode; op: "lose" | "set"; basis: "maxHp" | "hp"; ratio: Num; floor?: number; storeAs?: string }
+  /** Changes a status instance's stacks or remaining turns on the target (nothing happens without it). */
+  | { kind: "statusAdjust"; target: TargetMode; statusId: string; op: "add" | "set" | "turns"; value: Num; storeAs?: string };
+
+export type Effect = EffectCore & {
+  /** Skips the target when false (§16.2). Scope: effect scope (§16.1). */
+  when?: Expr;
+  /** Probability gate for non-status effects (§16.3); status effects keep their own `chance`. */
+  chance?: Num;
+};
+
+/** The numeric (Num) fields of an effect, including the generic `chance` gate (§16.1). */
+export function effectNums(e: Effect): [string, Num][] {
+  const out: [string, Num | undefined][] = [];
+  switch (e.kind) {
+    case "damage": out.push(["multiplier", e.multiplier], ["adjMultiplier", e.adjMultiplier], ["toughness", e.toughness], ["adjToughness", e.adjToughness]); break;
+    case "heal": out.push(["multiplier", e.multiplier], ["flat", e.flat]); break;
+    case "advance": case "energy": case "sp": out.push(["amount", e.amount]); break;
+    case "counter": case "statusAdjust": out.push(["value", e.value]); break;
+    case "detonate": case "hpCost": out.push(["ratio", e.ratio]); break;
+    default: break;
+  }
+  out.push(["chance", e.chance]);
+  return out.filter((x): x is [string, Num] => x[1] !== undefined);
+}
+
+/** Effects including nested onHit riders, in execution order; `rider` marks the nested ones. */
+export function flatEffects(effects: Effect[], rider = false): { effect: Effect; rider: boolean }[] {
+  return effects.flatMap((effect) => [{ effect, rider }, ...(effect.kind === "damage" && effect.onHit ? flatEffects(effect.onHit, true) : [])]);
+}
 
 export type DamageScale = "atk" | "def" | "hp";
 /** Damage effects may also scale with the victim's HP (§15.3). */
@@ -105,6 +144,8 @@ export interface StatusDef {
   // --- Extension fields (docs/spec/battle.md §13) ---
   /** Resistance group for UnitDef.statusRes (e.g. "freeze", "control"). */
   category?: string;
+  /** Labels for tag queries and dispel/detonate filters (§16.7). */
+  tags?: string[];
   /** Absorbs damage. Amount = caster's scale stat × multiplier + flat, rounded. */
   shield?: { scale: DamageScale; multiplier: number; flat: number };
   /** Consumed instead of dying: HP becomes max(1, rounding(maxHp × hpPct)). */
@@ -156,14 +197,29 @@ export type TriggerEvent =
   | "foeAction" // an opponent acted (filtered by skillTypes)
   | "phaseChange" // the holder entered a new phase
   | "counterChange" // one of the holder's counters changed
-  | "allyHit"; // a unit on the holder's team (including the holder) hit an opponent
+  | "allyHit" // a unit on the holder's team (including the holder) hit an opponent
+  // --- Rules 0.9 (§16.8) ---
+  | "battleStart" // once, before the first turn
+  | "action" // any unit acted (filtered by actor / skillTypes / skillIds / actorDefId)
+  | "allyDamaged" // a unit on the holder's team (including the holder) took hit damage (once per victim per scan)
+  | "unitEnter" // a unit was summoned
+  | "unitLeave" // a unit died or was dismissed
+  | "revived"; // a unit was revived
 
 export interface PassiveDef {
   id: string;
   name: string;
   on: TriggerEvent;
-  /** foeAction only: skill types that count. Missing = all. */
+  /** foeAction / action only: skill types that count. Missing = all. */
   skillTypes?: SkillType[];
+  /** action only: who acted, relative to the holder (default "any"; §16.8). */
+  actor?: "self" | "ally" | "otherAlly" | "foe" | "any";
+  /** action only: skill ids that count. */
+  skillIds?: string[];
+  /** action only: the actor's unit definition id. */
+  actorDefId?: string;
+  /** Probability gate evaluated after `when` (§16.3). */
+  chance?: Num;
   /** Skill of this unit to cast as a follow-up. */
   skillId: string;
   /** Extra condition over the AI scope (self.*, battle.*). */
@@ -303,7 +359,8 @@ export type BattleEvent =
   | { t: "toughness"; dst: string; before: number; after: number }
   | { t: "break"; src: string; dst: string }
   | { t: "heal"; src: string; dst: string; amount: number }
-  | { t: "status"; src: string; dst: string; statusId: string; result: "applied" | "resisted" | "refreshed" | "expired" | "dispelled" | "released" }
+  | { t: "status"; src: string; dst: string; statusId: string; result: "applied" | "resisted" | "refreshed" | "expired" | "dispelled" | "released" | "consumed" }
+  | { t: "hp"; uid: string; before: number; after: number }
   | { t: "energy"; uid: string; before: number; after: number }
   | { t: "sp"; before: number; after: number }
   | { t: "advance"; uid: string; before: number; after: number }
@@ -330,7 +387,7 @@ export interface BattleState {
   time: number;
   cycle: number;
   turns: number;
-  rng: { crit: RngState; status: RngState; ai: RngState };
+  rng: { crit: RngState; status: RngState; ai: RngState; proc: RngState };
   phase: "await" | "ended";
   decision?: Decision;
   result?: BattleResult;

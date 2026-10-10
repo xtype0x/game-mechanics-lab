@@ -109,7 +109,7 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
     case "recover": return { text: `　${name(e.uid)} 韌性恢復`, tone: "muted" };
     case "heal": return { text: `　${name(e.src)} 為 ${name(e.dst)} 回復 ${fmt(e.amount, 0)}`, tone: "heal" };
     case "status": {
-      const label = { applied: "獲得", refreshed: "刷新", resisted: "抵抗了", expired: "結束", dispelled: "被驅散", released: "解除了" }[e.result];
+      const label = { applied: "獲得", refreshed: "刷新", resisted: "抵抗了", expired: "結束", dispelled: "被驅散", released: "解除了", consumed: "被消耗了" }[e.result];
       if (e.result === "expired" && !details) return null;
       return { text: `　${name(e.dst)} ${label}「${sname(e.statusId)}」`, tone: e.result === "resisted" ? "muted" : "status" };
     }
@@ -122,6 +122,7 @@ export function describeEvent(e: BattleEvent, state: BattleState, statuses: Stat
     case "revive": return { text: `　✚ ${name(e.uid)} 因「${sname(e.statusId)}」復活（生命 ${fmt(e.hp, 0)}）`, tone: "heal" };
     case "phase": return { text: `　◆ ${name(e.uid)} 進入第 ${e.phase} 階段「${e.name}」`, tone: "break" };
     case "summon": return { text: `　＋ ${name(e.by)} 召喚了 ${name(e.uid)}`, tone: "trigger" };
+    case "hp": return { text: `　${name(e.uid)} 生命 ${fmt(e.before, 0)} → ${fmt(e.after, 0)}`, tone: "status" };
     case "dismiss": return { text: `　－ ${name(e.uid)} 離場${e.by !== e.uid ? `（${name(e.by)}）` : ""}`, tone: "death" };
     case "counter": return details ? { text: `　${name(e.uid)} 的 ${e.key}：${fmt(e.before, 0)} → ${fmt(e.after, 0)}`, tone: "muted" } : null;
     case "queue": return { text: `　${name(e.uid)} 下一次行動將使用「${units.find((d) => d.id === state.units.find((u) => u.uid === e.uid)?.defId)?.skills.find((s) => s.id === e.skillId)?.name ?? e.skillId}」`, tone: "status" };

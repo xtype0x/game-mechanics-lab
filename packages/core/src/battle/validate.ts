@@ -3,8 +3,9 @@
  * but legal. Messages are UI text; the `where` path lets editors highlight the offending field.
  */
 import type { DamageRules } from "../damage";
-import { collectRefs } from "../expr";
+import { collectRefs, validateExpr, type Expr } from "../expr";
 import type { BattleConfig } from "../project";
+import { effectNums, flatEffects } from "./types";
 
 export interface BattleIssue {
   level: "error" | "warning";
@@ -21,7 +22,11 @@ export const TARGET_SCOPE_REFS = ["target.exists", "target.isFoe", ...UNIT_VARS.
  * Error text for a variable the AI/passive scope can't provide, or null (spec §6, §13.11, §14.1).
  * `target.*` exists only for passives; AI rules have no subject.
  */
-export function aiRefProblem(ref: string, statusIds: Set<string>, opts: { unitIds?: Set<string>; passive?: boolean } = {}): string | null {
+export const EFFECT_SCOPE_REFS = ["effect.targets", "effect.index", "effect.adjacent", "action.hitCount"];
+/** Only inside a damage effect's onHit riders (spec §16.5). */
+export const HIT_SCOPE_REFS = ["hit.index", "hit.isLast", "hit.crit", "hit.killed", "hit.broke", "hit.amount"];
+
+export function aiRefProblem(ref: string, statusIds: Set<string>, opts: { unitIds?: Set<string>; passive?: boolean; effect?: boolean; hit?: boolean } = {}): string | null {
   if (AI_SCOPE_REFS.includes(ref)) return null;
   for (const who of ["self", "target"]) {
     if (who === "target" && !ref.startsWith("target.")) continue;
@@ -29,8 +34,14 @@ export function aiRefProblem(ref: string, statusIds: Set<string>, opts: { unitId
     if (who === "target" && TARGET_SCOPE_REFS.includes(ref)) return null;
     if (new RegExp(`^${who}\\.counter\\.[A-Za-z_]\\w*$`).test(ref)) return null;
     if (ref.startsWith(`${who}.status.`)) { const id = ref.slice(who.length + 8); return statusIds.has(id) ? null : `狀態「${id}」不存在`; }
+    if (new RegExp(`^${who}\\.tag\\.[A-Za-z_]\\w*$`).test(ref) || ref === `${who}.buffs` || ref === `${who}.debuffs`) return null;
   }
   if (ref.startsWith("battle.count.")) { const id = ref.slice(13); return !opts.unitIds || opts.unitIds.has(id) ? null : `角色「${id}」不存在`; }
+  for (const prefix of ["battle.holders.", "battle.maxStacks."]) {
+    if (ref.startsWith(prefix)) { const id = ref.slice(prefix.length); return statusIds.has(id) ? null : `狀態「${id}」不存在`; }
+  }
+  if (EFFECT_SCOPE_REFS.includes(ref)) return opts.effect ? null : `「${ref}」只能用在效果的條件與數值`;
+  if (HIT_SCOPE_REFS.includes(ref)) return opts.hit ? null : `「${ref}」只能用在命中附帶效果（onHit）內`;
   return `未定義的變數「${ref}」`;
 }
 
@@ -42,6 +53,25 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
   const stepIds = new Set(damage.steps.map((s) => s.id));
   const unitIds = new Set<string>();
   const allUnitIds = new Set(cfg.units.map((u) => u.id));
+  const declaredTags = new Set(cfg.statuses.flatMap((s) => s.tags ?? []));
+  const warnTag = (tag: string, label: string, where: BattleIssue["where"]) => {
+    if (!declaredTags.has(tag)) warn(`${label}使用的標籤「${tag}」沒有任何狀態宣告`, where);
+  };
+  /** Errors for unknown variables in a condition/formula (message `label：reason`) and warnings for unused tags. */
+  const checkRefs = (expr: Expr, where: BattleIssue["where"], label: string, opts: Parameters<typeof aiRefProblem>[2]) => {
+    for (const ref of collectRefs(expr)) {
+      const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds, ...opts });
+      if (why) err(`${label}：${why}`, where);
+      const tag = /^(?:self|target)\.tag\.(.+)$/.exec(ref)?.[1];
+      if (tag !== undefined) warnTag(tag, label, where);
+    }
+  };
+  /** Structure and variables of an Expr in an effect/passive field. */
+  const checkExpr = (expr: unknown, where: BattleIssue["where"], label: string, opts: Parameters<typeof aiRefProblem>[2]) => {
+    const bad = validateExpr(expr);
+    if (bad.length) err(`${label}：${bad[0]}`, where);
+    else checkRefs(expr as Expr, where, label, opts);
+  };
 
   for (const u of cfg.units) {
     const w = { unitId: u.id };
@@ -61,13 +91,33 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
         if (cost <= 0) warn(`「${u.name}・${sk.name}」不需要能量，每個決策點都能施放`, ws);
         else if (cost > (u.stats.maxEnergy ?? 0)) err(`「${u.name}・${sk.name}」需要 ${cost} 能量，但能量上限只有 ${u.stats.maxEnergy ?? 0}，永遠無法施放`, ws);
       }
-      for (const e of sk.effects) {
+      for (const { effect: e, rider } of flatEffects(sk.effects)) {
         if (e.kind === "status" && !statusIds.has(e.statusId)) err(`「${u.name}・${sk.name}」使用不存在的狀態「${e.statusId}」`, ws);
         if (e.kind === "damage") {
-          if (e.multiplier < 0) err(`「${u.name}・${sk.name}」的倍率不能是負數`, ws);
+          if (typeof e.multiplier === "number" && e.multiplier < 0) err(`「${u.name}・${sk.name}」的倍率不能是負數`, ws);
           if (e.hits && (e.hits.length === 0 || e.hits.some((h) => !(h >= 0)))) err(`「${u.name}・${sk.name}」的命中比例不正確`, ws);
+          if (rider && e.onHit?.length) err(`「${u.name}・${sk.name}」的命中附帶效果中的傷害不能再有命中附帶效果`, ws);
         }
         const label = `「${u.name}・${sk.name}」`;
+        // Rules 0.9 (spec §16): formulas, gates, victim targets, new effects.
+        const exprOpts = { passive: true, effect: true, hit: rider };
+        for (const [field, v] of effectNums(e)) {
+          if (typeof v === "number") continue;
+          if (v === null || typeof v !== "object") err(`${label}的「${field}」不是數字或表達式`, ws);
+          else checkExpr(v, ws, `${label}的「${field}」`, exprOpts);
+        }
+        if (e.when !== undefined) checkExpr(e.when, ws, `${label}的效果條件`, exprOpts);
+        if ("target" in e && e.target === "victim" && !rider) warn(`${label}在命中附帶效果以外使用「受害者」目標，不會有任何目標`, ws);
+        if (e.kind === "hpCost") {
+          if (typeof e.ratio === "number" && e.ratio < 0) warn(`${label}的生命消耗比例是負數，會視為 0`, ws);
+          if (e.floor !== undefined && !(e.floor >= 1)) warn(`${label}的生命消耗下限小於 1，會視為 1（消耗不會讓單位倒下）`, ws);
+          if (e.storeAs !== undefined && !e.storeAs.trim()) err(`${label}的生命消耗計數器名稱不能是空的`, ws);
+        }
+        if (e.kind === "statusAdjust") {
+          if (!statusIds.has(e.statusId)) err(`${label}調整不存在的狀態「${e.statusId}」`, ws);
+          if (e.storeAs !== undefined && !e.storeAs.trim()) err(`${label}的調整狀態計數器名稱不能是空的`, ws);
+        }
+        if ((e.kind === "dispel" || e.kind === "detonate") && e.tag !== undefined) warnTag(e.tag, label, ws);
         if (e.kind === "summon") {
           const s = cfg.units.find((x) => x.id === e.unitId);
           if (!s) err(`${label}召喚不存在的角色「${e.unitId}」`, ws);
@@ -83,7 +133,7 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
         }
         if (e.kind === "counter" && !e.key.trim()) err(`${label}的計數器名稱不能是空的`, ws);
         if (e.kind === "detonate" && e.statusId !== undefined && !statusIds.has(e.statusId)) err(`${label}引爆不存在的狀態「${e.statusId}」`, ws);
-        if (e.kind === "detonate" && !(e.ratio >= 0)) err(`${label}的引爆比例不能是負數`, ws);
+        if (e.kind === "detonate" && typeof e.ratio === "number" && !(e.ratio >= 0)) err(`${label}的引爆比例不能是負數`, ws);
         if (!("target" in e)) continue;
         const foeMode = e.target === "enemy" || e.target === "blast";
         if (foeMode && sk.targeting === "ally") warn(`「${u.name}・${sk.name}」選擇友方目標，但效果打向敵人；會改打第一個敵人`, ws);
@@ -105,7 +155,7 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
       if (!sk) err(`「${u.name}」的 AI 規則指向不存在的技能「${r.skillId}」`, wr);
       else if (sk.type === "followup") err(`「${u.name}」的 AI 規則不能使用追加攻擊「${sk.name}」`, wr);
       if (r.weight < 0) err(`「${u.name}」的 AI 權重不能是負數`, wr);
-      if (r.when) for (const ref of collectRefs(r.when)) { const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds }); if (why) err(`「${u.name}」的 AI 條件：${why}`, wr); }
+      if (r.when) checkRefs(r.when, wr, `「${u.name}」的 AI 條件`, {});
     }
     if (rules.length && rules.every((r) => r.weight <= 0)) warn(`「${u.name}」所有 AI 規則權重都是 0，會只用第一個技能`, w);
     if (u.timelineEvent) {
@@ -130,9 +180,16 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
       else if (sk.type !== "followup") warn(`「${u.name}」的被動「${p.name}」使用的「${sk.name}」不是追加攻擊類型`, wp);
       if (p.limitPerTurn < 0) err(`「${u.name}」的被動「${p.name}」次數上限不能是負數`, wp);
       if (p.limitPerTurn === 0 && p.on === "selfHit") warn(`「${u.name}」的被動「${p.name}」沒有次數上限，多段攻擊可能連續觸發很多次`, wp);
-      if (p.when) for (const ref of collectRefs(p.when)) { const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds, passive: true }); if (why) err(`「${u.name}」的被動條件：${why}`, wp); }
+      if (p.when) checkRefs(p.when, wp, `「${u.name}」的被動條件`, { passive: true });
+      if (p.chance !== undefined && typeof p.chance !== "number") checkExpr(p.chance, wp, `「${u.name}」的被動機率`, { passive: true });
       if (p.limitPerTurn === 0 && p.on === "allyHit") warn(`「${u.name}」的被動「${p.name}」沒有次數上限，隊友每一段命中都會觸發`, wp);
-      if (p.skillTypes && p.on !== "foeAction") warn(`「${u.name}」的被動「${p.name}」設定了技能類型篩選，但只有「對手行動」觸發會使用`, wp);
+      if (p.limitPerTurn === 0 && (p.on === "allyDamaged" || p.on === "action")) warn(`「${u.name}」的被動「${p.name}」沒有次數上限，可能連續觸發很多次`, wp);
+      if (p.skillTypes && p.on !== "foeAction" && p.on !== "action") warn(`「${u.name}」的被動「${p.name}」設定了技能類型篩選，但只有「對手行動」與「有人行動」觸發會使用`, wp);
+      if (p.on !== "action") {
+        if (p.actor !== undefined) warn(`「${u.name}」的被動「${p.name}」設定了行動者條件，但只有「有人行動」觸發會使用`, wp);
+        if (p.skillIds) warn(`「${u.name}」的被動「${p.name}」設定了技能篩選，但只有「有人行動」觸發會使用`, wp);
+        if (p.actorDefId !== undefined) warn(`「${u.name}」的被動「${p.name}」設定了行動者角色，但只有「有人行動」觸發會使用`, wp);
+      } else if (p.actorDefId !== undefined && !allUnitIds.has(p.actorDefId)) err(`「${u.name}」的被動「${p.name}」指定的行動者角色「${p.actorDefId}」不存在`, wp);
       if (p.on === "phaseChange" && !u.phases?.length) warn(`「${u.name}」沒有階段，被動「${p.name}」永遠不會觸發`, wp);
     }
   }
@@ -149,12 +206,13 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
     if (s.release && s.duration === 0 && s.dispellable === false) warn(`狀態「${s.name}」永久、不可驅散，只會在施加者倒下時解除`, w);
     if (s.charm && s.skipTurn) warn(`狀態「${s.name}」同時是無法行動與支配；無法行動優先，支配不會發生`, w);
     if (s.charm && s.kind === "buff") warn(`狀態「${s.name}」是增益但有支配效果，會被當成增益驅散與計算機率`, w);
+    if (s.tags?.some((t) => typeof t !== "string" || !t.trim())) err(`狀態「${s.name}」的標籤不能是空的`, w);
     if (!(s.maxStacks >= 1)) err(`狀態「${s.name}」最大層數至少為 1`, w);
     const damageStats = new Set(damage.stats.map((x) => x.key));
     for (const m of s.modifiers) {
       // Conditional modifiers (spec §15.1): passive-style scope, damage calculations only.
       for (const [field, expr] of [["條件", m.when], ["倍數", m.scaleBy]] as const) {
-        if (expr) for (const ref of collectRefs(expr)) { const why = aiRefProblem(ref, statusIds, { unitIds: allUnitIds, passive: true }); if (why) err(`狀態「${s.name}」修正的${field}：${why}`, w); }
+        if (expr) checkRefs(expr, w, `狀態「${s.name}」修正的${field}`, { passive: true });
       }
       if (m.scaleBy && m.op !== "add" && m.op !== "pct") err(`狀態「${s.name}」的修正倍數只能用在「加」或「百分比」`, w);
       if ((m.when || m.scaleBy) && m.target.startsWith("stat:") && !damageStats.has(m.target.slice(5))) warn(`狀態「${s.name}」的條件式修正只在傷害計算中生效；「${m.target.slice(5)}」不是傷害公式的數值，不會有效果`, w);

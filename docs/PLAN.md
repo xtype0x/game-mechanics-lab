@@ -1,6 +1,6 @@
 # Gacha Game Tool 計畫 v0.3
 
-狀態：M2–M5 完成；M1 抽卡實驗室完成；戰鬥擴充機制（規則 0.6–0.8）完成
+狀態：M2–M5 完成；M1 抽卡實驗室完成；戰鬥擴充機制（規則 0.6–0.9）完成
 最後更新：2026-10-09
 
 ## 1. 定位
@@ -123,6 +123,7 @@
 | 戰鬥擴充（規則 0.6） | 依參考資料研究補齊通用機制：屬性／狀態抵抗、嘲諷、護盾、復活、驅散、韌性鎖定、自動解除、召喚、階段、計數器、插隊行動、技能點效果、引爆持續傷害；主控台快速驗證列、相依關係總覽、參考資料匯入。見 docs/research/hsr-mechanism-coverage.md | 已完成（2026-10-09） |
 | 戰鬥擴充（規則 0.7） | 補上研究列出的三類缺口：觸發對象條件（`target.*`、`self.av／rank`、`battle.count`）與隊友命中觸發、支配（敵我互換）、行動條事件單位；主控台編輯器與 DEMO 對應顯示。見 docs/research/hsr-mechanism-coverage.md §6 | 已完成（2026-10-09） |
 | 戰鬥擴充（規則 0.8） | 條件式狀態修正（`when`／`scaleBy`，只在傷害計算中）、全隊受控判負（`defeatIfAll`）、依目標生命上限／目前生命的傷害；主控台狀態與技能編輯器對應欄位。見 docs/research/hsr-mechanism-coverage.md §7 | 已完成（2026-10-09） |
+| 戰鬥擴充（規則 0.9） | 通用機制：數值可為表達式（`effect.*`、`action.hitCount`、`hit.*`）、效果條件 `when` 與機率閘門 `chance`（`battle.proc` 亂數流）、生命消耗／設定 `hpCost`、命中附帶 `onHit` 與 `victim` 目標、調整狀態 `statusAdjust`、狀態標籤與 `battle.holders／maxStacks` 查詢、新觸發（`battleStart`、`action`、`allyDamaged`、`unitEnter`、`unitLeave`、`revived`）。見 docs/spec/battle.md §16 | 已完成（2026-10-11） |
 | M6 擴充驗證 | 不改核心新增一個傷害變體與一種卡池規則。結果：傷害變體通過；卡池規則（天井）可表達但精確分析有限制，卡池缺少資料擴充點。見 docs/m6-extension-check.md | 已完成（2026-10-10） |
 | 抽卡規則 2.0＋抽卡模擬器 | 規則模組化（可自由組合、任意目標的精確分析、成本與統計），規格 docs/spec/gacha2.md；獨立抽卡模擬器 packages/gacha-sim（預計移植到個人網站）；預設：軟保底＋大小保底型、十連保底＋天井兌換型、十連保底＋累計保底型 | 已完成（2026-10-10）；網站整合下一輪 |
 | M7 跨平台驗證 | Agent 實作包在 Unity C# 產生核心並跑完測試向量；記錄錯誤點回補規格 | M6 後 |
