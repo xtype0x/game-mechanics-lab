@@ -69,7 +69,7 @@
 .history li span { color: var(--text-2); font-variant-numeric: tabular-nums; }
 .history li.feat { color: var(--gold); font-weight: 600; }
 
-.reveal { position: fixed; inset: 0; z-index: 100; background: rgba(8, 8, 18, 0.82); display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 18px; padding: 16px; cursor: pointer; overflow-y: auto; }
+.reveal { position: fixed; inset: 0; z-index: 100; background: rgba(8, 8, 18, 0.82); display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 18px; padding: 16px; cursor: pointer; overflow-x: hidden; overflow-y: auto; }
 .reveal .cards { display: grid; grid-template-columns: repeat(5, minmax(0, 120px)); gap: 10px; max-width: 100%; }
 @media (max-width: 640px) { .reveal .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 8px; } .card-r { aspect-ratio: 4 / 5; } }
 .card-r {
@@ -84,4 +84,58 @@
 .card-r.r0.feat { box-shadow: 0 0 30px rgba(255, 214, 110, 1), 0 0 0 2px #fff inset; }
 .reveal .tap { color: rgba(255, 255, 255, 0.7); font-size: 13px; }
 @keyframes flip { from { opacity: 0; transform: translateY(14px) rotateY(80deg); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .card-r { animation: none; } .pull-btn:hover:not(:disabled) { transform: none; } }
+
+/* Pull animation: shooting star → spotlight for top-tier cards → grid. CSS only, no game assets. */
+.stage-opts { display: inline-flex; gap: 12px; align-items: center; }
+.fast { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; color: #fff; cursor: pointer; }
+.reveal { --c: #7fb7ff; --glow: rgba(127, 183, 255, 0.6); }
+.reveal.best-r1 { --c: #c99bff; --glow: rgba(190, 140, 255, 0.65); }
+.reveal.best-r0 { --c: #ffd36b; --glow: rgba(255, 205, 100, 0.8); }
+.reveal.phase-meteor, .reveal.phase-spot {
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 72% 12%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 34% 64%, #fff, transparent), radial-gradient(1px 1px at 86% 58%, #fff, transparent),
+    radial-gradient(1px 1px at 52% 32%, #fff, transparent), radial-gradient(1.5px 1.5px at 22% 86%, #fff, transparent),
+    radial-gradient(1px 1px at 64% 82%, #fff, transparent), radial-gradient(1px 1px at 92% 30%, #fff, transparent),
+    radial-gradient(120% 80% at 50% 110%, #2a3260, #0b0d1e 60%, #05060f);
+}
+.skip { position: fixed; top: 14px; right: 16px; z-index: 2; border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(0, 0, 0, 0.35); color: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+/* The head lands on the screen centre: the streak is anchored there and slides in along a fixed angle. */
+.meteor {
+  position: absolute; left: 50%; top: 50%; width: min(46vw, 420px); height: 5px; margin-top: -2.5px; border-radius: 999px; transform-origin: left center;
+  background: linear-gradient(90deg, #fff, var(--mc) 12%, transparent); filter: drop-shadow(0 0 10px var(--mc));
+  animation: fall 1.15s cubic-bezier(0.3, 0, 0.75, 0.55) forwards; --mc: #7fb7ff; --d: min(90vmax, 900px);
+}
+.meteor::before { content: ""; position: absolute; left: -9px; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; background: #fff; box-shadow: 0 0 18px 6px var(--mc); }
+.meteor.r1 { --mc: #c99bff; } .meteor.r0 { --mc: #ffd36b; height: 7px; margin-top: -3.5px; }
+.meteor.mini { width: min(26vw, 220px); height: 3px; opacity: 0.8; }
+.meteor.mini::before { width: 10px; height: 10px; margin-top: -5px; left: -5px; }
+.meteor.mini.a { margin: -70px 0 0 50px; animation-delay: 0.1s; }
+.meteor.mini.b { margin: 60px 0 0 -40px; animation-delay: 0.2s; }
+@keyframes fall {
+  0% { opacity: 0; transform: rotate(-35deg) translateX(var(--d)); }
+  15% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-35deg) translateX(0); }
+}
+.burst { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: radial-gradient(circle, #fff, var(--c) 35%, transparent 70%); opacity: 0; animation: burst-blue 0.7s ease-out 1.05s forwards; }
+.burst.r1 { animation-name: burst-purple; animation-duration: 0.8s; }
+.burst.r0 { animation-name: burst-gold; animation-duration: 1.2s; }
+@keyframes burst-blue { 0% { opacity: 0; transform: scale(0.2); } 40% { opacity: 0.9; } 100% { opacity: 0; transform: scale(8); } }
+@keyframes burst-purple { 0% { opacity: 0; transform: scale(0.2); } 40% { opacity: 1; } 100% { opacity: 0.2; transform: scale(14); } }
+@keyframes burst-gold { 0% { opacity: 0; transform: scale(0.2); } 30% { opacity: 1; } 100% { opacity: 0.85; transform: scale(36); } }
+
+.spotlight { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; animation: pop 0.5s ease-out both; }
+.spot-rays { position: absolute; left: 50%; top: 45%; width: 620px; height: 620px; margin: -310px 0 0 -310px; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 214, 110, 0.28) 0 6deg, transparent 6deg 18deg); mask: radial-gradient(circle, #000 20%, transparent 68%); -webkit-mask: radial-gradient(circle, #000 20%, transparent 68%); animation: spin 14s linear infinite; }
+.spot-card { position: relative; width: min(240px, 64vw); aspect-ratio: 3 / 4; border-radius: 14px; padding: 18px 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; text-align: center; color: #fff;
+  background: linear-gradient(180deg, #b47a18, #4a2f07); border: 3px solid #ffd36b; box-shadow: 0 0 40px rgba(255, 205, 100, 0.9); }
+.spotlight.feat .spot-card { box-shadow: 0 0 60px rgba(255, 220, 120, 1), 0 0 0 3px #fff inset; }
+.spot-card b { font-size: 24px; line-height: 1.25; word-break: break-word; }
+.spot-card .stars { font-size: 15px; letter-spacing: 0.2em; }
+.spot-card small { font-size: 13px; opacity: 0.9; min-height: 1em; }
+@keyframes pop { from { opacity: 0; transform: scale(0.82); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) { .card-r, .spotlight, .spot-rays, .meteor, .burst { animation: none; } .pull-btn:hover:not(:disabled) { transform: none; } }

@@ -158,3 +158,11 @@ input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-v
 .math > .hint { margin-top: 0; }
 .foot { font-size: 12px; color: var(--text-2); text-align: center; }
 .foot p { margin: 0; }
+
+/* Share / import */
+.share-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.issue.ok { background: var(--accent-soft); color: var(--text); }
+.share-link { display: block; width: 100%; margin-top: 6px; font-size: 12px; }
+.incoming { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius); padding: 10px 14px; }
+.incoming.error { background: var(--err-soft); border-color: var(--err); color: var(--err); }
+.incoming div { display: flex; gap: 8px; }

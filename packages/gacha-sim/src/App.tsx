@@ -8,7 +8,9 @@ import { MathPanel } from "./MathPanel";
 import { ModelEditor } from "./ModelEditor";
 import { BudgetPanel, ProgressPanel, Results, TargetPanel } from "./Panels";
 import { Playground } from "./Playground";
-import { analyze, fromCatalog, fromPreset, hasSavedState, loadState, normalize, saveState, type SimState } from "./state";
+import { clearHash, decodeRules, rulesInHash, type ParseResult, type SharedRules } from "./share";
+import { SharePanel } from "./SharePanel";
+import { analyze, fromCatalog, fromPreset, fromShared, hasSavedState, loadState, normalize, saveState, type SimState } from "./state";
 
 type View = "gacha" | "lab";
 
@@ -35,6 +37,17 @@ export function App() {
     setS((prev) => (prev.presetId?.startsWith("game:") && prev.catalog ? normalize({ ...fromCatalog(prev.catalog, live, prev), target: prev.target, start: prev.start }) : prev));
   }, [live]);
 
+  // A shared link (#rules=…) asks before replacing the current rules.
+  const [incoming, setIncoming] = useState<ParseResult | null>(null);
+  useEffect(() => {
+    const check = () => { const code = rulesInHash(); if (code) decodeRules(code).then(setIncoming); };
+    check();
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
+  }, []);
+  const loadShared = (r: SharedRules) => { setS((prev) => normalize(fromShared(r, prev))); setView("lab"); };
+  const closeIncoming = () => { setIncoming(null); clearHash(); };
+
   const deferred = useDeferredValue(s);
   const a = useMemo(() => (view === "lab" ? analyze(deferred) : null), [deferred, view]);
 
@@ -50,6 +63,14 @@ export function App() {
           <button role="tab" aria-selected={view === "lab"} className={view === "lab" ? "on" : ""} onClick={() => setView("lab")}>⚙ 設定與分析</button>
         </div>
       </header>
+      {incoming && (incoming.ok ? (
+        <div className="incoming" role="alert">
+          <span>有人分享了卡池規則「<b>{incoming.rules.model.name}</b>」。載入後會取代目前的設定（抽卡進度另外保存，不受影響）。</span>
+          <div><button className="btn primary" onClick={() => { loadShared(incoming.rules); closeIncoming(); }}>載入</button><button className="btn" onClick={closeIncoming}>略過</button></div>
+        </div>
+      ) : (
+        <div className="incoming error" role="alert"><span>分享連結無法載入：{incoming.error}</span><div><button className="btn" onClick={closeIncoming}>關閉</button></div></div>
+      ))}
       <GameMenu live={live} status={status} current={s.presetId} onPick={pick} onPreset={(id) => setS((prev) => normalize(fromPreset(id, prev)))} onRefresh={refresh} />
 
       {view === "gacha" ? (
@@ -59,6 +80,7 @@ export function App() {
           {s.model.source && <p className="source"><b>規則來源：</b>{s.model.source}{!s.presetId && "（已修改）"}</p>}
           <main className="layout">
             <div className="col rules">
+              <SharePanel s={s} onImport={loadShared} />
               <ModelEditor model={s.model} edit={editModel} issues={a.issues} />
             </div>
             <div className="col outcome">

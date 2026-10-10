@@ -1,6 +1,7 @@
 import { Gacha, Rng, type RngState } from "@ggt/core";
 import { useEffect, useMemo, useState } from "react";
 import { bannerStatus } from "./GameMenu";
+import { Reveal, type RevealCard } from "./Reveal";
 import type { LiveData } from "./catalog/live";
 import { gameOf, pityKey } from "./catalog/games";
 import { fmt, twd } from "./ui";
@@ -12,6 +13,8 @@ interface Run { state: Gacha.ModelState; rng: RngState; log: Entry[] }
 const RUNS_KEY = "ggt.gacha-sim.pulls.v1";
 const loadRuns = (): Record<string, Run> => { try { return JSON.parse(localStorage.getItem(RUNS_KEY) ?? "{}") as Record<string, Run>; } catch { return {}; } };
 const saveRuns = (r: Record<string, Run>) => { try { localStorage.setItem(RUNS_KEY, JSON.stringify(r)); } catch { /* ignore */ } };
+const FAST_KEY = "ggt.gacha-sim.fast";
+const loadFast = () => { try { return localStorage.getItem(FAST_KEY) === "1"; } catch { return false; } };
 
 /** Ensure the saved counters match the model's counters (rules may have changed). */
 function fit(m: Gacha.GachaModel, st: Gacha.ModelState): Gacha.ModelState {
@@ -23,7 +26,9 @@ export function GachaStage({ s, live, onAnalyze, onTarget }: { s: SimState; live
   const key = pityKey(m);
   const [runs, setRuns] = useState<Record<string, Run>>(loadRuns);
   const [reveal, setReveal] = useState<Entry[] | null>(null);
+  const [fast, setFast] = useState(loadFast);
   useEffect(() => saveRuns(runs), [runs]);
+  useEffect(() => { try { localStorage.setItem(FAST_KEY, fast ? "1" : "0"); } catch { /* ignore */ } }, [fast]);
   const valid = useMemo(() => !Gacha.validateModel(m).some((i) => i.level === "error"), [m]);
   const run: Run = runs[key] ? { ...runs[key]!, state: fit(m, runs[key]!.state) } : { state: Gacha.newState(m), rng: new Rng(Date.now() >>> 0, "gacha-sim.stage").snapshot(), log: [] };
   const st = run.state;
@@ -118,7 +123,10 @@ export function GachaStage({ s, live, onAnalyze, onTarget }: { s: SimState; live
         </div>
         <div className="stage-links">
           <button className="link" onClick={onAnalyze}>📊 這個卡池平均要抽幾抽？</button>
-          {run.log.length > 0 && <button className="link" onClick={reset}>重置進度</button>}
+          <span className="stage-opts">
+            <label className="fast"><input type="checkbox" checked={fast} onChange={(e) => setFast(e.target.checked)} /> 略過動畫</label>
+            {run.log.length > 0 && <button className="link" onClick={reset}>重置進度</button>}
+          </span>
         </div>
       </div>
 
@@ -135,21 +143,18 @@ export function GachaStage({ s, live, onAnalyze, onTarget }: { s: SimState; live
       )}
 
       {reveal && (
-        <div className="reveal" role="dialog" aria-label="抽卡結果" onClick={() => setReveal(null)}>
-          <div className="cards">
-            {reveal.map((e, i) => {
-              const r = Math.min(tierIdx(e.tierId), 2);
-              return (
-                <div key={i} className={`card-r r${r} ${e.featured ? "feat" : ""}`} style={{ animationDelay: `${i * 0.07}s` }}>
-                  <span className="stars">{m.tiers[tierIdx(e.tierId)]?.name}</span>
-                  <b>{name(e.itemId)}</b>
-                  <small>{e.exchanged ? "兌換" : e.featured ? "限定" : e.forced ? "保底" : ""}</small>
-                </div>
-              );
-            })}
-          </div>
-          <span className="tap">點任意處關閉</span>
-        </div>
+        <Reveal
+          instant={fast || reveal.every((e) => e.exchanged)}
+          onClose={() => setReveal(null)}
+          cards={reveal.map((e, i): RevealCard => ({
+            key: `${i}`,
+            name: name(e.itemId),
+            tierName: m.tiers[tierIdx(e.tierId)]?.name ?? "",
+            rank: Math.min(tierIdx(e.tierId), 2) as 0 | 1 | 2,
+            tag: e.exchanged ? "兌換" : e.featured ? "限定" : e.forced ? "保底" : "",
+            featured: e.featured,
+          }))}
+        />
       )}
     </section>
   );

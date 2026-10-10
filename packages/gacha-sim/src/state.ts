@@ -71,6 +71,21 @@ export function fromCatalog(pick: CatalogPick, live: LiveData, prev?: SimState):
   };
 }
 
+/** Rules loaded from a share link or file: a custom model, with the shared goal when it fits. */
+export function fromShared(r: { model: Model; target?: Target }, prev: SimState): SimState {
+  const model = structuredClone(r.model);
+  const top = model.tiers[0]?.id ?? "";
+  const featured = model.modules.some((x) => x.kind === "featured" && x.tier === top);
+  return {
+    ...prev,
+    model,
+    presetId: `shared:${model.id}`,
+    catalog: undefined,
+    target: r.target ? { ...r.target } : { tier: top, mode: featured ? "featured" : "tier", copies: 1 },
+    start: Gacha.newState(model),
+  };
+}
+
 export function hasSavedState(): boolean {
   try { return localStorage.getItem(STORAGE_KEY) !== null; } catch { return false; }
 }
