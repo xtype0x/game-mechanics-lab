@@ -20,18 +20,17 @@ npm run dev
 ## 目前內容
 
 - 首頁：原創二遊主視覺、青金配色，以宣傳官網語彙致敬與幽默文案介紹遊戲機制工具。
-- 工具遊樂場：暴擊期望值示範可操作；抽卡與行動順序清楚標為製作中。
-- 開發筆記：目前無公開文章，預留機制研究與開發紀錄。
-- 關於計畫：從台灣出發、歡迎各國玩家與開發者的完整動機；另有資料與使用說明頁。
+- 工具遊樂場：抽卡模擬器與戰鬥行動順序工具，目前標為製作中，尚未接入網站。
+- 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。
 
-暴擊示範是獨立的簡化公式，**未移植正式核心**，不代表任何特定遊戲。所有參數只存在分頁記憶體；尚未實作存檔、資料庫或收集研究資料。
+網站本身沒有帳號、存檔、分析追蹤或資料上傳功能。
 
 詳細規劃與搬移步驟：[ARCHITECTURE.md](./ARCHITECTURE.md)。
 
 檢查結果：[docs/VERIFICATION.md](./docs/VERIFICATION.md)。
 
-主要視覺與生成提示詞：[docs/HOMEPAGE-V3-DESIGN.md](./docs/HOMEPAGE-V3-DESIGN.md)。首頁畫面：[docs/homepage-hero-v3.jpg](./docs/homepage-hero-v3.jpg)。
+主要視覺與生成提示詞：[docs/HOMEPAGE-V4-DESIGN.md](./docs/HOMEPAGE-V4-DESIGN.md)。首頁畫面：[docs/homepage-hero-v4.jpg](./docs/homepage-hero-v4.jpg)。主視覺角落保留 AI 生成圖像註記，桌面與手機皆可見。
 
 ## 建立獨立 repo
 
