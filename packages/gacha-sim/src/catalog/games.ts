@@ -34,18 +34,18 @@ export interface GameDef {
   batchCost?: number;
   types: BannerType[];
   source: string;
-  /** Current banner contents come from a live source; otherwise pools use generic names. */
-  live: boolean;
+  /** Where current banner contents come from: a live public source, or the hand-maintained manual.json. */
+  data: "live" | "manual";
   /** False when the example top-up packs (about 160 currency per pull) do not fit this currency's price. */
   twd?: false;
 }
 
-const NO_LIVE = "目前找不到可從網頁直接讀取的公開卡池資料，卡池使用通用名稱；規則可在「設定與分析」調整。";
+const MANUAL_NOTE = "目前找不到可從網頁直接讀取的公開卡池資料，卡池內容為手動整理，可能比遊戲晚更新。";
 const HOYO_NOTE = "5★ 基礎機率、硬保底、限定比例與大保底為官方公開說明；軟保底的起點與每抽增幅是玩家社群統計推估，官方未公布。";
 
 export const GAMES: GameDef[] = [
   {
-    id: "hsr", name: "崩壞：星穹鐵道", currency: "星瓊", cost: 160, live: true,
+    id: "hsr", name: "崩壞：星穹鐵道", currency: "星瓊", cost: 160, data: "live",
     source: "躍遷規則依官方躍遷詳情與社群統計；目前卡池內容即時取自 api.ennead.cc（官方活動日曆）。",
     types: [
       {
@@ -75,7 +75,7 @@ export const GAMES: GameDef[] = [
     ],
   },
   {
-    id: "genshin", name: "原神", currency: "原石", cost: 160, live: true,
+    id: "genshin", name: "原神", currency: "原石", cost: 160, data: "live",
     source: "祈願規則依官方祈願詳情與社群統計；目前卡池內容即時取自 api.ennead.cc（官方活動日曆）。",
     types: [
       {
@@ -105,7 +105,7 @@ export const GAMES: GameDef[] = [
     ],
   },
   {
-    id: "zzz", name: "絕區零", currency: "菲林", cost: 160, live: true,
+    id: "zzz", name: "絕區零", currency: "菲林", cost: 160, data: "live",
     source: "調頻規則依官方調頻詳情（基礎與綜合機率）與社群統計；目前卡池內容即時取自 api.ennead.cc（官方活動日曆）。",
     types: [
       {
@@ -135,7 +135,7 @@ export const GAMES: GameDef[] = [
     ],
   },
   {
-    id: "ba", name: "蔚藍檔案", currency: "青輝石", cost: 120, batchCost: 1200, live: true,
+    id: "ba", name: "蔚藍檔案", currency: "青輝石", cost: 120, batchCost: 1200, data: "live",
     source: "招募規則依 Blue Archive Wiki 與 Inven Global 報導；Pickup 學生取自 SchaleDB，可能比遊戲晚更新。",
     types: [
       {
@@ -155,8 +155,8 @@ export const GAMES: GameDef[] = [
     ],
   },
   {
-    id: "wuwa", name: "鳴潮", currency: "星聲", cost: 160, live: false,
-    source: `喚取規則依官方喚取說明（5★ 0.8%、綜合 1.8%、80 抽保底）與社群統計。${NO_LIVE}`,
+    id: "wuwa", name: "鳴潮", currency: "星聲", cost: 160, data: "manual",
+    source: `喚取規則依官方喚取說明（5★ 0.8%、綜合 1.8%、80 抽保底）與社群統計。${MANUAL_NOTE}`,
     types: [
       {
         kind: "character", name: "角色活動喚取",
@@ -185,8 +185,8 @@ export const GAMES: GameDef[] = [
     ],
   },
   {
-    id: "endfield", name: "明日方舟：終末地", currency: "嵌晶玉", cost: 500, live: false, twd: false,
-    source: `尋訪規則依 Game8、GameWith 與 17173 等攻略整理（6★ 0.8%、80 抽保底、120 抽必得 UP），非官方完整公告。${NO_LIVE}`,
+    id: "endfield", name: "明日方舟：終末地", currency: "嵌晶玉", cost: 500, data: "manual", twd: false,
+    source: `尋訪規則依 Game8、GameWith 與 17173 等攻略整理（6★ 0.8%、80 抽保底、120 抽必得 UP），非官方完整公告。${MANUAL_NOTE}`,
     types: [
       {
         kind: "character", name: "特許尋訪（限定）",
@@ -208,8 +208,8 @@ export const GAMES: GameDef[] = [
     ],
   },
   {
-    id: "nte", name: "異環", currency: "環石", cost: 160, live: false,
-    source: `抽卡規則依卡池掉落率說明的整理（S 級 0.99%、棋盤切換後 19.59%、含保底 1.87%）與攻略網站，非官方完整公告。${NO_LIVE}`,
+    id: "nte", name: "異環", currency: "環石", cost: 160, data: "manual",
+    source: `抽卡規則依卡池掉落率說明的整理（S 級 0.99%、棋盤切換後 19.59%、含保底 1.87%）與攻略網站，非官方完整公告。${MANUAL_NOTE}`,
     types: [
       {
         kind: "character", name: "限定角色",

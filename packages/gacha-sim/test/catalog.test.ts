@@ -2,6 +2,7 @@ import { Gacha } from "@ggt/core";
 import { describe, expect, it } from "vitest";
 import { GAMES, buildModel, typeFor } from "../src/catalog/games";
 import { adaptHoyo, adaptSchale, adaptZzz, type LiveData } from "../src/catalog/live";
+import { MANUAL, manualBanners, withManual } from "../src/catalog/manual";
 import snapshot from "../src/catalog/snapshot.json";
 
 describe("live adapters", () => {
@@ -47,7 +48,31 @@ describe("live adapters", () => {
     const s = snapshot as LiveData;
     expect(typeof s.fetchedAt).toBe("string");
     expect(s.banners.length).toBeGreaterThan(0);
-    for (const b of s.banners) expect(GAMES.filter((g) => g.live).map((g) => g.id)).toContain(b.game);
+    for (const b of s.banners) expect(GAMES.filter((g) => g.data === "live").map((g) => g.id)).toContain(b.game);
+  });
+});
+
+describe("manual banner list", () => {
+  it("only covers games without a live source; valid times, ids unique", () => {
+    const manualGames = new Set(GAMES.filter((g) => g.data === "manual").map((g) => g.id));
+    expect(/^\d{4}-\d{2}-\d{2}$/.test(MANUAL.updated)).toBe(true);
+    const list = manualBanners();
+    for (const [i, b] of list.entries()) {
+      const e = MANUAL.banners[i]!;
+      expect(manualGames.has(b.game), b.id).toBe(true);
+      expect(Number.isFinite(b.start) && Number.isFinite(b.end) && b.end > b.start, b.id).toBe(true);
+      expect(/([+-]\d{2}:\d{2}|Z)$/.test(e.start) && /([+-]\d{2}:\d{2}|Z)$/.test(e.end),`${b.id}: times need an offset`).toBe(true);
+      expect(b.featured5.length, b.id).toBeGreaterThan(0);
+      expect(e.source.startsWith("https://"), b.id).toBe(true);
+      const g = GAMES.find((x) => x.id === b.game)!;
+      expect(typeFor(g, b), `${b.id}: no ${b.kind} pool`).toBeDefined();
+    }
+    expect(new Set(list.map((b) => b.id)).size).toBe(list.length);
+  });
+
+  it("is merged over live data and replaces older copies", () => {
+    const d = withManual(withManual(snapshot as LiveData));
+    expect(d.banners.length).toBe((snapshot as LiveData).banners.length + MANUAL.banners.length);
   });
 });
 
@@ -66,7 +91,7 @@ describe("catalog models", () => {
     for (const t of g.types) {
       const key = `${g.id}:${t.kind}${t.region ? `:${t.region}` : ""}`;
       it(`${key}: valid, and the guaranteed maximum matches the rules`, () => {
-        const banner = t.kind === "standard" ? undefined : live.banners.find((b) => b.game === g.id && typeFor(g, b) === t);
+        const banner = t.kind === "standard" ? undefined : withManual(live).banners.find((b) => b.game === g.id && typeFor(g, b) === t);
         for (const m of [buildModel(g, t), buildModel(g, t, banner)]) {
           expect(Gacha.validateModel(m).filter((i) => i.level === "error")).toEqual([]);
           const epi = m.modules.find((x) => x.kind === "epitomized");

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchLive, type LiveData } from "./live";
+import { withManual } from "./manual";
 import snapshot from "./snapshot.json";
 
 export type LiveStatus = "snapshot" | "loading" | "live" | "offline";
@@ -19,6 +20,7 @@ function readCache(): LiveData | null {
 /**
  * Current banners: the bundled snapshot right away (works offline), then live data from the public sources.
  * Live results are cached for 30 minutes so a busy page does not hit the sources on every visit.
+ * The hand-maintained banners (manual.json) are always added on top.
  */
 export function useLiveBanners(): { data: LiveData; status: LiveStatus; refresh: () => void } {
   const cached = readCache();
@@ -43,5 +45,6 @@ export function useLiveBanners(): { data: LiveData; status: LiveStatus; refresh:
     }).catch(() => alive && setStatus("offline"));
     return () => { alive = false; };
   }, [tick]); // eslint-disable-line react-hooks/exhaustive-deps
-  return { data, status, refresh: () => setTick((t) => t + 1) };
+  const withList = useMemo(() => withManual(data), [data]);
+  return { data: withList, status, refresh: () => setTick((t) => t + 1) };
 }
