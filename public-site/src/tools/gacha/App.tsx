@@ -55,7 +55,7 @@ export function App() {
     <div className="app">
       <header className="top">
         <div className="brand">
-          <a className="back-link" href="../#/lab">← gacha-game-tool 工具遊樂場</a>
+          <a className="back-link" href="../index.html#/lab">← gacha-game-tool 工具遊樂場</a>
           <h1>抽卡模擬器</h1>
           <p className="tagline">選一款遊戲直接抽，或到「設定與分析」調整規則、精確計算要抽幾抽與花費。</p>
         </div>

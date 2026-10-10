@@ -15,7 +15,7 @@ npm run dev
 
 預覽：<http://127.0.0.1:5180/>。`npm run build` 會先檢查型別，再產生 `dist/`；`npm run preview` 預覽建置結果。本網站有自己的依賴，請在此資料夾執行 `npm ci`，搬到新 repo 後也同樣操作。
 
-`npm run build:offline` 另外產生 `offline/index.html`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
+`npm run build:offline` 另外產生 `offline/index.html` 與 `offline/gacha/index.html`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
 
 ## 目前內容
 

@@ -48,7 +48,7 @@ function Home() {
   </>;
 }
 function ToolLaunch() {
-  return <a className="tool-launch" href="./gacha/">
+  return <a className="tool-launch" href="./gacha/index.html">
     <div className="tool-launch-copy"><span className="category">給喜歡抽卡的你</span><h2>抽卡模擬器</h2><p>調整保底、限定與天井規則，精確算出抽數分布、花費與機率。內建近期卡池資料，也能自己設定一套卡池。</p><span className="button primary">開啟模擬器 <Arrow/></span></div>
     <div className="tool-launch-art" aria-hidden="true"><div className="pack-art"><i/><i/><i/><span>✦</span></div></div>
   </a>;
