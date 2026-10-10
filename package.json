@@ -9,8 +9,11 @@
     "dev": "npm run dev -w @ggt/console",
     "build": "npm run build -w @ggt/console",
     "test": "vitest run",
-    "typecheck": "tsc -p packages/core && tsc -p packages/console --noEmit",
-    "vectors": "node scripts/update-vectors.mjs"
+    "typecheck": "tsc -p packages/core && tsc -p packages/console --noEmit && tsc -p packages/gacha-sim --noEmit",
+    "vectors": "node scripts/update-vectors.mjs",
+    "sim:dev": "npm run dev -w @ggt/gacha-sim",
+    "sim:build": "npm run build -w @ggt/gacha-sim",
+    "sim:snapshot": "node packages/gacha-sim/scripts/update-snapshot.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

@@ -1,0 +1,26 @@
+# 抽卡模擬器（@ggt/gacha-sim）
+
+給一般玩家的抽卡模擬器。打開就是抽卡畫面；「設定與分析」可自由調整規則並精確計算抽數與花費。計算核心是 `@ggt/core` 的 `Gacha` 命名空間（[規格](../../docs/spec/gacha2.md)）。
+
+```bash
+npm run sim:dev        # http://localhost:5190
+npm run sim:build      # 單檔 dist/index.html
+npm run sim:snapshot   # 更新卡池快照
+```
+
+## 遊戲卡池與資料來源
+一款遊戲一個按鈕，選單內選卡池類型與目前的卡池。
+
+| 遊戲 | 卡池類型 | 目前卡池內容來源 |
+|---|---|---|
+| 崩壞：星穹鐵道 | 限定角色、光錐、常駐 | [api.ennead.cc](https://github.com/torikushiii/hoyoverse-api)（官方活動日曆，開源，免金鑰，每 IP 每秒 2 次） |
+| 原神 | 限定角色、武器（定軌）、常駐 | 同上 |
+| 蔚藍檔案 | 國際服 Pickup（天井兌換）、日服 Pickup（累計保底） | [SchaleDB](https://schaledb.com) 公開資料（`config.min.json`、`tw/students.min.json`）；**可能比遊戲晚更新**，畫面會顯示日期與「已結束」 |
+
+- **只有卡池內容（限定角色／武器名稱、日期）來自外部**；機率、保底等規則是穩定的遊戲機制，寫在 `src/catalog/games.ts`，每類都附來源與可信度說明（軟保底增幅是社群統計，官方未公布）。
+- **載入順序**：先顯示 `src/catalog/snapshot.json`（離線也能用），再從來源抓即時資料取代；成功的結果在瀏覽器快取 30 分鐘。某個來源失敗時，該遊戲沿用快照。
+- **更新快照**：`npm run sim:snapshot` 執行與瀏覽器相同的抓取程式（`src/catalog/live.ts`），只有至少一個來源成功時才寫入。上線前或改版後執行一次即可。
+- 不使用任何遊戲圖片；遊戲名稱與角色名稱只用於說明卡池內容。
+
+## 搬到個人網站
+只依賴 `@ggt/core`（目前以 Vite 別名指向原始碼）與 React，沒有使用主控台的元件。移植時把 `src/` 放進網站的 `features/gacha/`，並依網站 ARCHITECTURE.md 改為依賴打包後的 `@ggt/core`。

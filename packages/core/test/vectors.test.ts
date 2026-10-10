@@ -32,6 +32,7 @@ import {
   PROJECT_TEMPLATES,
   type Scenario,
   GACHA_RULES_VERSION,
+  Gacha,
   DEMO_MODULES,
   disclosure,
   newGachaState,
@@ -319,6 +320,86 @@ function gachaVectors() {
   return { rulesVersion: GACHA_RULES_VERSION, tolerance: 1e-9, banners, pulls, distributions, longRun, disclosure: banners.map((b) => ({ banner: b.id, ...disclosure(b) })) };
 }
 
+function gacha2Vectors() {
+  const models: Gacha.GachaModel[] = Gacha.PRESETS.map((p) => structuredClone(p.model));
+  // Every module at once, to pin down how they interact.
+  const combo = structuredClone(Gacha.PRESETS[1]!.model);
+  combo.id = "combo";
+  combo.name = "combo";
+  // Small thresholds keep the exact chain small (since 20 × guar 2 × miss 26 × pts 30 states for the target).
+  for (const x of combo.modules) if (x.kind === "exchange") x.cost = 30;
+  combo.modules.push(
+    { kind: "softPity", tier: "3", start: 12, step: 0.05 },
+    { kind: "hardPity", tier: "3", at: 20 },
+    { kind: "guarantee", tier: "3" },
+    { kind: "milestone", tier: "3", steps: [{ at: 10, featuredShare: 0.5 }, { at: 25, featuredShare: 1 }] },
+    { kind: "hardPity", tier: "2", at: 4 },
+  );
+  models.push(combo);
+  // Weapon-banner style with a chosen item (epitomized, 2.1).
+  models.push({
+    version: 2, id: "weapon", name: "weapon", pull: { cost: 160, currency: "c", batchSize: 10 },
+    tiers: [{ id: "5", name: "5★", rate: 0.007, items: ["std"] }, { id: "4", name: "4★", rate: 0.06, items: ["r4"] }, { id: "3", name: "3★", rate: 0, items: ["r3"] }],
+    items: ["a", "b", "std", "r4", "r3"].map((id) => ({ id, name: id, kind: "resource" as const })),
+    modules: [
+      { kind: "softPity", tier: "5", start: 63, step: 0.07 },
+      { kind: "hardPity", tier: "5", at: 80 },
+      { kind: "featured", tier: "5", share: 0.75, items: ["a", "b"] },
+      { kind: "guarantee", tier: "5" },
+      { kind: "epitomized", tier: "5", item: "a", points: 1 },
+      { kind: "hardPity", tier: "4", at: 10 },
+    ],
+  });
+  const targetOf = (m: Gacha.GachaModel): Gacha.Target => ({ tier: m.tiers[0]!.id, mode: "featured", copies: 1 });
+  const pulls = models.flatMap((m) => [1, "g2"].map((seed) => {
+    const state = Gacha.newState(m);
+    const rng = new Rng(seed, "gacha2.pulls");
+    const results = [];
+    for (let i = 0; i < 300; i++) {
+      results.push(Gacha.pull(m, state, rng));
+      // Scripted exchanges: try to exchange the first exchangeable item after every 50th pull.
+      const ex = m.modules.find((x) => x.kind === "exchange");
+      if (ex && ex.kind === "exchange" && (i + 1) % 50 === 0) results.push({ exchange: ex.items[0], ok: Gacha.exchange(m, state, ex.items[0]!) });
+    }
+    return { model: m.id, seed, stream: "gacha2.pulls", results, finalState: state };
+  }));
+  const contexts = models.map((m) => {
+    const states = [Gacha.newState(m).vars, Object.fromEntries(Gacha.stateVars(m).map((v, i) => [v, (i * 37 + 9) % Math.max(1, Gacha.varDomain(m, v))]))];
+    return { model: m.id, cases: states.map((vars) => ({ vars, expected: Gacha.pullContext(m, vars) })) };
+  });
+  const targets: { model: string; target: Gacha.Target; start?: Gacha.ModelState }[] = [
+    ...models.map((m) => ({ model: m.id, target: targetOf(m) })),
+    { model: "soft-pity-5050", target: { tier: "5", mode: "featured", copies: 2 } },
+    { model: "soft-pity-5050", target: { tier: "4", mode: "item", itemId: "up4b", copies: 1 } },
+    { model: "soft-pity-5050", target: { tier: "5", mode: "featured", copies: 1 }, start: { vars: { "since:5": 70, "guar:5": 1 }, pulls: 0 } },
+    { model: "floor-exchange", target: { tier: "3", mode: "featured", copies: 2 }, start: { vars: { pts: 150 }, pulls: 0 } },
+    { model: "floor-exchange", target: { tier: "3", mode: "featured", copies: 1, useExchange: false } },
+    { model: "combo", target: { tier: "2", mode: "tier", copies: 3 } },
+    { model: "weapon", target: { tier: "5", mode: "item", itemId: "a", copies: 1 } },
+    { model: "weapon", target: { tier: "5", mode: "item", itemId: "b", copies: 1 } },
+    { model: "weapon", target: { tier: "5", mode: "item", itemId: "a", copies: 2 }, start: { vars: { "since:5": 40, "fate:5": 1 }, pulls: 0 } },
+  ];
+  const byId = (id: string) => models.find((m) => m.id === id)!;
+  const distributions = targets.map(({ model, target, start }) => {
+    const m = byId(model);
+    const d = Gacha.targetDistribution(m, target, start, { maxPulls: 3000 });
+    const s = Gacha.summarize(d);
+    return { model, target, start, expected: { states: d.states, mean: d.mean, tail: d.tail, worstCase: Gacha.worstCase(m, target, start), variance: s.variance, percentiles: s.percentiles, pmf: d.pmf } };
+  });
+  const copies = models.map((m) => ({ model: m.id, target: targetOf(m), pulls: 150, maxCopies: 5, expected: Gacha.copiesAfter(m, targetOf(m), 150, 5) }));
+  const longRun = models.map((m) => ({ model: m.id, expected: Gacha.longRun(m) }));
+  const table = Gacha.topUpTable(Gacha.EXAMPLE_PACKS, 50000);
+  const needs = [0, 1, 60, 120, 160, 1200, 1600, 9999, 24000, 50000];
+  const cost = {
+    packs: Gacha.EXAMPLE_PACKS,
+    unit: table.unit,
+    cases: needs.map((need) => ({ need, price: table.price[Math.ceil(need / table.unit)], plan: table.plan(need) })),
+    currencyFor: models.map((m) => ({ model: m.id, wallet: { currency: 500, freePulls: 3 }, pulls: 25, expected: Gacha.currencyFor(m, 25, { currency: 500, freePulls: 3 }) })),
+    spend: models.map((m) => ({ model: m.id, target: targetOf(m), expected: Gacha.spend(m, Gacha.targetDistribution(m, targetOf(m)), Gacha.EXAMPLE_PACKS) })),
+  };
+  return { rulesVersion: Gacha.RULES_VERSION, tolerance: 1e-9, models, pulls, contexts, distributions, copies, longRun, cost };
+}
+
 function moduleVectors() {
   const optional = DEMO_MODULES.filter((m) => m.kind === "optional").map((m) => m.id);
   // Every module on, then each optional module off on its own, then economy and teamEdit off together.
@@ -326,7 +407,7 @@ function moduleVectors() {
   return { modules: DEMO_MODULES, cases: selections.map((selection) => ({ selection, expected: resolveModules(selection) })) };
 }
 
-const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, modules: moduleVectors };
+const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, gacha2: gacha2Vectors, modules: moduleVectors };
 
 describe("test vectors", () => {
   for (const [name, gen] of Object.entries(SUITES)) {
@@ -338,6 +419,7 @@ describe("test vectors", () => {
         writeFileSync(file, JSON.stringify(fresh, null, 2) + "\n");
       }
       expect(fresh).toEqual(JSON.parse(readFileSync(file, "utf8")));
-    });
+      // Generating exact gacha analyses takes a few seconds; under a parallel full run it can exceed the 5 s default.
+    }, 60_000);
   }
 });
