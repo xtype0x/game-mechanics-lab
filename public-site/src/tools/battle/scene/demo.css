@@ -1,0 +1,41 @@
+/* Demo runs on a fixed 1280×720 stage scaled to fit the viewport. */
+.demo-root { position: fixed; inset: 0; background: #07050c; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 100; color: #f4eefc; font-family: system-ui, "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif; }
+.stage-frame { width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9; position: relative; container-type: inline-size; }
+/* Phone held upright (touch screens only, so narrow desktop windows are unaffected): turn the 16:9 stage sideways so it uses the long side instead of shrinking to ~25%. */
+@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
+  .stage-frame { width: min(100vh, calc(100vw * 16 / 9)); width: min(100dvh, calc(100vw * 16 / 9)); flex-shrink: 0; transform: rotate(90deg); }
+}
+.stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; transform: scale(calc(100cqw / 1280px)); overflow: hidden; user-select: none; }
+.backdrop { position: absolute; inset: 0; width: 100%; height: 100%; }
+.backdrop .bolt { animation: bolt 6s infinite; opacity: 0; }
+@keyframes bolt { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 1; } 94% { opacity: 0.2; } }
+
+.gallery { position: absolute; inset: 40px; display: flex; flex-direction: column; justify-content: space-around; }
+.gallery .row { display: flex; gap: 16px; align-items: flex-end; justify-content: center; }
+.gallery .cell { width: 150px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gallery .cell .sprite { width: 100%; }
+.gallery .cell svg { width: 100%; height: auto; display: block; }
+.exit { position: absolute; right: 16px; top: 16px; }
+
+/* sprite animations */
+.sprite.idle { animation: bob 2.6s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.wing-l { animation: flapL 0.5s ease-in-out infinite alternate; }
+.wing-r { animation: flapR 0.5s ease-in-out infinite alternate; }
+@keyframes flapL { from { transform: rotate(-14deg); } to { transform: rotate(10deg); } }
+@keyframes flapR { from { transform: rotate(14deg); } to { transform: rotate(-10deg); } }
+.hover { animation: hover 2s ease-in-out infinite; }
+@keyframes hover { 0%, 100% { transform: translateY(-4px); } 50% { transform: translateY(6px); } }
+.orbit { animation: spin 7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.core-pulse, .weapon-glow, .halo { animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.ember, .eye-glow { animation: ember 1.4s ease-in-out infinite; }
+@keyframes ember { 0%, 100% { opacity: 0.75; filter: none; } 50% { opacity: 1; filter: drop-shadow(0 0 4px #ffb347); } }
+.squish { animation: squish 1.6s ease-in-out infinite; }
+@keyframes squish { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.06, 0.93); } }
+.spark { animation: pulse 0.6s steps(2) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sprite.idle, .wing-l, .wing-r, .hover, .orbit, .core-pulse, .weapon-glow, .halo, .ember, .eye-glow, .squish, .spark, .backdrop .bolt { animation: none !important; }
+}

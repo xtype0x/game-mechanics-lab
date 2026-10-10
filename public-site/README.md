@@ -15,14 +15,16 @@ npm run dev
 
 預覽：<http://127.0.0.1:5180/>。`npm run build` 會先檢查型別，再產生 `dist/`；`npm run preview` 預覽建置結果。本網站有自己的依賴，請在此資料夾執行 `npm ci`，搬到新 repo 後也同樣操作。
 
-`npm run build:offline` 另外產生 `offline/index.html` 與 `offline/gacha/index.html`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
+`npm run build:offline` 另外產生 `offline/index.html`、`offline/gacha/index.html` 與 `offline/battle/index.html`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
 
 ## 目前內容
 
 - 首頁：原創二遊主視覺、青金配色，以宣傳官網語彙致敬與幽默文案介紹遊戲機制工具。
-- 工具遊樂場：抽卡模擬器入口，開啟獨立頁面 `gacha/`（從 `packages/gacha-sim` 搬入，核心規則取自 `src/lib/core/`，`@ggt/core` 以別名指向它）。戰鬥行動順序工具仍標為製作中。
+- 工具遊樂場：抽卡模擬器入口，開啟獨立頁面 `gacha/`（從 `packages/gacha-sim` 搬入，核心規則取自 `src/lib/core/`，`@ggt/core` 以別名指向它）。另有戰鬥實驗室入口，開啟獨立頁面 `battle/`（規則核心同樣複製自 `packages/core`；動畫戰鬥畫面取自研究 repo 的試玩 DEMO，不含標題畫面、關卡、抽卡與升級）。
 - 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。
+
+戰鬥實驗室可選隊伍與敵人、改角色數值與技能（存在瀏覽器 localStorage，「重設」回範本）、預覽行動順序、批量模擬勝率並用動畫畫面開打；角色預設選單由 `src/tools/battle/presets/index.ts` 的 `presetGroups` 提供（型別見同資料夾 `types.ts`），目前有「範本角色」，「星穹鐵道」群組為空、整理中。
 
 網站本身沒有帳號或分析追蹤功能。抽卡模擬器的設定存在瀏覽器本機，開啟時會讀取公開卡池資料，說明見資料與使用說明頁。
 

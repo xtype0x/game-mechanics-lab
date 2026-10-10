@@ -48,10 +48,16 @@ function Home() {
   </>;
 }
 function ToolLaunch() {
-  return <a className="tool-launch" href="./gacha/index.html">
+  return <>
+  <a className="tool-launch" href="./gacha/index.html">
     <div className="tool-launch-copy"><span className="category">給喜歡抽卡的你</span><h2>抽卡模擬器</h2><p>調整保底、限定與天井規則，精確算出抽數分布、花費與機率。內建近期卡池資料，也能自己設定一套卡池。</p><span className="button primary">開啟模擬器 <Arrow/></span></div>
     <div className="tool-launch-art" aria-hidden="true"><div className="pack-art"><i/><i/><i/><span>✦</span></div></div>
-  </a>;
+  </a>
+  <a className="tool-launch" href="./battle/index.html">
+    <div className="tool-launch-copy"><span className="category">給愛研究戰鬥的你</span><h2>戰鬥實驗室</h2><p>挑選隊伍與敵人，調整角色數值與技能，預覽誰先出手、批量模擬勝率，最後親手打一場動畫戰鬥。角色皆為原創範例。</p><span className="button primary">進入實驗室 <Arrow/></span></div>
+    <div className="tool-launch-art" aria-hidden="true"><div className="pack-art"><i/><i/><i/><span>⚔</span></div></div>
+  </a>
+  </>;
 }
 function PageIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return <div className="page-intro"><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{text}</p></div>;
@@ -60,7 +66,7 @@ function About() {
   return <><PageIntro eyebrow="ABOUT THE PROJECT / 計畫的起點" title="遊戲還可以有更多玩法。" text="gacha-game-tool，一個從台灣出發的個人遊戲機制工具計畫。"/><div className="about-layout"><aside className="about-marginal"><span>PLAYER'S NOTE</span><strong>保持好奇。<br/>試著動手。<br/>讓點子發芽。</strong><small>給喜歡玩遊戲，<br/>也喜歡做遊戲的你。</small></aside><article className="prose project-story"><h2>為什麼做這個計畫？</h2>{projectStory.map(paragraph => <p key={paragraph}>{paragraph}</p>)}<blockquote>有更多值得期待的作品，<br/>也有更多從沒玩過的玩法。</blockquote><h2>工具會怎麼做？</h2><p>每個工具都會說明適用範圍與限制。工具裡的數值是模擬用的假設，不代表任何特定遊戲的官方設定。</p><a className="button primary" href="#/lab">進來玩玩規則 <Arrow/></a></article></div></>;
 }
 function Privacy() {
-  return <><PageIntro eyebrow="YOUR DATA" title="資料與使用說明" text="玩得輕鬆，也知道自己的資料放在哪裡。"/><div className="prose"><h2>網站本身</h2><p>網站沒有帳號、分析追蹤或資料上傳功能。</p><h2>抽卡模擬器</h2><p>模擬設定與分享規則都只存在你的瀏覽器本機（localStorage），網址的分享連結也只在你的瀏覽器中產生與解讀。清除瀏覽器資料就會消失。</p><p>開啟模擬器時，會向公開來源讀取近期卡池資料（api.ennead.cc 與 SchaleDB）。這些請求不含個人資料，但會讓來源看到你的 IP 位址，與一般瀏覽網頁相同。</p><h2>工具的結果怎麼看？</h2><p>工具會標示假設與限制。簡化的範例用來理解規則，實際遊戲仍可能包含尚未建模的條件。這是一個個人的開發與研究計畫。</p></div></>;
+  return <><PageIntro eyebrow="YOUR DATA" title="資料與使用說明" text="玩得輕鬆，也知道自己的資料放在哪裡。"/><div className="prose"><h2>網站本身</h2><p>網站沒有帳號、分析追蹤或資料上傳功能。</p><h2>抽卡模擬器</h2><p>模擬設定與分享規則都只存在你的瀏覽器本機（localStorage），網址的分享連結也只在你的瀏覽器中產生與解讀。清除瀏覽器資料就會消失。</p><p>開啟模擬器時，會向公開來源讀取近期卡池資料（api.ennead.cc 與 SchaleDB）。這些請求不含個人資料，但會讓來源看到你的 IP 位址，與一般瀏覽網頁相同。</p><h2>戰鬥實驗室</h2><p>你選的隊伍、敵人與修改過的角色數值、技能，只存在你的瀏覽器本機（localStorage），不會上傳；按「重設」即可清除並回到範本。這個頁面不會向外部讀取資料。</p><h2>工具的結果怎麼看？</h2><p>工具會標示假設與限制。簡化的範例用來理解規則，實際遊戲仍可能包含尚未建模的條件。這是一個個人的開發與研究計畫。</p></div></>;
 }
 function App() {
   const [path, setPath] = useState(() => window.location.hash.slice(1) || '/');

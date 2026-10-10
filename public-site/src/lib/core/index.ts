@@ -1,2 +1,17 @@
 export * from "./rng";
 export * as Gacha from "./gacha2/index";
+export * from "./expr";
+export * from "./modifier";
+export * from "./damage";
+export * from "./project";
+export * from "./library/damage-components";
+export * from "./battle/types";
+export * from "./battle/engine";
+export * from "./battle/sim";
+export * from "./library/battle-content";
+export * from "./battle/validate";
+export * from "./battle/deps";
+export * from "./library/reference";
+export * from "./library/showcase-content";
+export * from "./library/gacha-content";
+export * from "./modules";
