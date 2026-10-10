@@ -1,0 +1,381 @@
+{
+  "modules": [
+    {
+      "id": "battle",
+      "name": "回合制戰鬥",
+      "kind": "core",
+      "provides": [
+        "battle"
+      ],
+      "requires": [],
+      "summary": "行動值、技能、傷害公式、敵人 AI、勝負判定（主控台的戰鬥規則）。",
+      "whenOff": "不能關閉：沒有戰鬥就沒有可玩的內容。"
+    },
+    {
+      "id": "stages",
+      "name": "關卡",
+      "kind": "core",
+      "provides": [
+        "content"
+      ],
+      "requires": [
+        "battle"
+      ],
+      "summary": "由主控台的戰鬥清單組成關卡與波次。",
+      "whenOff": "不能關閉：沒有要打的對象。"
+    },
+    {
+      "id": "freeRoster",
+      "name": "自由選角",
+      "kind": "slot-default",
+      "provides": [
+        "roster"
+      ],
+      "requires": [],
+      "summary": "所有我方角色一開始就能使用。",
+      "whenOff": "有其他「角色來源」模組開啟時自動讓位。"
+    },
+    {
+      "id": "autoTeam",
+      "name": "固定隊伍",
+      "kind": "slot-default",
+      "provides": [
+        "team"
+      ],
+      "requires": [
+        "roster"
+      ],
+      "summary": "使用目前隊伍設定（或角色清單前 4 人）出戰。",
+      "whenOff": "開啟「編隊」時自動讓位。"
+    },
+    {
+      "id": "teamEdit",
+      "name": "編隊",
+      "kind": "optional",
+      "provides": [
+        "team"
+      ],
+      "requires": [
+        "roster"
+      ],
+      "summary": "玩家自選 1～4 人與站位。",
+      "whenOff": "改用固定隊伍。"
+    },
+    {
+      "id": "economy",
+      "name": "貨幣與獎勵",
+      "kind": "optional",
+      "provides": [
+        "currency"
+      ],
+      "requires": [
+        "content"
+      ],
+      "summary": "通關獲得星晶與經驗，首通獎勵較多。",
+      "whenOff": "不發獎勵、不顯示錢包；需要貨幣的模組會一併停用。"
+    },
+    {
+      "id": "gacha",
+      "name": "抽卡",
+      "kind": "optional",
+      "provides": [
+        "roster",
+        "gacha"
+      ],
+      "requires": [
+        "currency"
+      ],
+      "summary": "用星晶召喚角色；機率、保底與限定規則來自主控台的卡池設定。",
+      "whenOff": "角色改為自由選取。"
+    },
+    {
+      "id": "disclosure",
+      "name": "機率公示",
+      "kind": "optional",
+      "provides": [],
+      "requires": [
+        "gacha"
+      ],
+      "summary": "在召喚畫面顯示每個物品的基礎與綜合機率。",
+      "whenOff": "召喚畫面不顯示機率表。"
+    },
+    {
+      "id": "growth",
+      "name": "角色升級",
+      "kind": "optional",
+      "provides": [
+        "growth"
+      ],
+      "requires": [
+        "currency"
+      ],
+      "summary": "用經驗提升等級，生命、攻擊、防禦隨等級成長。",
+      "whenOff": "所有角色固定 1 級（使用主控台的原始數值）。"
+    },
+    {
+      "id": "progression",
+      "name": "關卡解鎖順序",
+      "kind": "optional",
+      "provides": [],
+      "requires": [
+        "content"
+      ],
+      "summary": "通關前一關才能挑戰下一關。",
+      "whenOff": "所有關卡一開始就能挑戰。"
+    }
+  ],
+  "cases": [
+    {
+      "selection": {
+        "teamEdit": true,
+        "economy": true,
+        "gacha": true,
+        "disclosure": true,
+        "growth": true,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "teamEdit",
+          "economy",
+          "gacha",
+          "disclosure",
+          "growth",
+          "progression"
+        ],
+        "blocked": [],
+        "fallbacks": [],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": false,
+        "economy": true,
+        "gacha": true,
+        "disclosure": true,
+        "growth": true,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "autoTeam",
+          "economy",
+          "gacha",
+          "disclosure",
+          "growth",
+          "progression"
+        ],
+        "blocked": [],
+        "fallbacks": [
+          "autoTeam"
+        ],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": true,
+        "economy": false,
+        "gacha": true,
+        "disclosure": true,
+        "growth": true,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "freeRoster",
+          "teamEdit",
+          "progression"
+        ],
+        "blocked": [
+          {
+            "id": "gacha",
+            "missing": [
+              "currency"
+            ]
+          },
+          {
+            "id": "disclosure",
+            "missing": [
+              "gacha"
+            ]
+          },
+          {
+            "id": "growth",
+            "missing": [
+              "currency"
+            ]
+          }
+        ],
+        "fallbacks": [
+          "freeRoster"
+        ],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": true,
+        "economy": true,
+        "gacha": false,
+        "disclosure": true,
+        "growth": true,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "freeRoster",
+          "teamEdit",
+          "economy",
+          "growth",
+          "progression"
+        ],
+        "blocked": [
+          {
+            "id": "disclosure",
+            "missing": [
+              "gacha"
+            ]
+          }
+        ],
+        "fallbacks": [
+          "freeRoster"
+        ],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": true,
+        "economy": true,
+        "gacha": true,
+        "disclosure": false,
+        "growth": true,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "teamEdit",
+          "economy",
+          "gacha",
+          "growth",
+          "progression"
+        ],
+        "blocked": [],
+        "fallbacks": [],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": true,
+        "economy": true,
+        "gacha": true,
+        "disclosure": true,
+        "growth": false,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "teamEdit",
+          "economy",
+          "gacha",
+          "disclosure",
+          "progression"
+        ],
+        "blocked": [],
+        "fallbacks": [],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": true,
+        "economy": true,
+        "gacha": true,
+        "disclosure": true,
+        "growth": true,
+        "progression": false
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "teamEdit",
+          "economy",
+          "gacha",
+          "disclosure",
+          "growth"
+        ],
+        "blocked": [],
+        "fallbacks": [],
+        "missing": [],
+        "playable": true
+      }
+    },
+    {
+      "selection": {
+        "teamEdit": false,
+        "economy": false,
+        "gacha": true,
+        "disclosure": true,
+        "growth": true,
+        "progression": true
+      },
+      "expected": {
+        "active": [
+          "battle",
+          "stages",
+          "freeRoster",
+          "autoTeam",
+          "progression"
+        ],
+        "blocked": [
+          {
+            "id": "gacha",
+            "missing": [
+              "currency"
+            ]
+          },
+          {
+            "id": "disclosure",
+            "missing": [
+              "gacha"
+            ]
+          },
+          {
+            "id": "growth",
+            "missing": [
+              "currency"
+            ]
+          }
+        ],
+        "fallbacks": [
+          "freeRoster",
+          "autoTeam"
+        ],
+        "missing": [],
+        "playable": true
+      }
+    }
+  ]
+}

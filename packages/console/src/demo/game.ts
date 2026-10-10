@@ -1,21 +1,31 @@
 /**
- * Demo meta-game: save data, stages, levels and the gacha banner. Battle rules come from the project untouched;
- * levels only scale ally stats before the battle is created.
+ * Demo meta-game: save data, stages, levels and summoning. Battle rules come from the project untouched;
+ * levels only scale ally stats before the battle is created. Which of these mechanisms run is decided by
+ * the project's demo modules (docs/demo-modules.md); the gacha rules come from the project's banner.
  */
-import { Rng, type Project, type RngState, type UnitDef } from "@ggt/core";
+import {
+  Rng, itemOf, newGachaState, pullOnce, resolveModules, starterAllies,
+  type BannerDef, type GachaState, type Project, type PullResult, type RngState, type UnitDef,
+} from "@ggt/core";
 import type { Theme } from "./art/Backdrop";
 
 export const SAVE_KEY = "ggt.demo.save";
 export const MAX_LEVEL = 10;
-export const PULL_COST = 160;
-export const RATE_5 = 0.02;
-export const RATE_4 = 0.13;
-export const HARD_PITY = 50;
-export const EXP_3 = 400;
-export const EXP_4 = 2000;
+/** Exp given for a duplicate character. */
 export const EXP_DUPE = 5000;
 
 export interface DemoSave {
+  version: 2;
+  crystals: number;
+  exp: number;
+  owned: Record<string, { level: number }>;
+  team: string[];
+  cleared: Record<string, number>;
+  /** One rng for all pulls; banner progress (pity, guarantee) is kept per banner id. */
+  gacha: { rng: RngState; banners: Record<string, GachaState> };
+}
+
+export interface DemoSaveV1 {
   version: 1;
   crystals: number;
   exp: number;
@@ -35,41 +45,97 @@ export interface Stage {
   recommended: number;
 }
 
-export function starters(p: Project): string[] {
-  const allies = p.battle.units.filter((u) => u.team === "ally").map((u) => u.id);
-  const team = p.battle.encounter.allies.filter((id) => allies.includes(id));
-  return (team.length ? team : allies).slice(0, 4);
+// ---------------------------------------------------------------------------
+// Modules
+// ---------------------------------------------------------------------------
+
+/** What the demo needs to know about the active modules. */
+export interface Mods {
+  gacha: boolean;
+  disclosure: boolean;
+  economy: boolean;
+  growth: boolean;
+  progression: boolean;
+  teamEdit: boolean;
+  /** Module names the user switched off or that could not run (for the hub badge). */
+  removed: string[];
 }
 
-/** Allies not given at the start become the gacha's featured characters. */
-export function featured(p: Project): UnitDef[] {
-  const s = new Set(starters(p));
-  return p.battle.units.filter((u) => u.team === "ally" && !s.has(u.id));
+export function modsOf(p: Project): Mods {
+  const r = resolveModules(p.demo.modules);
+  const on = (id: string) => r.active.includes(id);
+  return {
+    gacha: on("gacha"), disclosure: on("disclosure"), economy: on("economy"), growth: on("growth"),
+    progression: on("progression"), teamEdit: on("teamEdit"),
+    removed: ["gacha", "economy", "growth", "progression", "teamEdit", "disclosure"].filter((id) => !on(id)),
+  };
+}
+
+/** Allies the player can use: owned ones with the gacha, every ally without it (free roster). */
+export function rosterOf(p: Project, save: DemoSave, mods: Mods): UnitDef[] {
+  return p.battle.units.filter((u) => u.team === "ally" && (!mods.gacha || save.owned[u.id]));
+}
+
+export function levelOf(save: DemoSave, mods: Mods, id: string): number {
+  return mods.growth ? save.owned[id]?.level ?? 1 : 1;
+}
+
+/** Who fights: the player's line-up with team editing, otherwise the console's line-up (or the first four). */
+export function teamOf(p: Project, save: DemoSave, mods: Mods): string[] {
+  const roster = new Set(rosterOf(p, save, mods).map((u) => u.id));
+  const pick = mods.teamEdit ? save.team : p.battle.encounter.allies;
+  const team = pick.filter((id) => roster.has(id)).slice(0, 4);
+  return team.length ? team : [...roster].slice(0, 4);
+}
+
+// ---------------------------------------------------------------------------
+// Save
+// ---------------------------------------------------------------------------
+
+export function activeBanner(p: Project): BannerDef | undefined {
+  return p.gacha.banners.find((b) => b.id === p.gacha.active) ?? p.gacha.banners[0];
 }
 
 export function newSave(p: Project, seed: number): DemoSave {
-  const team = starters(p);
+  const team = starterAllies(p.battle);
   return {
-    version: 1,
+    version: 2,
     crystals: 1600,
     exp: 3000,
     owned: Object.fromEntries(team.map((id) => [id, { level: 1 }])),
     team,
     cleared: {},
-    gacha: { pity: 0, total: 0, rng: new Rng(seed, "demo.gacha").snapshot() },
+    gacha: { rng: new Rng(seed, "demo.gacha").snapshot(), banners: {} },
   };
+}
+
+export function upgradeSave(s: DemoSave | DemoSaveV1, p: Project): DemoSave | null {
+  if (s.version === 2) return s;
+  if (s.version !== 1) return null;
+  // v1 had one hard-coded banner; its pity becomes the progress of the project's simple banner.
+  const simple = p.gacha.banners.find((b) => b.id === "simple");
+  const banners: Record<string, GachaState> = {};
+  if (simple) {
+    const st = newGachaState(simple);
+    st.counters[simple.tiers[0]!.id] = s.gacha.pity;
+    st.pulls = s.gacha.total;
+    banners[simple.id] = st;
+  }
+  return { version: 2, crystals: s.crystals, exp: s.exp, owned: s.owned, team: s.team, cleared: s.cleared, gacha: { rng: s.gacha.rng, banners } };
 }
 
 export function loadSave(p: Project): DemoSave {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) {
-      const s = JSON.parse(raw) as DemoSave;
-      const ids = new Set(p.battle.units.filter((u) => u.team === "ally").map((u) => u.id));
-      // Drop characters the project no longer has (content edited in the console).
-      s.owned = Object.fromEntries(Object.entries(s.owned).filter(([id]) => ids.has(id)));
-      s.team = s.team.filter((id) => s.owned[id]);
-      if (s.version === 1 && s.team.length) return s;
+      const s = upgradeSave(JSON.parse(raw) as DemoSave | DemoSaveV1, p);
+      if (s) {
+        const ids = new Set(p.battle.units.filter((u) => u.team === "ally").map((u) => u.id));
+        // Drop characters the project no longer has (content edited in the console).
+        s.owned = Object.fromEntries(Object.entries(s.owned).filter(([id]) => ids.has(id)));
+        s.team = s.team.filter((id) => s.owned[id]);
+        if (s.team.length) return s;
+      }
     }
   } catch {
     /* storage unavailable or corrupt: start fresh */
@@ -84,6 +150,10 @@ export function storeSave(s: DemoSave) {
     /* ignore: progress just won't persist */
   }
 }
+
+// ---------------------------------------------------------------------------
+// Stages, levels
+// ---------------------------------------------------------------------------
 
 export function stagesOf(p: Project): Stage[] {
   const enc = (id: string) => p.battle.encounters.find((e) => e.id === id)?.enemies;
@@ -108,64 +178,55 @@ export const levelCost = (level: number) => 800 * level;
 export const levelScale = (level: number) => 1 + 0.08 * (level - 1);
 
 /** Project used for one battle: chosen team and enemies, ally hp/atk/def scaled by level. */
-export function battleProject(p: Project, save: DemoSave, enemies: string[]): Project {
+export function battleProject(p: Project, team: string[], level: (id: string) => number, enemies: string[]): Project {
   const units = p.battle.units.map((u) => {
-    const lv = save.owned[u.id]?.level;
-    if (u.team !== "ally" || !lv) return u;
-    const k = levelScale(lv);
+    if (u.team !== "ally" || !team.includes(u.id)) return u;
+    const k = levelScale(level(u.id));
+    if (k === 1) return u;
     return { ...u, stats: { ...u.stats, hp: Math.round((u.stats.hp ?? 1) * k), atk: Math.round((u.stats.atk ?? 0) * k), def: Math.round((u.stats.def ?? 0) * k) } };
   });
-  return { ...p, battle: { ...p.battle, units, encounter: { allies: save.team, enemies } } };
+  return { ...p, battle: { ...p.battle, units, encounter: { allies: team, enemies } } };
 }
 
-export type PullResult =
-  | { rarity: 5; kind: "char"; unitId: string; dupe: boolean }
-  | { rarity: 5; kind: "exp"; exp: number }
-  | { rarity: 4; kind: "exp"; exp: number }
-  | { rarity: 3; kind: "exp"; exp: number };
+// ---------------------------------------------------------------------------
+// Summoning (rules: docs/spec/gacha.md; granting: here)
+// ---------------------------------------------------------------------------
 
-/** One pull. 5★ at RATE_5 with a hard pity on pull HARD_PITY; featured characters split the 5★ rate evenly. */
-export function pull(p: Project, save: DemoSave): PullResult {
+export interface Granted {
+  pull: PullResult;
+  name: string;
+  rarity: string;
+  /** Top tier = highest rarity. */
+  top: boolean;
+  unitId?: string;
+  dupe?: boolean;
+  exp: number;
+}
+
+/** One pull on the banner, then grant the item: new character, duplicate → exp, exp resource → exp. */
+export function summon(p: Project, banner: BannerDef, save: DemoSave): Granted {
   const rng = Rng.fromState(save.gacha.rng);
-  const roll = rng.next();
-  save.gacha.total++;
-  save.gacha.pity++;
-  let out: PullResult;
-  if (save.gacha.pity >= HARD_PITY || roll < RATE_5) {
-    save.gacha.pity = 0;
-    const pool = featured(p);
-    if (pool.length) {
-      const u = pool[rng.int(pool.length)]!;
-      const dupe = !!save.owned[u.id];
-      if (dupe) save.exp += EXP_DUPE;
-      else save.owned[u.id] = { level: 1 };
-      out = { rarity: 5, kind: "char", unitId: u.id, dupe };
-    } else {
-      save.exp += EXP_DUPE;
-      out = { rarity: 5, kind: "exp", exp: EXP_DUPE };
-    }
-  } else if (roll < RATE_5 + RATE_4) {
-    save.exp += EXP_4;
-    out = { rarity: 4, kind: "exp", exp: EXP_4 };
-  } else {
-    save.exp += EXP_3;
-    out = { rarity: 3, kind: "exp", exp: EXP_3 };
-  }
+  const state = (save.gacha.banners[banner.id] ??= newGachaState(banner));
+  const pull = pullOnce(banner, state, rng);
   save.gacha.rng = rng.snapshot();
+  const item = itemOf(banner, pull.itemId);
+  const tier = banner.tiers.find((t) => t.id === pull.tierId)!;
+  const out: Granted = { pull, name: item?.name ?? pull.itemId, rarity: tier.name, top: tier === banner.tiers[0], exp: 0 };
+  if (item?.kind === "unit" && item.unitId && p.battle.units.some((u) => u.id === item.unitId)) {
+    out.unitId = item.unitId;
+    out.dupe = !!save.owned[item.unitId];
+    if (out.dupe) out.exp = EXP_DUPE;
+    else save.owned[item.unitId] = { level: 1 };
+  } else if (item?.kind === "resource" && (item.resource ?? "exp") === "exp") {
+    out.exp = item.amount ?? 0;
+  }
+  save.exp += out.exp;
   return out;
 }
 
-/**
- * Exact pull-count distribution for the 5★ with hard pity: P(first 5★ on pull k) = (1−p)^(k−1)·p for k < N,
- * and the remainder on pull N. Used for the probability disclosure.
- */
-export function pityStats(p = RATE_5, n = HARD_PITY) {
-  let survive = 1;
-  let mean = 0;
-  for (let k = 1; k <= n; k++) {
-    const hit = k === n ? survive : survive * p;
-    mean += k * hit;
-    survive -= hit;
-  }
-  return { mean, consolidated: 1 / mean };
+/** Characters the banner can give, featured first (for the banner art). */
+export function bannerUnits(p: Project, banner: BannerDef): UnitDef[] {
+  const top = banner.tiers[0];
+  const ids = [...(top?.featured?.items ?? []), ...(top?.items ?? [])];
+  return ids.map((id) => itemOf(banner, id)?.unitId).map((uid) => p.battle.units.find((u) => u.id === uid)).filter((u): u is UnitDef => !!u);
 }

@@ -31,6 +31,19 @@ import {
   parseExpr,
   PROJECT_TEMPLATES,
   type Scenario,
+  GACHA_RULES_VERSION,
+  DEMO_MODULES,
+  disclosure,
+  newGachaState,
+  pullMany,
+  rateUpBanner,
+  resolveModules,
+  simpleBanner,
+  targetDistribution,
+  tierLongRunRates,
+  worstCasePulls,
+  type BannerDef,
+  type TargetSpec,
 } from "../src";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "vectors");
@@ -261,7 +274,46 @@ function battleVectors() {
   return { rulesVersion: RULES_VERSION, timeline, battles: [...battles, ...extBattles] };
 }
 
-const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors };
+function gachaVectors() {
+  const p = PROJECT_TEMPLATES.find((t) => t.id === "boss-mechanics")!.create("gacha");
+  const banners: BannerDef[] = [simpleBanner(p.battle), rateUpBanner(p.battle)];
+  // Small hand-checkable banner: deterministic pity on 4★, soft pity on 5★, 50/50 without guarantee.
+  banners.push({
+    id: "mini", name: "mini", cost: 1,
+    tiers: [
+      { id: "5", name: "5★", rate: 0.05, softPityStart: 6, softPityStep: 0.2, hardPity: 10, featured: { share: 0.5, guarantee: false, items: ["f1", "f2"] }, items: ["o"] },
+      { id: "4", name: "4★", rate: 0, hardPity: 4, items: ["m"] },
+      { id: "3", name: "3★", rate: 0, items: ["c"] },
+    ],
+    items: ["f1", "f2", "o", "m", "c"].map((id) => ({ id, name: id, kind: "resource" as const, resource: "x", amount: 1 })),
+  });
+  const pulls = banners.flatMap((b) => [1, "gacha"].map((seed) => {
+    const state = newGachaState(b);
+    const results = pullMany(b, state, new Rng(seed, "gacha.pulls"), b.id === "mini" ? 120 : 300);
+    return { banner: b.id, seed, stream: "gacha.pulls", results, finalState: state };
+  }));
+  const targets: { banner: string; target: TargetSpec }[] = [
+    { banner: "simple", target: { mode: "tier", copies: 1 } },
+    { banner: "rate-up", target: { mode: "featured", copies: 1 } },
+    { banner: "rate-up", target: { mode: "featured", copies: 3 } },
+    { banner: "mini", target: { mode: "item", itemId: "f2", copies: 2 } },
+  ];
+  const distributions = targets.map(({ banner, target }) => {
+    const d = targetDistribution(banners.find((b) => b.id === banner)!, target);
+    return { banner, target, mean: d.mean, tail: d.tail, worstCase: worstCasePulls(banners.find((b) => b.id === banner)!, target), pmf: d.pmf };
+  });
+  const longRun = banners.map((b) => ({ banner: b.id, tiers: tierLongRunRates(b) }));
+  return { rulesVersion: GACHA_RULES_VERSION, tolerance: 1e-9, banners, pulls, distributions, longRun, disclosure: banners.map((b) => ({ banner: b.id, ...disclosure(b) })) };
+}
+
+function moduleVectors() {
+  const optional = DEMO_MODULES.filter((m) => m.kind === "optional").map((m) => m.id);
+  // Every module on, then each optional module off on its own, then economy and teamEdit off together.
+  const selections = [[], ...optional.map((id) => [id]), ["economy", "teamEdit"]].map((off) => Object.fromEntries(optional.map((id) => [id, !off.includes(id)])));
+  return { modules: DEMO_MODULES, cases: selections.map((selection) => ({ selection, expected: resolveModules(selection) })) };
+}
+
+const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, modules: moduleVectors };
 
 describe("test vectors", () => {
   for (const [name, gen] of Object.entries(SUITES)) {

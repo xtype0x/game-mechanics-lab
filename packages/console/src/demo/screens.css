@@ -31,6 +31,7 @@
 .hub-top nav button.on { background: rgba(255, 211, 107, 0.16); border-color: var(--gold); color: var(--gold); }
 .wallet { margin-left: auto; display: flex; gap: 12px; align-items: center; font-weight: 800; font-size: 16px; }
 .wallet > span { background: var(--panel); border: 1px solid var(--line); padding: 5px 14px; border-radius: 999px; }
+.wallet > .mods-off { font-size: 13px; font-weight: 600; opacity: 0.8; border-style: dashed; }
 .hub-body { position: absolute; left: 0; right: 0; top: 64px; bottom: 0; padding: 18px 28px; }
 .hub-hint { opacity: 0.75; margin: 6px 0; }
 

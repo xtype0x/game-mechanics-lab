@@ -25,11 +25,15 @@ import { CharacterSkills, CharacterStats } from "./tools/battle/CharacterEditor"
 import { EncounterEditor } from "./tools/battle/EncounterEditor";
 import { StatusEditor } from "./tools/battle/StatusEditor";
 import { DependencyMap } from "./tools/DependencyMap";
+import { DemoModules } from "./tools/DemoModules";
+import { Budget } from "./tools/gacha/Budget";
+import { DisclosureTool } from "./tools/gacha/DisclosureTool";
+import { PoolEditor } from "./tools/gacha/PoolEditor";
 import { QuickSim } from "./tools/QuickSim";
 import { ReferenceImport } from "./tools/ReferenceImport";
 import { NavProvider, type Focus } from "./nav";
 import { Demo } from "./demo/Demo";
-import { onReplay, type ReplayRequest } from "./demo/link";
+import { onOpenDemo, onReplay, type ReplayRequest } from "./demo/link";
 import { canExportDemo, downloadDemo } from "./demo/exportDemo";
 import { Badge } from "./ui";
 import { useProject, type Updater } from "./useProject";
@@ -51,10 +55,14 @@ const IMPLEMENTED: Record<string, ComponentType<{ project: Project; update: Upda
   "sim.ab": AbCompare,
   "content.deps": DependencyMap,
   "content.import": ReferenceImport,
+  "gacha.pool-editor": PoolEditor,
+  "gacha.budget": Budget,
+  "gacha.disclosure": DisclosureTool,
+  "demo.modules": DemoModules,
 };
 
 /** Tools that already run their own simulations, so the quick-sim strip would only duplicate them. */
-const NO_QUICKSIM = new Set(["sim.batch", "sim.step", "sim.ab"]);
+const NO_QUICKSIM = new Set(["sim.batch", "sim.step", "sim.ab", "gacha.pool-editor", "gacha.budget", "gacha.disclosure", "demo.modules"]);
 
 const STATUS_TONE: Record<ToolStatus, "ok" | "warn" | "info" | "muted"> = { available: "ok", experimental: "warn", researching: "info", planned: "muted" };
 const STATUS_RANK: Record<ToolStatus, number> = { available: 0, experimental: 1, researching: 2, planned: 3 };
@@ -92,6 +100,7 @@ export function App() {
 
   const [replay, setReplay] = useState<ReplayRequest | null>(null);
   useEffect(() => onReplay((r) => setReplay(r)), []);
+  useEffect(() => onOpenDemo(() => openDemo(true)), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (replay) return <Demo project={project} replay={replay} onExit={() => setReplay(null)} />;
   if (demo) return <Demo project={project} update={update} onExit={() => openDemo(false)} />;

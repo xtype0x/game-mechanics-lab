@@ -189,13 +189,14 @@ describe("validation and templates", () => {
     expect(msgs).toContain("不是我方");
   });
 
-  it("v2 projects migrate to v3 keeping their content", () => {
+  it("v2 projects migrate to the current version keeping their content", () => {
     const p = newProject();
     p.battle.units[0]!.name = "改過的名字";
     const { snapshots: _s, ...rest } = p;
     const { encounters: _e, ...battle } = rest.battle;
     const loaded = loadProject(JSON.parse(JSON.stringify({ ...rest, battle, schemaVersion: 2 })));
-    expect(loaded.schemaVersion).toBe(3);
+    expect(loaded.schemaVersion).toBe(4);
+    expect(loaded.gacha.banners.length).toBeGreaterThan(0);
     expect(loaded.battle.units[0]!.name).toBe("改過的名字");
     expect(loaded.battle.encounters).toHaveLength(3);
     expect(loaded.snapshots).toEqual([]);

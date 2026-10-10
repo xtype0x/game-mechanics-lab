@@ -8,9 +8,12 @@ import { composeRules, type DamageConfig, type Scenario } from "./damage";
 import { validateExpr } from "./expr";
 import { configFromTemplate, defaultScenario } from "./library/damage-components";
 import { SHOWCASE_ALLIES, SHOWCASE_ENCOUNTER, SHOWCASE_ENEMIES, SHOWCASE_STATUSES, SHOWCASE_V07_ALLIES, SHOWCASE_V07_ENCOUNTER, SHOWCASE_V07_ENEMIES, SHOWCASE_V07_STATUSES } from "./library/showcase-content";
+import { defaultGachaConfig } from "./library/gacha-content";
+import type { GachaConfig } from "./gacha/types";
+import { defaultModuleSelection, type ModuleSelection } from "./modules";
 import { DEFAULT_BATTLE_RULES, DEFAULT_ENCOUNTER, DEFAULT_ENCOUNTERS, DEFAULT_POLICY_CONFIG, DEFAULT_STATUSES, DEFAULT_UNITS } from "./library/battle-content";
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 export const RULES_VERSION = "0.8.0";
 
 export interface BattleConfig {
@@ -43,6 +46,10 @@ export interface Project {
     scenarios: { A: Scenario; B: Scenario };
   };
   battle: BattleConfig;
+  /** Banners (docs/spec/gacha.md). */
+  gacha: GachaConfig;
+  /** Playable demo settings: which mechanism modules are switched on (docs/demo-modules.md). */
+  demo: { modules: ModuleSelection };
   snapshots: Snapshot[];
 }
 
@@ -56,13 +63,16 @@ export function newProject(name = "未命名專案"): Project {
   const b = defaultScenario("方案 B");
   b.attacker.critRate = 0.3;
   b.attacker.critDmg = 1.8;
+  const battle = defaultBattleConfig();
   return {
     schemaVersion: SCHEMA_VERSION,
     rulesVersion: RULES_VERSION,
     name,
     seed: 12345,
     damage: { config: configFromTemplate("tpl.weakness-break"), scenarios: { A: defaultScenario("方案 A"), B: b } },
-    battle: defaultBattleConfig(),
+    battle,
+    gacha: defaultGachaConfig(battle),
+    demo: { modules: defaultModuleSelection() },
     snapshots: [],
   };
 }
@@ -114,6 +124,8 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       b.units.find((u) => u.id === "raimei")?.skills.find((s) => s.id === "ult")?.effects.push({ kind: "detonate", target: "enemy", ratio: 0.5, statusId: "shock" });
       b.encounters.push(structuredCloneJson(SHOWCASE_ENCOUNTER), structuredCloneJson(SHOWCASE_V07_ENCOUNTER));
       b.encounter = { allies: ["shimo", "iwamori", "raimei", "akari"], enemies: [...SHOWCASE_ENCOUNTER.enemies] };
+      // Banners reference allies, so rebuild them for the extended roster.
+      p.gacha = defaultGachaConfig(b);
       return p;
     },
   },
@@ -154,6 +166,9 @@ const MIGRATIONS: Record<number, Migration> = {
   1: (p) => ({ ...p, battle: defaultBattleConfig() }),
   // v2 → v3: saved encounter list and A/B snapshots (M4). Existing content is kept as-is.
   2: (p) => ({ ...p, battle: { ...(p.battle as object), encounters: JSON.parse(JSON.stringify(DEFAULT_ENCOUNTERS)) }, snapshots: [] }),
+  // v3 → v4: banners and demo modules (M1). Banners are built from the project's own allies; every module on,
+  // which is how the demo behaved before.
+  3: (p) => ({ ...p, gacha: defaultGachaConfig(p.battle as BattleConfig), demo: { modules: defaultModuleSelection() } }),
 };
 
 export function loadProject(raw: unknown): Project {
@@ -194,6 +209,10 @@ function validateProject(p: Record<string, unknown>): string[] {
   const b = p.battle as BattleConfig | undefined;
   if (!b || typeof b !== "object") return [...errs, "缺少 battle"];
   if (!b.rules || !Array.isArray(b.units) || !Array.isArray(b.statuses) || !b.encounter || !Array.isArray(b.encounters)) errs.push("battle 格式錯誤");
+  const g = p.gacha as GachaConfig | undefined;
+  if (!g || typeof g !== "object" || !Array.isArray(g.banners) || typeof g.active !== "string") errs.push("gacha 格式錯誤");
+  const d = p.demo as Project["demo"] | undefined;
+  if (!d || typeof d !== "object" || !d.modules || typeof d.modules !== "object") errs.push("demo 格式錯誤");
   if (!Array.isArray(p.snapshots)) errs.push("snapshots 必須是陣列");
   else {
     errs.push(...validateExpr(b.rules.breakDamage, "battle.rules.breakDamage"));

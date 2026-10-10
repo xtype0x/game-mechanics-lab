@@ -1,4 +1,4 @@
-import type { Project, UnitDef } from "@ggt/core";
+import { disclosure, type Project, type UnitDef } from "@ggt/core";
 import type { ReplayRequest } from "./link";
 import { useEffect, useMemo, useState } from "react";
 import type { Updater } from "../useProject";
@@ -6,9 +6,9 @@ import { Backdrop } from "./art/Backdrop";
 import { Sprite, elementColor } from "./art/Sprite";
 import { BattleScene, type BattleOutcome } from "./battle/BattleScene";
 import {
-  EXP_3, EXP_4, EXP_DUPE, HARD_PITY, MAX_LEVEL, PULL_COST, RATE_4, RATE_5,
-  battleProject, featured, levelCost, levelScale, loadSave, pityStats, pull, stagesOf, storeSave,
-  type DemoSave, type PullResult, type Stage,
+  EXP_DUPE, MAX_LEVEL,
+  activeBanner, bannerUnits, battleProject, levelCost, levelOf, levelScale, loadSave, modsOf, rosterOf, stagesOf, storeSave, summon, teamOf,
+  type DemoSave, type Granted, type Mods, type Stage,
 } from "./game";
 import "./demo.css";
 import "./battle.css";
@@ -28,6 +28,9 @@ export function Demo({ project, update, onExit, replay }: { project: Project; up
   const [screen, setScreen] = useState<Screen>(replay ? { name: "replay" } : { name: "title" });
   const [tweak, setTweak] = useState(false);
   const stages = useMemo(() => stagesOf(project), [project]);
+  const mods = useMemo(() => modsOf(project), [project]);
+  const team = teamOf(project, save, mods);
+  const level = (id: string) => levelOf(save, mods, id);
   useEffect(() => storeSave(save), [save]);
 
   const mutate = (fn: (s: DemoSave) => void) => setSave((prev) => { const s = JSON.parse(JSON.stringify(prev)) as DemoSave; fn(s); return s; });
@@ -44,6 +47,9 @@ export function Demo({ project, update, onExit, replay }: { project: Project; up
               setTab={(tab) => setScreen({ name: "hub", tab })}
               project={project}
               save={save}
+              mods={mods}
+              team={team}
+              level={level}
               mutate={mutate}
               stages={stages}
               onPlay={(stage) => setScreen({ name: "battle", stage, seed: `${stage.id}-${Date.now().toString(36)}` })}
@@ -54,7 +60,7 @@ export function Demo({ project, update, onExit, replay }: { project: Project; up
           {screen.name === "battle" && (
             <BattleScene
               key={screen.seed}
-              project={battleProject(project, save, [])}
+              project={battleProject(project, team, level, [])}
               waves={screen.stage.waves}
               theme={screen.stage.theme}
               seed={screen.seed}
@@ -65,7 +71,7 @@ export function Demo({ project, update, onExit, replay }: { project: Project; up
                 const stage = screen.stage;
                 const first = outcome.result === "win" && !save.cleared[stage.id];
                 const k = first ? 1 : 0.2;
-                const reward = outcome.result === "win" ? { crystals: Math.round(stage.firstReward.crystals * k), exp: Math.round(stage.firstReward.exp * k), first } : { crystals: 0, exp: 0, first: false };
+                const reward = outcome.result === "win" && mods.economy ? { crystals: Math.round(stage.firstReward.crystals * k), exp: Math.round(stage.firstReward.exp * k), first } : { crystals: 0, exp: 0, first: false };
                 mutate((s) => {
                   s.crystals += reward.crystals;
                   s.exp += reward.exp;
@@ -83,12 +89,13 @@ export function Demo({ project, update, onExit, replay }: { project: Project; up
               stage={screen.stage}
               outcome={screen.outcome}
               reward={screen.reward}
+              mods={mods}
               unit={unit}
               onAgain={() => setScreen({ name: "battle", stage: screen.stage, seed: `${screen.stage.id}-${Date.now().toString(36)}` })}
               onBack={() => setScreen({ name: "hub", tab: "stages" })}
             />
           )}
-          {tweak && update && <TweakDrawer project={project} update={update} save={save} onClose={() => setTweak(false)} />}
+          {tweak && update && <TweakDrawer project={project} update={update} team={team} onClose={() => setTweak(false)} />}
         </div>
       </div>
     </div>
@@ -124,18 +131,28 @@ function Title({ project, onStart, onExit }: { project: Project; onStart: () => 
 // Hub
 // ---------------------------------------------------------------------------
 
-function Hub(props: {
+interface HubProps {
   tab: "stages" | "team" | "roster" | "gacha";
   setTab: (t: "stages" | "team" | "roster" | "gacha") => void;
   project: Project;
   save: DemoSave;
+  mods: Mods;
+  team: string[];
+  level: (id: string) => number;
   mutate: (fn: (s: DemoSave) => void) => void;
   stages: Stage[];
   onPlay: (s: Stage) => void;
   onExit?: () => void;
   onTweak?: () => void;
-}) {
-  const { tab, setTab, save } = props;
+}
+
+const MODULE_NAMES: Record<string, string> = { gacha: "抽卡", economy: "貨幣與獎勵", growth: "升級", progression: "解鎖順序", teamEdit: "編隊", disclosure: "機率公示" };
+
+function Hub(props: HubProps) {
+  const { setTab, save, mods } = props;
+  const tabs = ([["stages", "關卡"], ["team", "編隊"], ["roster", "角色"], ["gacha", "召喚"]] as const).filter(([k]) => (k !== "team" || mods.teamEdit) && (k !== "gacha" || mods.gacha));
+  // A tab whose module was switched off falls back to the stage list.
+  const tab = tabs.some(([k]) => k === props.tab) ? props.tab : "stages";
   return (
     <div className="screen hub">
       <Backdrop theme="frost" />
@@ -143,13 +160,14 @@ function Hub(props: {
       <header className="hub-top">
         <b className="hub-logo">星火迴響</b>
         <nav>
-          {([["stages", "關卡"], ["team", "編隊"], ["roster", "角色"], ["gacha", "召喚"]] as const).map(([k, label]) => (
+          {tabs.map(([k, label]) => (
             <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{label}</button>
           ))}
         </nav>
         <div className="wallet">
-          <span title="星晶：召喚用">💎 {save.crystals.toLocaleString()}</span>
-          <span title="經驗：升級用">✦ {save.exp.toLocaleString()}</span>
+          {mods.removed.length > 0 && <span className="mods-off" title="在主控台「DEMO 模組組合」切換">已拆除：{mods.removed.map((id) => MODULE_NAMES[id] ?? id).join("、")}</span>}
+          {mods.economy && <span title="星晶：召喚用">💎 {save.crystals.toLocaleString()}</span>}
+          {mods.economy && <span title="經驗：升級用">✦ {save.exp.toLocaleString()}</span>}
           {props.onTweak && <button className="ghost-btn small" onClick={props.onTweak}>⚙ 調整數值</button>}
           {props.onExit && <button className="ghost-btn small" onClick={props.onExit}>返回主控台</button>}
         </div>
@@ -164,13 +182,13 @@ function Hub(props: {
   );
 }
 
-function Stages({ project, save, stages, onPlay }: { project: Project; save: DemoSave; stages: Stage[]; onPlay: (s: Stage) => void }) {
+function Stages({ project, save, mods, team, level, stages, onPlay }: HubProps) {
   const unit = (id: string) => project.battle.units.find((u) => u.id === id);
-  const teamLevel = Math.round(save.team.reduce((a, id) => a + (save.owned[id]?.level ?? 1), 0) / Math.max(1, save.team.length));
+  const teamLevel = Math.round(team.reduce((a, id) => a + level(id), 0) / Math.max(1, team.length));
   return (
     <div className="stage-list">
       {stages.map((s, i) => {
-        const locked = i > 0 && !save.cleared[stages[i - 1]!.id];
+        const locked = mods.progression && i > 0 && !save.cleared[stages[i - 1]!.id];
         const enemies = [...new Set(s.waves.flat())];
         return (
           <div key={s.id} className={`stage-card theme-${s.theme} ${locked ? "locked" : ""}`}>
@@ -183,8 +201,8 @@ function Stages({ project, save, stages, onPlay }: { project: Project; save: Dem
               </div>
               <div className="stage-meta">
                 <span>{s.waves.length} 波</span>
-                <span className={teamLevel < s.recommended ? "warn" : ""}>建議等級 {s.recommended}</span>
-                {save.cleared[s.id] ? <span className="ok">✓ 已通關 ×{save.cleared[s.id]}</span> : <span>首通 💎{s.firstReward.crystals}</span>}
+                {mods.growth && <span className={teamLevel < s.recommended ? "warn" : ""}>建議等級 {s.recommended}</span>}
+                {save.cleared[s.id] ? <span className="ok">✓ 已通關 ×{save.cleared[s.id]}</span> : mods.economy && <span>首通 💎{s.firstReward.crystals}</span>}
               </div>
               <button className="big-btn" disabled={locked} onClick={() => onPlay(s)}>{locked ? "🔒 先通關前一關" : "出擊"}</button>
             </div>
@@ -195,16 +213,16 @@ function Stages({ project, save, stages, onPlay }: { project: Project; save: Dem
   );
 }
 
-function Team({ project, save, mutate }: { project: Project; save: DemoSave; mutate: (fn: (s: DemoSave) => void) => void }) {
-  const owned = project.battle.units.filter((u) => u.team === "ally" && save.owned[u.id]);
+function Team({ project, save, mods, team, level, mutate }: HubProps) {
+  const owned = rosterOf(project, save, mods);
   return (
     <div className="team">
       <div className="team-slots">
         {Array.from({ length: 4 }, (_, i) => {
-          const u = project.battle.units.find((x) => x.id === save.team[i]);
+          const u = project.battle.units.find((x) => x.id === team[i]);
           return (
             <div key={i} className={`slot ${u ? "" : "empty"}`}>
-              {u ? <><div className="sprite idle"><Sprite unit={u} /></div><b>{u.name}</b><small>Lv.{save.owned[u.id]?.level}・{ELEMENT_NAMES[u.element] ?? u.element}・{u.role}</small></> : <span>空位</span>}
+              {u ? <><div className="sprite idle"><Sprite unit={u} /></div><b>{u.name}</b><small>{mods.growth ? `Lv.${level(u.id)}・` : ""}{ELEMENT_NAMES[u.element] ?? u.element}・{u.role}</small></> : <span>空位</span>}
             </div>
           );
         })}
@@ -212,9 +230,11 @@ function Team({ project, save, mutate }: { project: Project; save: DemoSave; mut
       <p className="hub-hint">點選角色加入或移出隊伍（1～4 人，依加入順序站位）。</p>
       <div className="owned-row">
         {owned.map((u) => {
-          const idx = save.team.indexOf(u.id);
+          const idx = team.indexOf(u.id);
           return (
             <button key={u.id} className={`owned ${idx >= 0 ? "in" : ""}`} onClick={() => mutate((s) => {
+              // Start from the team actually shown (it may differ from the saved one after module changes).
+              s.team = [...team];
               const i = s.team.indexOf(u.id);
               if (i >= 0) { if (s.team.length > 1) s.team.splice(i, 1); } else if (s.team.length < 4) s.team.push(u.id);
             })}>
@@ -229,12 +249,12 @@ function Team({ project, save, mutate }: { project: Project; save: DemoSave; mut
   );
 }
 
-function Roster({ project, save, mutate }: { project: Project; save: DemoSave; mutate: (fn: (s: DemoSave) => void) => void }) {
-  const owned = project.battle.units.filter((u) => u.team === "ally" && save.owned[u.id]);
+function Roster({ project, save, mods, level, mutate }: HubProps) {
+  const owned = rosterOf(project, save, mods);
   const [sel, setSel] = useState(owned[0]?.id ?? "");
   const u = owned.find((x) => x.id === sel) ?? owned[0];
   if (!u) return null;
-  const lv = save.owned[u.id]!.level;
+  const lv = level(u.id);
   const cost = levelCost(lv);
   const k = levelScale(lv);
   const k2 = levelScale(lv + 1);
@@ -246,7 +266,7 @@ function Roster({ project, save, mutate }: { project: Project; save: DemoSave; m
           <button key={x.id} className={`owned ${x.id === u.id ? "in" : ""}`} onClick={() => setSel(x.id)}>
             <div className="portrait"><Sprite unit={x} portrait /></div>
             <span>{x.name}</span>
-            <small>Lv.{save.owned[x.id]!.level}</small>
+            {mods.growth && <small>Lv.{level(x.id)}</small>}
           </button>
         ))}
       </div>
@@ -255,20 +275,20 @@ function Roster({ project, save, mutate }: { project: Project; save: DemoSave; m
       </div>
       <div className="roster-info">
         <b className="rname">{u.name}</b>
-        <span className="rsub">{ELEMENT_NAMES[u.element] ?? u.element}屬性・{u.role}・Lv.{lv}/{MAX_LEVEL}</span>
+        <span className="rsub">{ELEMENT_NAMES[u.element] ?? u.element}屬性・{u.role}{mods.growth ? `・Lv.${lv}/${MAX_LEVEL}` : ""}</span>
         {u.description && <p>{u.description}</p>}
         <table className="rstats">
           <tbody>
             {([["生命", "hp"], ["攻擊", "atk"], ["防禦", "def"]] as const).map(([label, key]) => (
-              <tr key={key}><td>{label}</td><td>{stat(key).toLocaleString()}</td><td className="up">{lv < MAX_LEVEL ? `→ ${stat(key, k2).toLocaleString()}` : ""}</td></tr>
+              <tr key={key}><td>{label}</td><td>{stat(key).toLocaleString()}</td><td className="up">{mods.growth && lv < MAX_LEVEL ? `→ ${stat(key, k2).toLocaleString()}` : ""}</td></tr>
             ))}
             <tr><td>速度</td><td>{u.stats.spd}</td><td /></tr>
             <tr><td>暴擊</td><td>{Math.round((u.stats.critRate ?? 0) * 100)}% / {Math.round((u.stats.critDmg ?? 0) * 100)}%</td><td /></tr>
           </tbody>
         </table>
-        <button className="big-btn" disabled={lv >= MAX_LEVEL || save.exp < cost} onClick={() => mutate((s) => { s.exp -= cost; s.owned[u.id]!.level++; })}>
+        {mods.growth && <button className="big-btn" disabled={lv >= MAX_LEVEL || save.exp < cost} onClick={() => mutate((s) => { s.exp -= cost; (s.owned[u.id] ??= { level: 1 }).level = lv + 1; })}>
           {lv >= MAX_LEVEL ? "已達等級上限" : `升級（✦ ${cost.toLocaleString()}）`}
-        </button>
+        </button>}
         <div className="skills-list">
           {u.skills.filter((s) => s.type !== "followup").map((s) => (
             <div key={s.id}><b>{{ basic: "普攻", skill: "戰技", ultimate: "大招", followup: "追加", dot: "" }[s.type]}・{s.name}</b><span>{s.description ?? describeSkill(s)}</span></div>
@@ -292,76 +312,94 @@ function describeSkill(s: UnitDef["skills"][number]): string {
   }).join("，");
 }
 
-function Gacha({ project, save, mutate }: { project: Project; save: DemoSave; mutate: (fn: (s: DemoSave) => void) => void }) {
-  const [results, setResults] = useState<PullResult[] | null>(null);
+function Gacha({ project, save, mods, mutate }: HubProps) {
+  const [results, setResults] = useState<Granted[] | null>(null);
   const [showRates, setShowRates] = useState(false);
-  const feat = featured(project);
-  const stats = pityStats();
+  const banner = activeBanner(project);
+  const rates = useMemo(() => {
+    if (!banner) return null;
+    try { return disclosure(banner); } catch { return null; }
+  }, [banner]);
+  if (!banner) return <p className="hub-hint">專案沒有卡池。請到主控台「卡池與保底規則編輯器」新增。</p>;
+  const top = banner.tiers[0]!;
+  const feat = bannerUnits(project, banner);
+  const progress = save.gacha.banners[banner.id];
+  const sinceTop = progress?.counters[top.id] ?? 0;
+  const guaranteed = !!progress?.guaranteed[top.id];
   const doPull = (n: number) => {
     // Pull on a copy outside the state updater: updaters must be pure (StrictMode calls them twice).
     const next = JSON.parse(JSON.stringify(save)) as DemoSave;
-    if (next.crystals < PULL_COST * n) return;
-    next.crystals -= PULL_COST * n;
-    const out: PullResult[] = Array.from({ length: n }, () => pull(project, next));
+    if (next.crystals < banner.cost * n) return;
+    next.crystals -= banner.cost * n;
+    let out: Granted[];
+    try { out = Array.from({ length: n }, () => summon(project, banner, next)); } catch { return; }
     mutate((s) => Object.assign(s, next));
     setResults(out);
   };
   const unit = (id: string) => project.battle.units.find((u) => u.id === id)!;
+  const pityLine = [
+    top.hardPity ? `第 ${top.hardPity} 抽必定獲得 ${top.name}` : "",
+    top.softPityStart && top.softPityStep ? `第 ${top.softPityStart} 抽起機率提升` : "",
+  ].filter(Boolean).join("・");
   return (
     <div className="gacha">
       <div className="banner-art">
         <div className="banner-chars">
           {feat.slice(0, 2).map((u, i) => <div key={u.id} className="sprite idle" style={{ animationDelay: `${-i * 0.6}s` }}><Sprite unit={u} /></div>)}
-          {feat.length === 0 && <span className="muted">所有角色都已在初始隊伍中，5★ 將轉為大量經驗。</span>}
+          {feat.length === 0 && <span className="muted">這個卡池的 {top.name} 沒有角色，抽到時會得到資源。</span>}
         </div>
         <div className="banner-text">
-          <small>限定召喚</small>
-          <b>{feat.length ? feat.map((u) => u.name).join("・") : "星輝祈願"}</b>
-          <span>5★ 機率 {(RATE_5 * 100).toFixed(0)}%・第 {HARD_PITY} 抽必定獲得 5★</span>
-          <span className="pity">距離保底還有 {HARD_PITY - save.gacha.pity} 抽</span>
+          <small>{top.featured?.items.length ? "限定召喚" : "召喚"}</small>
+          <b>{banner.name}</b>
+          <span>{top.name} 機率 {(top.rate * 100).toFixed(top.rate < 0.01 ? 1 : 0)}%{pityLine ? `・${pityLine}` : ""}</span>
+          <span className="pity">{top.hardPity ? `距離保底還有 ${Math.max(0, top.hardPity - sinceTop)} 抽` : `已 ${sinceTop} 抽未出 ${top.name}`}{guaranteed ? "・下一次必定限定" : ""}</span>
         </div>
       </div>
       <div className="gacha-actions">
-        <button className="big-btn" disabled={save.crystals < PULL_COST} onClick={() => doPull(1)}>召喚 1 次<small>💎 {PULL_COST}</small></button>
-        <button className="big-btn gold" disabled={save.crystals < PULL_COST * 10} onClick={() => doPull(10)}>召喚 10 次<small>💎 {PULL_COST * 10}</small></button>
-        <button className="ghost-btn" onClick={() => setShowRates((x) => !x)}>機率公示</button>
+        <button className="big-btn" disabled={save.crystals < banner.cost} onClick={() => doPull(1)}>召喚 1 次<small>💎 {banner.cost}</small></button>
+        <button className="big-btn gold" disabled={save.crystals < banner.cost * 10} onClick={() => doPull(10)}>召喚 10 次<small>💎 {banner.cost * 10}</small></button>
+        {mods.disclosure && <button className="ghost-btn" onClick={() => setShowRates((x) => !x)}>機率公示</button>}
       </div>
-      {showRates && (
+      {showRates && mods.disclosure && rates && (
         <div className="rates">
           <b>機率公示</b>
           <table>
-            <thead><tr><th>稀有度</th><th>內容</th><th>機率</th></tr></thead>
+            <thead><tr><th>稀有度</th><th>內容</th><th>基礎機率</th><th>綜合機率</th></tr></thead>
             <tbody>
-              <tr><td>5★</td><td>{feat.length ? feat.map((u) => `${u.name}（各 ${((RATE_5 / feat.length) * 100).toFixed(2)}%）`).join("、") : `經驗 ${EXP_DUPE}`}</td><td>{(RATE_5 * 100).toFixed(2)}%</td></tr>
-              <tr><td>4★</td><td>高級經驗晶（經驗 {EXP_4}）</td><td>{(RATE_4 * 100).toFixed(2)}%</td></tr>
-              <tr><td>3★</td><td>經驗晶（經驗 {EXP_3}）</td><td>{((1 - RATE_5 - RATE_4) * 100).toFixed(2)}%</td></tr>
+              {rates.rows.map((r) => (
+                <tr key={`${r.tierId}-${r.itemId}`}><td>{r.tierName}</td><td>{r.itemName}{r.featured ? "（限定）" : ""}</td><td>{(r.base * 100).toFixed(2)}%</td><td>{(r.consolidated * 100).toFixed(2)}%</td></tr>
+              ))}
             </tbody>
           </table>
-          <p>保底：連續 {HARD_PITY - 1} 抽未獲得 5★ 時，第 {HARD_PITY} 抽必定為 5★。含保底的 5★ 綜合機率為 <b>{(stats.consolidated * 100).toFixed(2)}%</b>，平均 {stats.mean.toFixed(1)} 抽獲得一次（精確計算）。重複獲得角色轉為經驗 {EXP_DUPE}。</p>
+          <p>{rates.tiers.flatMap((t) => t.pity.map((x) => `${t.name}：${x}`)).join("。")}{rates.tiers.some((t) => t.pity.length) ? "。" : ""}綜合機率已計入保底（精確計算）。重複獲得角色轉為經驗 {EXP_DUPE}。</p>
           <p className="muted">此為 DEMO 範例。正式上線前，請依最新法規確認公示格式與內容。</p>
         </div>
       )}
       {results && (
         <div className="pull-results" onClick={() => setResults(null)}>
           <div className="cards">
-            {results.map((r, i) => (
-              <div key={i} className={`pcard-r r${r.rarity}`} style={{ animationDelay: `${i * 0.08}s` }}>
-                {r.kind === "char" ? (
-                  <>
-                    <div className="art"><Sprite unit={unit(r.unitId)} /></div>
-                    <b>{unit(r.unitId).name}</b>
-                    <small>{r.dupe ? `重複 → 經驗 ${EXP_DUPE}` : "NEW!"}</small>
-                  </>
-                ) : (
-                  <>
-                    <div className="gem">{r.rarity === 5 ? "✷" : r.rarity === 4 ? "◆" : "◇"}</div>
-                    <b>{r.rarity === 4 ? "高級經驗晶" : r.rarity === 5 ? "星輝結晶" : "經驗晶"}</b>
-                    <small>經驗 +{r.exp}</small>
-                  </>
-                )}
-                <span className="stars">{"★".repeat(r.rarity)}</span>
-              </div>
-            ))}
+            {results.map((r, i) => {
+              const rank = banner.tiers.findIndex((t) => t.id === r.pull.tierId);
+              const cls = rank === 0 ? "r5" : rank === 1 && banner.tiers.length > 2 ? "r4" : "r3";
+              return (
+                <div key={i} className={`pcard-r ${cls}`} style={{ animationDelay: `${i * 0.08}s` }}>
+                  {r.unitId ? (
+                    <>
+                      <div className="art"><Sprite unit={unit(r.unitId)} /></div>
+                      <b>{unit(r.unitId).name}</b>
+                      <small>{r.dupe ? `重複 → 經驗 ${EXP_DUPE}` : r.pull.featured ? "NEW!・限定" : "NEW!"}</small>
+                    </>
+                  ) : (
+                    <>
+                      <div className="gem">{cls === "r5" ? "✷" : cls === "r4" ? "◆" : "◇"}</div>
+                      <b>{r.name}</b>
+                      <small>{r.exp ? `經驗 +${r.exp}` : ""}</small>
+                    </>
+                  )}
+                  <span className="stars">{r.rarity}</span>
+                </div>
+              );
+            })}
           </div>
           <span className="tap">點擊任意處關閉</span>
         </div>
@@ -374,8 +412,8 @@ function Gacha({ project, save, mutate }: { project: Project; save: DemoSave; mu
 // Result
 // ---------------------------------------------------------------------------
 
-function Result({ stage, outcome, reward, unit, onAgain, onBack }: {
-  stage: Stage; outcome: BattleOutcome; reward: { crystals: number; exp: number; first: boolean };
+function Result({ stage, outcome, reward, mods, unit, onAgain, onBack }: {
+  stage: Stage; outcome: BattleOutcome; reward: { crystals: number; exp: number; first: boolean }; mods: Mods;
   unit: (id: string) => UnitDef | undefined; onAgain: () => void; onBack: () => void;
 }) {
   const ranked = Object.entries(outcome.damage).sort((a, b) => b[1] - a[1]);
@@ -400,8 +438,8 @@ function Result({ stage, outcome, reward, unit, onAgain, onBack }: {
             <div key={id}><span>{unit(id)?.name ?? id}</span><i style={{ width: `${(d / total) * 100}%`, background: elementColor(unit(id)?.element ?? "").main }} /><em>{d.toLocaleString()}</em></div>
           ))}
         </div>
-        {win && <div className="rewards">{reward.first && <span className="first">首次通關</span>}<span>💎 +{reward.crystals}</span><span>✦ +{reward.exp}</span></div>}
-        {!win && <p className="tip">提示：到「角色」升級隊伍，或在「召喚」取得新角色後再挑戰。</p>}
+        {win && mods.economy && <div className="rewards">{reward.first && <span className="first">首次通關</span>}<span>💎 +{reward.crystals}</span><span>✦ +{reward.exp}</span></div>}
+        {!win && <p className="tip">{loseTip(mods)}</p>}
         <div className="result-actions">
           <button className="big-btn" onClick={onAgain}>{win ? "再戰一次" : "重新挑戰"}</button>
           <button className="ghost-btn" onClick={onBack}>返回關卡</button>
@@ -411,12 +449,17 @@ function Result({ stage, outcome, reward, unit, onAgain, onBack }: {
   );
 }
 
+function loseTip(mods: Mods): string {
+  const ways = [mods.growth && "到「角色」升級隊伍", mods.gacha && "在「召喚」取得新角色", mods.teamEdit && "在「編隊」換人"].filter(Boolean);
+  return ways.length ? `提示：${ways.join("、")}後再挑戰。` : "提示：可在主控台「⚙ 調整數值」或開啟更多 DEMO 模組後再挑戰。";
+}
+
 // ---------------------------------------------------------------------------
 // Console link: tweak numbers while playing
 // ---------------------------------------------------------------------------
 
-function TweakDrawer({ project, update, save, onClose }: { project: Project; update: Updater; save: DemoSave; onClose: () => void }) {
-  const team = save.team.map((id) => project.battle.units.find((u) => u.id === id)).filter((u): u is UnitDef => !!u);
+function TweakDrawer({ project, update, team: teamIds, onClose }: { project: Project; update: Updater; team: string[]; onClose: () => void }) {
+  const team = teamIds.map((id) => project.battle.units.find((u) => u.id === id)).filter((u): u is UnitDef => !!u);
   const enemies = project.battle.units.filter((u) => u.team === "enemy");
   const set = (id: string, key: string, v: number) => {
     if (!Number.isFinite(v) || v < 0) return;
