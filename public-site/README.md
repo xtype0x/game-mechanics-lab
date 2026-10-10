@@ -1,0 +1,46 @@
+# gacha-game-tool — 給玩家與開發者的個人遊戲工具網站
+
+可整包移到獨立 GitHub repo 的本機原型。此資料夾有自己的依賴、型別設定與建置設定，不屬於外層 npm workspace，不引用外層 core、console、data，也沒有修改目前正在開發的工具。
+
+目前以二遊官網致敬版作為主要視覺方向，完整計畫動機已放入「關於計畫」。尚未建立獨立 GitHub 遠端 repo、推送或上線；中文名稱、作者身份、聯絡方式與遠端 repo 連結待補。
+
+## 使用
+
+Node.js 22.12+（建議 Node 24）。在此資料夾執行：
+
+```powershell
+npm ci
+npm run dev
+```
+
+預覽：<http://127.0.0.1:5180/>。`npm run build` 會先檢查型別，再產生 `dist/`；`npm run preview` 預覽建置結果。本網站有自己的依賴，請在此資料夾執行 `npm ci`，搬到新 repo 後也同樣操作。
+
+`npm run build:offline` 另外產生 `offline/index.html`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
+
+## 目前內容
+
+- 首頁：原創二遊主視覺、青金配色，以宣傳官網語彙致敬與幽默文案介紹遊戲機制工具。
+- 工具遊樂場：暴擊期望值示範可操作；抽卡與行動順序清楚標為製作中。
+- 開發筆記：目前無公開文章，預留機制研究與開發紀錄。
+- 關於計畫：從台灣出發、歡迎各國玩家與開發者的完整動機；另有資料與使用說明頁。
+- 響應式排版、鍵盤操作與跳至內容連結。
+
+暴擊示範是獨立的簡化公式，**未移植正式核心**，不代表任何特定遊戲。所有參數只存在分頁記憶體；尚未實作存檔、資料庫或收集研究資料。
+
+詳細規劃與搬移步驟：[ARCHITECTURE.md](./ARCHITECTURE.md)。
+
+檢查結果：[docs/VERIFICATION.md](./docs/VERIFICATION.md)。
+
+主要視覺與生成提示詞：[docs/HOMEPAGE-V3-DESIGN.md](./docs/HOMEPAGE-V3-DESIGN.md)。首頁畫面：[docs/homepage-hero-v3.jpg](./docs/homepage-hero-v3.jpg)。
+
+## 建立獨立 repo
+
+1. 將整個 `public-site/` 複製到目前研究 repo **以外**的新資料夾，例如 `gacha-game-tool-site/`；不要複製 `node_modules/`、`dist/`、`offline/` 或任何 `.git/`。
+2. 在新資料夾執行 `npm ci`、`npm run build`，確認可獨立建置。
+3. 在新資料夾建立 Git repo，建立獨立的 GitHub repo 再推送。不要把外層研究 repo 的歷史直接公開。
+4. 先補作者介紹、聯絡入口、採用的程式碼授權與實際 GitHub 連結，再開放訪客試用。
+5. 可把建置產物 `dist/` 放到靜態網站主機。選 GitHub Pages 時使用 Vite 官方建置部署流程；網站目前用相對資產路徑與 hash 導覽，可放在 repo 子路徑，不需伺服器路由回退。
+
+上線方案與費用比較：[DEPLOYMENT.md](./DEPLOYMENT.md)。建議 GitHub + Cloudflare Pages 免費起步；備選 GitHub Pages 的手動部署 workflow 已附上，尚未實際推送或部署。瀏覽器導覽採 `#/lab` 等路徑；研究文章數量增加並需要搜尋曝光時，加入靜態預渲染並轉成實體 URL。
+
+參考：[Vite 靜態部署](https://vite.dev/guide/static-deploy.html)。
