@@ -1,0 +1,1616 @@
+{
+  "schemaVersion": 4,
+  "rulesVersion": "0.8.0",
+  "name": "M6 擴充驗證",
+  "seed": 12345,
+  "damage": {
+    "config": {
+      "components": [
+        "dmg.base-atk",
+        "dmg.crit",
+        "dmg.bonus",
+        "dmg.def-ratio",
+        "dmg.res",
+        "dmg.vuln",
+        "dmg.reduction",
+        "dmg.toughness"
+      ],
+      "customSteps": [
+        {
+          "id": "amplify",
+          "label": "增幅反應",
+          "apply": "mul",
+          "order": 25,
+          "base": {
+            "op": "if",
+            "args": [
+              {
+                "op": "and",
+                "args": [
+                  {
+                    "ref": "flags.amplify"
+                  },
+                  {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "ref": "skill.element"
+                      },
+                      {
+                        "const": "fire"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "mul",
+                "args": [
+                  {
+                    "const": 1.5
+                  },
+                  {
+                    "op": "add",
+                    "args": [
+                      {
+                        "const": 1
+                      },
+                      {
+                        "op": "div",
+                        "args": [
+                          {
+                            "op": "mul",
+                            "args": [
+                              {
+                                "const": 2.5
+                              },
+                              {
+                                "ref": "attacker.mastery"
+                              }
+                            ]
+                          },
+                          {
+                            "op": "add",
+                            "args": [
+                              {
+                                "ref": "attacker.mastery"
+                              },
+                              {
+                                "const": 1200
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "const": 1
+              }
+            ]
+          },
+          "description": "火屬性技能觸發增幅反應：基礎 ×1.5，再依精通提高（精通 1200 時再 ×2.25）。"
+        }
+      ],
+      "overrides": {},
+      "disabledSteps": [],
+      "finalRounding": "floor",
+      "minDamage": 1,
+      "customStats": [
+        {
+          "side": "attacker",
+          "key": "mastery",
+          "label": "精通",
+          "default": 0,
+          "unit": "flat",
+          "min": 0
+        }
+      ],
+      "customFlags": [
+        {
+          "key": "amplify",
+          "label": "觸發增幅反應",
+          "default": true
+        }
+      ]
+    },
+    "scenarios": {
+      "A": {
+        "name": "方案 A",
+        "attacker": {
+          "atk": 2400,
+          "critRate": 0.6,
+          "critDmg": 1.2,
+          "dmgBonus": 0.4,
+          "level": 80,
+          "defIgnore": 0,
+          "resPen": 0
+        },
+        "defender": {
+          "def": 1000,
+          "res": 0.2,
+          "vulnerability": 0,
+          "dmgReduction": 0.1
+        },
+        "skill": {
+          "name": "戰技",
+          "multiplier": 2,
+          "type": "skill",
+          "element": "fire",
+          "hits": [
+            0.5,
+            0.5
+          ]
+        },
+        "flags": {
+          "broken": false
+        },
+        "modifiers": []
+      },
+      "B": {
+        "name": "方案 B",
+        "attacker": {
+          "atk": 2400,
+          "critRate": 0.3,
+          "critDmg": 1.8,
+          "dmgBonus": 0.4,
+          "level": 80,
+          "defIgnore": 0,
+          "resPen": 0
+        },
+        "defender": {
+          "def": 1000,
+          "res": 0.2,
+          "vulnerability": 0,
+          "dmgReduction": 0.1
+        },
+        "skill": {
+          "name": "戰技",
+          "multiplier": 2,
+          "type": "skill",
+          "element": "fire",
+          "hits": [
+            0.5,
+            0.5
+          ]
+        },
+        "flags": {
+          "broken": false
+        },
+        "modifiers": []
+      }
+    }
+  },
+  "battle": {
+    "rules": {
+      "avBase": 10000,
+      "firstCycleAv": 150,
+      "cycleAv": 100,
+      "spStart": 3,
+      "spMax": 5,
+      "energyOnHitTaken": 10,
+      "energyOnKill": 10,
+      "breakDelay": 0.25,
+      "breakDamage": {
+        "op": "mul",
+        "args": [
+          {
+            "op": "mul",
+            "args": [
+              {
+                "ref": "attacker.atk"
+              },
+              {
+                "op": "add",
+                "args": [
+                  {
+                    "const": 1
+                  },
+                  {
+                    "ref": "attacker.breakEffect"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "add",
+            "args": [
+              {
+                "const": 0.5
+              },
+              {
+                "op": "div",
+                "args": [
+                  {
+                    "ref": "defender.maxToughness"
+                  },
+                  {
+                    "const": 120
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "maxCycles": 20,
+      "rounding": "floor"
+    },
+    "units": [
+      {
+        "id": "homura",
+        "name": "焰華",
+        "team": "ally",
+        "element": "fire",
+        "role": "主輸出",
+        "weaknesses": [],
+        "description": "範圍火焰輸出。戰技擴散傷害，大招全體爆發。",
+        "stats": {
+          "level": 80,
+          "def": 700,
+          "critRate": 0.55,
+          "critDmg": 1.1,
+          "dmgBonus": 0.3,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0.1,
+          "breakEffect": 0,
+          "startEnergy": 0,
+          "hp": 3200,
+          "atk": 2300,
+          "spd": 105,
+          "maxEnergy": 120,
+          "mastery": 300
+        },
+        "skills": [
+          {
+            "id": "basic",
+            "name": "普攻",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ]
+          },
+          {
+            "id": "skill",
+            "name": "灼流",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 2,
+                "adjMultiplier": 0.8,
+                "toughness": 20,
+                "adjToughness": 10,
+                "hits": [
+                  0.3,
+                  0.3,
+                  0.4
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ult",
+            "name": "焚天",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 2.4,
+                "toughness": 20
+              }
+            ]
+          },
+          {
+            "id": "ember",
+            "name": "餘燼",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 10,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 0.5,
+                "toughness": 5
+              }
+            ]
+          }
+        ],
+        "passives": [
+          {
+            "id": "ember",
+            "name": "餘燼",
+            "on": "allyUltimate",
+            "skillId": "ember",
+            "limitPerTurn": 1,
+            "description": "隊友（含自己）施放大招後，追加一次全體火焰傷害。每回合一次。"
+          }
+        ]
+      },
+      {
+        "id": "shimo",
+        "name": "霜語",
+        "team": "ally",
+        "element": "ice",
+        "role": "控制",
+        "weaknesses": [],
+        "description": "冰封單體並讓全體敵人出現破綻。",
+        "stats": {
+          "level": 80,
+          "def": 700,
+          "critRate": 0.3,
+          "critDmg": 0.8,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0.3,
+          "effectRes": 0.1,
+          "breakEffect": 0,
+          "startEnergy": 0,
+          "hp": 3500,
+          "atk": 1700,
+          "spd": 115,
+          "maxEnergy": 110
+        },
+        "skills": [
+          {
+            "id": "basic",
+            "name": "普攻",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ]
+          },
+          {
+            "id": "skill",
+            "name": "霜縛",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.5,
+                "toughness": 20
+              },
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "freeze",
+                "chance": 0.6
+              }
+            ]
+          },
+          {
+            "id": "ult",
+            "name": "雪幕",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 110,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1.2,
+                "toughness": 20
+              },
+              {
+                "kind": "status",
+                "target": "allEnemies",
+                "statusId": "exposed",
+                "chance": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "raimei",
+        "name": "雷鳴",
+        "team": "ally",
+        "element": "thunder",
+        "role": "持續傷害",
+        "weaknesses": [],
+        "description": "施加感電，靠持續傷害累積總輸出。",
+        "stats": {
+          "level": 80,
+          "def": 700,
+          "critRate": 0.2,
+          "critDmg": 0.6,
+          "dmgBonus": 0.2,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0.2,
+          "effectRes": 0.1,
+          "breakEffect": 0,
+          "startEnergy": 0,
+          "hp": 3300,
+          "atk": 2000,
+          "spd": 108,
+          "maxEnergy": 120
+        },
+        "skills": [
+          {
+            "id": "basic",
+            "name": "普攻",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ]
+          },
+          {
+            "id": "skill",
+            "name": "落雷",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.2,
+                "toughness": 20
+              },
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "shock",
+                "chance": 1
+              }
+            ]
+          },
+          {
+            "id": "ult",
+            "name": "雷霆萬鈞",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 1.8,
+                "adjMultiplier": 0.9,
+                "toughness": 30,
+                "adjToughness": 15
+              },
+              {
+                "kind": "status",
+                "target": "blast",
+                "statusId": "shock",
+                "chance": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "aoba",
+        "name": "蒼羽",
+        "team": "ally",
+        "element": "wind",
+        "role": "輔助",
+        "weaknesses": [],
+        "description": "加速隊友並提高其傷害。",
+        "stats": {
+          "level": 80,
+          "def": 700,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0.1,
+          "breakEffect": 0,
+          "startEnergy": 0,
+          "hp": 3800,
+          "atk": 1400,
+          "spd": 134,
+          "maxEnergy": 100
+        },
+        "skills": [
+          {
+            "id": "basic",
+            "name": "普攻",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ]
+          },
+          {
+            "id": "skill",
+            "name": "順風",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "ally",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "ally",
+                "statusId": "haste",
+                "chance": 1
+              },
+              {
+                "kind": "advance",
+                "target": "ally",
+                "amount": 0.5
+              }
+            ]
+          },
+          {
+            "id": "ult",
+            "name": "長風",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 100,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "allAllies",
+                "statusId": "haste",
+                "chance": 1
+              },
+              {
+                "kind": "energy",
+                "target": "allAllies",
+                "amount": 15
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "akari",
+        "name": "晨曦",
+        "team": "ally",
+        "element": "light",
+        "role": "治療",
+        "weaknesses": [],
+        "description": "單體與全體治療。",
+        "stats": {
+          "level": 80,
+          "def": 700,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0.1,
+          "breakEffect": 0,
+          "startEnergy": 0,
+          "hp": 4200,
+          "atk": 1300,
+          "spd": 102,
+          "maxEnergy": 100
+        },
+        "skills": [
+          {
+            "id": "basic",
+            "name": "普攻",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ]
+          },
+          {
+            "id": "skill",
+            "name": "祈光",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "ally",
+            "effects": [
+              {
+                "kind": "heal",
+                "target": "ally",
+                "scale": "atk",
+                "multiplier": 0.6,
+                "flat": 300
+              }
+            ]
+          },
+          {
+            "id": "ult",
+            "name": "曙光",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 100,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "heal",
+                "target": "allAllies",
+                "scale": "atk",
+                "multiplier": 0.5,
+                "flat": 400
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "yoru",
+        "name": "夜歌",
+        "team": "ally",
+        "element": "shadow",
+        "role": "擊破",
+        "weaknesses": [],
+        "description": "高削韌，擊破後造成大量擊破傷害並碎甲。",
+        "stats": {
+          "level": 80,
+          "def": 700,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0.1,
+          "breakEffect": 1,
+          "startEnergy": 0,
+          "hp": 3300,
+          "atk": 1800,
+          "spd": 112,
+          "maxEnergy": 110
+        },
+        "skills": [
+          {
+            "id": "basic",
+            "name": "普攻",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 15
+              }
+            ]
+          },
+          {
+            "id": "skill",
+            "name": "影刃",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.6,
+                "toughness": 30
+              },
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "armorBreak",
+                "chance": 0.8
+              }
+            ]
+          },
+          {
+            "id": "ult",
+            "name": "夜幕斬",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 110,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 3,
+                "toughness": 40
+              }
+            ]
+          },
+          {
+            "id": "shade",
+            "name": "影襲",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 10,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 0.9,
+                "toughness": 0
+              },
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "armorBreak",
+                "chance": 1
+              }
+            ]
+          }
+        ],
+        "passives": [
+          {
+            "id": "shade",
+            "name": "影襲",
+            "on": "allyBreak",
+            "skillId": "shade",
+            "limitPerTurn": 2,
+            "description": "隊友擊破敵人時，對該敵人追加攻擊並施加碎甲。每回合最多兩次。"
+          }
+        ]
+      },
+      {
+        "id": "golem",
+        "name": "岩甲獸",
+        "team": "enemy",
+        "element": "fire",
+        "weaknesses": [
+          "ice",
+          "wind",
+          "shadow"
+        ],
+        "role": "普通",
+        "stats": {
+          "level": 80,
+          "critRate": 0,
+          "critDmg": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0.2,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0.1,
+          "effectHit": 0,
+          "effectRes": 0.2,
+          "breakEffect": 0,
+          "maxEnergy": 0,
+          "def": 1000,
+          "hp": 22000,
+          "atk": 1700,
+          "spd": 83,
+          "toughness": 60
+        },
+        "skills": [
+          {
+            "id": "bite",
+            "name": "撕咬",
+            "type": "basic",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.8,
+                "toughness": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bat",
+        "name": "影翼蝠",
+        "team": "enemy",
+        "element": "shadow",
+        "weaknesses": [
+          "fire",
+          "light"
+        ],
+        "role": "普通",
+        "stats": {
+          "level": 80,
+          "critRate": 0,
+          "critDmg": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0.2,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0.1,
+          "effectHit": 0,
+          "effectRes": 0.2,
+          "breakEffect": 0,
+          "maxEnergy": 0,
+          "def": 900,
+          "hp": 13000,
+          "atk": 1500,
+          "spd": 110,
+          "toughness": 30
+        },
+        "skills": [
+          {
+            "id": "claw",
+            "name": "利爪",
+            "type": "basic",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.5,
+                "toughness": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sentinel",
+        "name": "雷晶哨兵",
+        "team": "enemy",
+        "element": "thunder",
+        "weaknesses": [
+          "fire",
+          "shadow"
+        ],
+        "role": "普通",
+        "stats": {
+          "level": 80,
+          "critRate": 0,
+          "critDmg": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0.2,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0.1,
+          "effectHit": 0,
+          "effectRes": 0.2,
+          "breakEffect": 0,
+          "maxEnergy": 0,
+          "def": 1000,
+          "hp": 16000,
+          "atk": 1450,
+          "spd": 95,
+          "toughness": 45
+        },
+        "skills": [
+          {
+            "id": "shot",
+            "name": "晶射",
+            "type": "basic",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.6,
+                "toughness": 0
+              }
+            ]
+          },
+          {
+            "id": "burst",
+            "name": "電弧爆發",
+            "type": "skill",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 0.7,
+                "toughness": 0
+              }
+            ]
+          }
+        ],
+        "ai": [
+          {
+            "skillId": "shot",
+            "weight": 3
+          },
+          {
+            "skillId": "burst",
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "colossus",
+        "name": "灰燼巨像",
+        "team": "enemy",
+        "element": "fire",
+        "weaknesses": [
+          "ice",
+          "thunder",
+          "light"
+        ],
+        "role": "首領",
+        "stats": {
+          "level": 80,
+          "critRate": 0,
+          "critDmg": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0.2,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0.1,
+          "effectHit": 0,
+          "effectRes": 0.3,
+          "breakEffect": 0,
+          "maxEnergy": 0,
+          "def": 1100,
+          "hp": 70000,
+          "atk": 2250,
+          "spd": 100,
+          "toughness": 160
+        },
+        "skills": [
+          {
+            "id": "smash",
+            "name": "重擊",
+            "type": "basic",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 2.2,
+                "toughness": 0
+              }
+            ]
+          },
+          {
+            "id": "quake",
+            "name": "震地",
+            "type": "skill",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1.1,
+                "toughness": 0
+              }
+            ]
+          },
+          {
+            "id": "roar",
+            "name": "怒吼",
+            "type": "skill",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "rage",
+                "chance": 1
+              }
+            ]
+          },
+          {
+            "id": "recoil",
+            "name": "反震",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 0.5,
+                "toughness": 0
+              }
+            ]
+          }
+        ],
+        "passives": [
+          {
+            "id": "recoil",
+            "name": "反震",
+            "on": "selfHit",
+            "skillId": "recoil",
+            "limitPerTurn": 1,
+            "when": {
+              "op": "lt",
+              "args": [
+                {
+                  "ref": "self.hpPct"
+                },
+                {
+                  "const": 0.5
+                }
+              ]
+            },
+            "description": "血量低於 50% 後，受到攻擊時反擊攻擊者。每回合一次。"
+          }
+        ],
+        "ai": [
+          {
+            "skillId": "smash",
+            "weight": 3
+          },
+          {
+            "skillId": "quake",
+            "weight": 2,
+            "when": {
+              "op": "lt",
+              "args": [
+                {
+                  "ref": "self.hpPct"
+                },
+                {
+                  "const": 0.6
+                }
+              ]
+            }
+          },
+          {
+            "skillId": "roar",
+            "weight": 1,
+            "when": {
+              "op": "gt",
+              "args": [
+                {
+                  "ref": "battle.turn"
+                },
+                {
+                  "const": 4
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "id": "freeze",
+        "name": "冰封",
+        "kind": "debuff",
+        "category": "freeze",
+        "duration": 1,
+        "maxStacks": 1,
+        "modifiers": [],
+        "skipTurn": true,
+        "description": "無法行動一回合。"
+      },
+      {
+        "id": "exposed",
+        "name": "破綻",
+        "kind": "debuff",
+        "duration": 2,
+        "maxStacks": 1,
+        "modifiers": [
+          {
+            "target": "stat:vulnerability",
+            "op": "add",
+            "value": 0.2
+          }
+        ],
+        "description": "受到的傷害提高 20%。"
+      },
+      {
+        "id": "shock",
+        "name": "感電",
+        "kind": "debuff",
+        "category": "shock",
+        "duration": 3,
+        "maxStacks": 1,
+        "modifiers": [],
+        "dot": {
+          "multiplier": 0.8,
+          "element": "thunder"
+        },
+        "description": "每回合開始時受到攻擊力 80% 的雷屬性傷害。"
+      },
+      {
+        "id": "armorBreak",
+        "name": "碎甲",
+        "kind": "debuff",
+        "duration": 2,
+        "maxStacks": 1,
+        "modifiers": [
+          {
+            "target": "stat:def",
+            "op": "pct",
+            "value": -0.3
+          }
+        ],
+        "description": "防禦力降低 30%。"
+      },
+      {
+        "id": "haste",
+        "name": "疾風",
+        "kind": "buff",
+        "duration": 2,
+        "maxStacks": 1,
+        "modifiers": [
+          {
+            "target": "stat:spd",
+            "op": "pct",
+            "value": 0.1
+          },
+          {
+            "target": "stat:dmgBonus",
+            "op": "add",
+            "value": 0.25
+          }
+        ],
+        "description": "速度 +10%、增傷 +25%。"
+      },
+      {
+        "id": "rage",
+        "name": "狂怒",
+        "kind": "buff",
+        "duration": 3,
+        "maxStacks": 2,
+        "modifiers": [
+          {
+            "target": "stat:dmgBonus",
+            "op": "add",
+            "value": 0.3
+          }
+        ],
+        "description": "增傷 +30%，可疊 2 層。"
+      },
+      {
+        "id": "kindle",
+        "name": "熾燃",
+        "kind": "buff",
+        "duration": 2,
+        "maxStacks": 1,
+        "modifiers": [
+          {
+            "target": "stat:mastery",
+            "op": "add",
+            "value": 200
+          }
+        ],
+        "description": "精通 +200。"
+      }
+    ],
+    "encounter": {
+      "allies": [
+        "homura",
+        "shimo",
+        "raimei",
+        "akari"
+      ],
+      "enemies": [
+        "bat",
+        "golem",
+        "bat"
+      ]
+    },
+    "encounters": [
+      {
+        "id": "normal",
+        "name": "普通戰",
+        "enemies": [
+          "bat",
+          "golem",
+          "bat"
+        ],
+        "description": "兩隻高速的影翼蝠護著岩甲獸。"
+      },
+      {
+        "id": "elite",
+        "name": "精英戰",
+        "enemies": [
+          "sentinel",
+          "golem",
+          "sentinel"
+        ],
+        "description": "雷晶哨兵會隨機施放全體電弧。"
+      },
+      {
+        "id": "boss",
+        "name": "首領戰",
+        "enemies": [
+          "colossus"
+        ],
+        "description": "灰燼巨像：血量低時會震地與反擊。"
+      }
+    ],
+    "policy": {
+      "ult": "asap",
+      "skill": "whenSp",
+      "target": "weaknessFirst"
+    }
+  },
+  "gacha": {
+    "banners": [
+      {
+        "id": "simple",
+        "name": "DEMO 簡易池",
+        "description": "固定機率加硬保底，沒有大小保底。DEMO 原本的卡池。",
+        "cost": 160,
+        "tiers": [
+          {
+            "id": "5",
+            "name": "5★",
+            "rate": 0.02,
+            "hardPity": 50,
+            "items": [
+              "u.aoba",
+              "u.yoru"
+            ]
+          },
+          {
+            "id": "4",
+            "name": "4★",
+            "rate": 0.13,
+            "items": [
+              "exp.m"
+            ]
+          },
+          {
+            "id": "3",
+            "name": "3★",
+            "rate": 0,
+            "items": [
+              "exp.s"
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": "u.aoba",
+            "name": "蒼羽",
+            "kind": "unit",
+            "unitId": "aoba"
+          },
+          {
+            "id": "u.yoru",
+            "name": "夜歌",
+            "kind": "unit",
+            "unitId": "yoru"
+          },
+          {
+            "id": "exp.s",
+            "name": "經驗晶",
+            "kind": "resource",
+            "resource": "exp",
+            "amount": 400
+          },
+          {
+            "id": "exp.m",
+            "name": "高級經驗晶",
+            "kind": "resource",
+            "resource": "exp",
+            "amount": 2000
+          }
+        ]
+      },
+      {
+        "id": "rate-up",
+        "name": "限定祈願（軟保底＋大小保底）",
+        "description": "5★ 基礎 0.6%，第 74 抽起每抽 +6%，第 90 抽必中；5★ 有 50% 為限定，歪了下次必中。4★ 每 10 抽保底。",
+        "cost": 160,
+        "tiers": [
+          {
+            "id": "5",
+            "name": "5★",
+            "rate": 0.006,
+            "softPityStart": 74,
+            "softPityStep": 0.06,
+            "hardPity": 90,
+            "featured": {
+              "share": 0.5,
+              "guarantee": true,
+              "items": [
+                "u.aoba"
+              ]
+            },
+            "items": [
+              "u.homura",
+              "u.shimo",
+              "u.raimei",
+              "u.akari"
+            ]
+          },
+          {
+            "id": "4",
+            "name": "4★",
+            "rate": 0.051,
+            "hardPity": 10,
+            "featured": {
+              "share": 0.5,
+              "guarantee": true,
+              "items": [
+                "u.yoru"
+              ]
+            },
+            "items": [
+              "exp.m"
+            ]
+          },
+          {
+            "id": "3",
+            "name": "3★",
+            "rate": 0,
+            "items": [
+              "exp.s"
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": "u.aoba",
+            "name": "蒼羽",
+            "kind": "unit",
+            "unitId": "aoba"
+          },
+          {
+            "id": "u.yoru",
+            "name": "夜歌",
+            "kind": "unit",
+            "unitId": "yoru"
+          },
+          {
+            "id": "u.homura",
+            "name": "焰華",
+            "kind": "unit",
+            "unitId": "homura"
+          },
+          {
+            "id": "u.shimo",
+            "name": "霜語",
+            "kind": "unit",
+            "unitId": "shimo"
+          },
+          {
+            "id": "u.raimei",
+            "name": "雷鳴",
+            "kind": "unit",
+            "unitId": "raimei"
+          },
+          {
+            "id": "u.akari",
+            "name": "晨曦",
+            "kind": "unit",
+            "unitId": "akari"
+          },
+          {
+            "id": "exp.s",
+            "name": "經驗晶",
+            "kind": "resource",
+            "resource": "exp",
+            "amount": 400
+          },
+          {
+            "id": "exp.m",
+            "name": "高級經驗晶",
+            "kind": "resource",
+            "resource": "exp",
+            "amount": 2000
+          }
+        ]
+      },
+      {
+        "id": "spark",
+        "name": "天井限定池（每 200 抽必得限定）",
+        "description": "限定池加上天井：每累計 200 抽自動獲得限定 5★，與 5★ 保底分開計算。",
+        "cost": 160,
+        "tiers": [
+          {
+            "id": "spark",
+            "name": "天井",
+            "rate": 0,
+            "hardPity": 200,
+            "items": [
+              "u.aoba"
+            ]
+          },
+          {
+            "id": "5",
+            "name": "5★",
+            "rate": 0.006,
+            "softPityStart": 74,
+            "softPityStep": 0.06,
+            "hardPity": 90,
+            "featured": {
+              "share": 0.5,
+              "guarantee": true,
+              "items": [
+                "u.aoba"
+              ]
+            },
+            "items": [
+              "u.homura",
+              "u.shimo",
+              "u.raimei",
+              "u.akari"
+            ]
+          },
+          {
+            "id": "4",
+            "name": "4★",
+            "rate": 0.051,
+            "hardPity": 10,
+            "featured": {
+              "share": 0.5,
+              "guarantee": true,
+              "items": [
+                "u.yoru"
+              ]
+            },
+            "items": [
+              "exp.m"
+            ]
+          },
+          {
+            "id": "3",
+            "name": "3★",
+            "rate": 0,
+            "items": [
+              "exp.s"
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": "u.aoba",
+            "name": "蒼羽",
+            "kind": "unit",
+            "unitId": "aoba"
+          },
+          {
+            "id": "u.yoru",
+            "name": "夜歌",
+            "kind": "unit",
+            "unitId": "yoru"
+          },
+          {
+            "id": "u.homura",
+            "name": "焰華",
+            "kind": "unit",
+            "unitId": "homura"
+          },
+          {
+            "id": "u.shimo",
+            "name": "霜語",
+            "kind": "unit",
+            "unitId": "shimo"
+          },
+          {
+            "id": "u.raimei",
+            "name": "雷鳴",
+            "kind": "unit",
+            "unitId": "raimei"
+          },
+          {
+            "id": "u.akari",
+            "name": "晨曦",
+            "kind": "unit",
+            "unitId": "akari"
+          },
+          {
+            "id": "exp.s",
+            "name": "經驗晶",
+            "kind": "resource",
+            "resource": "exp",
+            "amount": 400
+          },
+          {
+            "id": "exp.m",
+            "name": "高級經驗晶",
+            "kind": "resource",
+            "resource": "exp",
+            "amount": 2000
+          }
+        ]
+      }
+    ],
+    "active": "spark"
+  },
+  "demo": {
+    "modules": {
+      "teamEdit": true,
+      "economy": true,
+      "gacha": true,
+      "disclosure": true,
+      "growth": true,
+      "progression": true
+    }
+  },
+  "snapshots": []
+}

@@ -5093,6 +5093,637 @@
       }
     },
     {
+      "id": "m6/amplify-fire",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [
+            {
+              "id": "amplify",
+              "label": "增幅反應",
+              "apply": "mul",
+              "order": 25,
+              "base": {
+                "op": "if",
+                "args": [
+                  {
+                    "op": "and",
+                    "args": [
+                      {
+                        "ref": "flags.amplify"
+                      },
+                      {
+                        "op": "eq",
+                        "args": [
+                          {
+                            "ref": "skill.element"
+                          },
+                          {
+                            "const": "fire"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "mul",
+                    "args": [
+                      {
+                        "const": 1.5
+                      },
+                      {
+                        "op": "add",
+                        "args": [
+                          {
+                            "const": 1
+                          },
+                          {
+                            "op": "div",
+                            "args": [
+                              {
+                                "op": "mul",
+                                "args": [
+                                  {
+                                    "const": 2.5
+                                  },
+                                  {
+                                    "ref": "attacker.mastery"
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "add",
+                                "args": [
+                                  {
+                                    "ref": "attacker.mastery"
+                                  },
+                                  {
+                                    "const": 1200
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "const": 1
+                  }
+                ]
+              },
+              "description": "火屬性技能觸發增幅反應：基礎 ×1.5，再依精通提高（精通 1200 時再 ×2.25）。"
+            }
+          ],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1,
+          "customStats": [
+            {
+              "side": "attacker",
+              "key": "mastery",
+              "label": "精通",
+              "default": 0,
+              "unit": "flat",
+              "min": 0
+            }
+          ],
+          "customFlags": [
+            {
+              "key": "amplify",
+              "label": "觸發增幅反應",
+              "default": true
+            }
+          ]
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0,
+            "mastery": 300
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "amplify",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 4898,
+          "hits": [
+            {
+              "damage": 2449,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "amplify": 2.25,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 2449,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "amplify": 2.25,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 10776,
+          "hits": [
+            {
+              "damage": 5388,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "amplify": 2.25,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 5388,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "amplify": 2.25,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 8424.8,
+        "distribution": [
+          {
+            "value": 4898,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 7837,
+            "prob": 0.48
+          },
+          {
+            "value": 10776,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            7837,
+            7837,
+            10776,
+            7837,
+            7837,
+            7837,
+            10776,
+            7837,
+            7837,
+            7837,
+            7837,
+            7837,
+            7837,
+            10776,
+            7837,
+            10776,
+            4898,
+            7837,
+            10776,
+            4898,
+            10776,
+            10776,
+            7837,
+            10776,
+            10776,
+            7837,
+            7837,
+            10776,
+            10776,
+            7837,
+            7837,
+            4898,
+            4898,
+            7837,
+            4898,
+            7837,
+            7837,
+            10776,
+            4898,
+            10776,
+            7837,
+            7837,
+            7837,
+            10776,
+            4898,
+            4898,
+            10776,
+            10776,
+            7837,
+            10776,
+            7837,
+            10776,
+            10776,
+            7837,
+            7837,
+            7837,
+            10776,
+            7837,
+            7837,
+            7837,
+            10776,
+            10776,
+            7837,
+            7837
+          ]
+        }
+      }
+    },
+    {
+      "id": "m6/amplify-flag-off",
+      "input": {
+        "config": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [
+            {
+              "id": "amplify",
+              "label": "增幅反應",
+              "apply": "mul",
+              "order": 25,
+              "base": {
+                "op": "if",
+                "args": [
+                  {
+                    "op": "and",
+                    "args": [
+                      {
+                        "ref": "flags.amplify"
+                      },
+                      {
+                        "op": "eq",
+                        "args": [
+                          {
+                            "ref": "skill.element"
+                          },
+                          {
+                            "const": "fire"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "mul",
+                    "args": [
+                      {
+                        "const": 1.5
+                      },
+                      {
+                        "op": "add",
+                        "args": [
+                          {
+                            "const": 1
+                          },
+                          {
+                            "op": "div",
+                            "args": [
+                              {
+                                "op": "mul",
+                                "args": [
+                                  {
+                                    "const": 2.5
+                                  },
+                                  {
+                                    "ref": "attacker.mastery"
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "add",
+                                "args": [
+                                  {
+                                    "ref": "attacker.mastery"
+                                  },
+                                  {
+                                    "const": 1200
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "const": 1
+                  }
+                ]
+              },
+              "description": "火屬性技能觸發增幅反應：基礎 ×1.5，再依精通提高（精通 1200 時再 ×2.25）。"
+            }
+          ],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1,
+          "customStats": [
+            {
+              "side": "attacker",
+              "key": "mastery",
+              "label": "精通",
+              "default": 0,
+              "unit": "flat",
+              "min": 0
+            }
+          ],
+          "customFlags": [
+            {
+              "key": "amplify",
+              "label": "觸發增幅反應",
+              "default": true
+            }
+          ]
+        },
+        "scenario": {
+          "name": "方案 A",
+          "attacker": {
+            "atk": 2400,
+            "critRate": 0.6,
+            "critDmg": 1.2,
+            "dmgBonus": 0.4,
+            "level": 80,
+            "defIgnore": 0,
+            "resPen": 0,
+            "mastery": 300
+          },
+          "defender": {
+            "def": 1000,
+            "res": 0.2,
+            "vulnerability": 0,
+            "dmgReduction": 0.1
+          },
+          "skill": {
+            "name": "戰技",
+            "multiplier": 2,
+            "type": "skill",
+            "element": "fire",
+            "hits": [
+              0.5,
+              0.5
+            ]
+          },
+          "flags": {
+            "broken": false,
+            "amplify": false
+          },
+          "modifiers": []
+        }
+      },
+      "expected": {
+        "stepOrder": [
+          "base",
+          "crit",
+          "dmgBonus",
+          "amplify",
+          "defRatio",
+          "res",
+          "vuln",
+          "reduction",
+          "toughness"
+        ],
+        "critChance": 0.6,
+        "nonCrit": {
+          "total": 2176,
+          "hits": [
+            {
+              "damage": 1088,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "amplify": 1,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 1088,
+              "steps": {
+                "base": 2400,
+                "crit": 1,
+                "dmgBonus": 1.4,
+                "amplify": 1,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "crit": {
+          "total": 4790,
+          "hits": [
+            {
+              "damage": 2395,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "amplify": 1,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            },
+            {
+              "damage": 2395,
+              "steps": {
+                "base": 2400,
+                "crit": 2.2,
+                "dmgBonus": 1.4,
+                "amplify": 1,
+                "defRatio": 0.5,
+                "res": 0.8,
+                "vuln": 1,
+                "reduction": 0.9,
+                "toughness": 0.9
+              }
+            }
+          ]
+        },
+        "expected": 3744.4,
+        "distribution": [
+          {
+            "value": 2176,
+            "prob": 0.16000000000000003
+          },
+          {
+            "value": 3483,
+            "prob": 0.48
+          },
+          {
+            "value": 4790,
+            "prob": 0.36
+          }
+        ],
+        "sample": {
+          "n": 64,
+          "seed": 2024,
+          "samples": [
+            3483,
+            3483,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            3483,
+            3483,
+            3483,
+            3483,
+            3483,
+            3483,
+            4790,
+            3483,
+            4790,
+            2176,
+            3483,
+            4790,
+            2176,
+            4790,
+            4790,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483,
+            2176,
+            2176,
+            3483,
+            2176,
+            3483,
+            3483,
+            4790,
+            2176,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            2176,
+            2176,
+            4790,
+            4790,
+            3483,
+            4790,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            3483,
+            3483,
+            3483,
+            4790,
+            4790,
+            3483,
+            3483
+          ]
+        }
+      }
+    },
+    {
       "id": "feature/modifier-ops",
       "input": {
         "config": {

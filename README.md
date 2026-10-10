@@ -55,6 +55,9 @@
 
 DEMO 中的角色、敵人、關卡與數值都是本工具的原創範例，可在主控台自由修改。
 
+## 範例專案
+- [`examples/m6-extension.json`](examples/m6-extension.json)：只用專案資料加入的傷害變體（增幅反應）與卡池規則（天井），用「開啟檔案」開啟。說明見 [docs/m6-extension-check.md](docs/m6-extension-check.md)。
+
 ## 給其他引擎／語言的開發者
 核心規則有完整規格（[docs/spec](docs/spec/README.md)）與語言無關的測試向量（`packages/core/vectors/`）。
 在 Unity（C#）、Godot、伺服器等環境重新實作時，跑完全部向量即可確認結果與本工具一致。

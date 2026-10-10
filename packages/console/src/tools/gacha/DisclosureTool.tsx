@@ -1,8 +1,8 @@
-import { disclosure, type BannerDef, type Disclosure, type Project } from "@ggt/core";
+import { type BannerDef, type Disclosure, type Project } from "@ggt/core";
 import { useMemo, useState } from "react";
 import type { Updater } from "../../useProject";
 import { ErrorBox, Section, Segmented, tryCompute } from "../../ui";
-import { BannerPicker, GachaIssues, useBanner } from "./common";
+import { BannerPicker, EstimateNote, GachaIssues, safeDisclosure, useBanner } from "./common";
 
 type Digits = "2" | "4";
 
@@ -24,7 +24,7 @@ export function DisclosureTool({ project, update }: { project: Project; update: 
   const { banner, issues, errors } = useBanner(project, update);
   const [digits, setDigits] = useState<Digits>("2");
   const [copied, setCopied] = useState(false);
-  const d = useMemo(() => (banner && !errors.length ? tryCompute(() => disclosure(banner)) : null), [banner, errors.length]);
+  const d = useMemo(() => (banner && !errors.length ? tryCompute(() => safeDisclosure(banner, project.seed)) : null), [banner, errors.length, project.seed]);
   const n = Number(digits);
   const copy = async () => {
     if (!banner || !d?.ok) return;
@@ -44,6 +44,7 @@ export function DisclosureTool({ project, update }: { project: Project; update: 
         {d?.ok && banner && (
           <>
             <Section title={`${banner.name}・稀有度`}>
+              <EstimateNote d={d.value} />
               <table className="table">
                 <thead><tr><th>稀有度</th><th className="r">基礎機率</th><th className="r">綜合機率（含保底）</th><th>保底規則</th></tr></thead>
                 <tbody>{d.value.tiers.map((t) => <tr key={t.id}><td>{t.name}</td><td className="r mono">{asPct(t.base, n)}</td><td className="r mono">{asPct(t.consolidated, n)}</td><td className="small">{t.pity.join("；") || "—"}</td></tr>)}</tbody>

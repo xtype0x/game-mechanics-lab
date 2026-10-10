@@ -1,11 +1,11 @@
 import {
-  Rng, disclosure, newGachaState, pullMany, rateUpBanner, simpleBanner, targetDistribution,
+  Rng, newGachaState, pullMany, rateUpBanner, simpleBanner, targetDistribution,
   type BannerDef, type GachaItem, type GachaTier, type Project, type PullResult,
 } from "@ggt/core";
 import { useMemo, useState } from "react";
 import type { Updater } from "../../useProject";
 import { ErrorBox, Field, NumberField, Section, fmt, pct, tryCompute } from "../../ui";
-import { BannerPicker, GachaIssues, itemName, useBanner } from "./common";
+import { BannerPicker, EstimateNote, GachaIssues, itemName, safeDisclosure, useBanner } from "./common";
 
 const nextId = (prefix: string, taken: string[]) => { let n = 1; while (taken.includes(`${prefix}${n}`)) n++; return `${prefix}${n}`; };
 
@@ -178,13 +178,13 @@ function ItemEditor({ banner, edit, allies }: { banner: BannerDef; edit: (fn: (b
 
 function Overview({ banner, seed }: { banner: BannerDef; seed: number | string }) {
   const stats = useMemo(() => tryCompute(() => {
-    const d = disclosure(banner);
+    const d = safeDisclosure(banner, seed);
     const top = banner.tiers[0]!;
     const toTop = targetDistribution(banner, { mode: "tier", copies: 1 });
     const hasFeat = !!top.featured?.items.length;
     const toFeat = hasFeat ? targetDistribution(banner, { mode: "featured", copies: 1 }) : null;
     return { d, top, toTop, toFeat };
-  }), [banner]);
+  }), [banner, seed]);
   const [sample, setSample] = useState<{ n: number; results: PullResult[] } | null>(null);
   if (!stats.ok) return <ErrorBox error={stats.error} />;
   const { d, top, toTop, toFeat } = stats.value;
@@ -192,6 +192,7 @@ function Overview({ banner, seed }: { banner: BannerDef; seed: number | string }
   return (
     <>
       <Section title="各稀有度機率">
+        <EstimateNote d={d} />
         <table className="table">
           <thead><tr><th>稀有度</th><th className="r">基礎</th><th className="r">綜合（含保底）</th></tr></thead>
           <tbody>{d.tiers.map((t) => <tr key={t.id}><td>{t.name}</td><td className="r mono">{pct(t.base, 3)}</td><td className="r mono">{pct(t.consolidated, 3)}</td></tr>)}</tbody>
@@ -200,7 +201,7 @@ function Overview({ banner, seed }: { banner: BannerDef; seed: number | string }
           <span>平均幾抽出一次 {top.name}</span><strong>{fmt(toTop.mean, 2)}</strong>
           {toFeat && <><span>平均幾抽出一次限定 {top.name}</span><strong>{fmt(toFeat.mean, 2)}</strong></>}
         </div>
-        <p className="muted small">綜合機率是長期平均每抽的機率（含軟硬保底與大保底），精確計算。抽數分布與預算請用「抽卡機率與預算模擬器」。</p>
+        <p className="muted small">綜合機率是長期平均每抽的機率（含軟硬保底與大保底），{d.exact ? "精確計算" : "抽樣估計"}。「平均幾抽」只看最高稀有度（docs/spec/gacha.md §3.2）。抽數分布與預算請用「抽卡機率與預算模擬器」。</p>
       </Section>
       <Section title="試抽" actions={<><button className="btn small" onClick={() => draw(10)}>抽 10 次</button><button className="btn small" onClick={() => draw(1000)}>抽 1000 次</button></>}>
         {!sample && <p className="muted small">用專案種子從新的保底進度開始抽，同種子結果相同。</p>}

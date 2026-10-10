@@ -1,4 +1,5 @@
-import { disclosure, type Project, type UnitDef } from "@ggt/core";
+import type { Project, UnitDef } from "@ggt/core";
+import { safeDisclosure } from "../tools/gacha/common";
 import type { ReplayRequest } from "./link";
 import { useEffect, useMemo, useState } from "react";
 import type { Updater } from "../useProject";
@@ -318,8 +319,8 @@ function Gacha({ project, save, mods, mutate }: HubProps) {
   const banner = activeBanner(project);
   const rates = useMemo(() => {
     if (!banner) return null;
-    try { return disclosure(banner); } catch { return null; }
-  }, [banner]);
+    try { return safeDisclosure(banner, project.seed); } catch { return null; }
+  }, [banner, project.seed]);
   if (!banner) return <p className="hub-hint">專案沒有卡池。請到主控台「卡池與保底規則編輯器」新增。</p>;
   const top = banner.tiers[0]!;
   const feat = bannerUnits(project, banner);
@@ -371,7 +372,7 @@ function Gacha({ project, save, mods, mutate }: HubProps) {
               ))}
             </tbody>
           </table>
-          <p>{rates.tiers.flatMap((t) => t.pity.map((x) => `${t.name}：${x}`)).join("。")}{rates.tiers.some((t) => t.pity.length) ? "。" : ""}綜合機率已計入保底（精確計算）。重複獲得角色轉為經驗 {EXP_DUPE}。</p>
+          <p>{rates.tiers.flatMap((t) => t.pity.map((x) => `${t.name}：${x}`)).join("。")}{rates.tiers.some((t) => t.pity.length) ? "。" : ""}綜合機率已計入保底（{rates.exact ? "精確計算" : "抽樣估計"}）。重複獲得角色轉為經驗 {EXP_DUPE}。</p>
           <p className="muted">此為 DEMO 範例。正式上線前，請依最新法規確認公示格式與內容。</p>
         </div>
       )}

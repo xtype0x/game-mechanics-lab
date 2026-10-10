@@ -154,6 +154,19 @@ function damageVectors() {
     add("feature/step-rounding", c, sc0());
   }
   {
+    // M6 data-only damage variant (examples/m6-extension.json): string comparison and a custom flag in a step.
+    const example = JSON.parse(readFileSync(join(DIR, "..", "..", "..", "examples", "m6-extension.json"), "utf8"));
+    const s = sc0();
+    s.skill.element = "fire";
+    s.attacker.mastery = 300;
+    add("m6/amplify-fire", example.damage.config, s);
+    const off = sc0();
+    off.skill.element = "fire";
+    off.attacker.mastery = 300;
+    off.flags.amplify = false;
+    add("m6/amplify-flag-off", example.damage.config, off);
+  }
+  {
     const s = sc0();
     s.modifiers = [
       { id: "m", label: "×1.25", target: "step:dmgBonus", op: "mul", value: 1.25 },
