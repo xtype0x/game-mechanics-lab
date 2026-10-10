@@ -11,12 +11,18 @@ const THEMES: Record<Theme, { sky: [string, string, string]; far: string; near: 
   storm: { sky: ["#120b26", "#3a2466", "#8e6bd6"], far: "#2a1d4a", near: "#170f2e", ground: ["#2a2240", "#0d0918"], glow: "#c9a3ff", moon: "#efe3ff" },
 };
 
-export function Backdrop({ theme }: { theme: Theme }) {
+/**
+ * "card" frames the right part of the scene (moon, ridge, ruins, ground line) for small thumbnails
+ * such as the stage cards; the window keeps the cards' ≈1.7 aspect ratio.
+ */
+const VIEWS = { full: "0 0 1280 720", card: "440 70 820 480" } as const;
+
+export function Backdrop({ theme, view = "full" }: { theme: Theme; view?: keyof typeof VIEWS }) {
   const uid = useId().replace(/:/g, "");
   const t = THEMES[theme];
   const id = (n: string) => `${n}-${uid}`;
   return (
-    <svg className="backdrop" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <svg className="backdrop" viewBox={VIEWS[view]} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
         <linearGradient id={id("sky")} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={t.sky[0]} />
@@ -40,7 +46,7 @@ export function Backdrop({ theme }: { theme: Theme }) {
       <rect width="1280" height="720" fill={`url(#${id("sky")})`} />
       <circle cx="980" cy="170" r="160" fill={`url(#${id("moon")})`} />
       <circle cx="980" cy="170" r="46" fill={t.moon} opacity="0.9" />
-      {theme === "storm" && <path className="bolt" d="M300 40 L270 150 L300 150 L250 290" stroke="#efe3ff" strokeWidth="4" fill="none" />}
+      {theme === "storm" && <path className="bolt" d="M300 40 L270 150 L300 150 L250 290" transform={view === "card" ? "translate(500 60)" : undefined} stroke="#efe3ff" strokeWidth="4" fill="none" />}
       <path d="M0 430 L120 330 L210 390 L330 280 L450 380 L560 300 L700 400 L820 320 L960 410 L1080 330 L1280 420 L1280 720 L0 720 Z" fill={t.far} opacity="0.85" />
       {theme === "frost" ? (
         <g fill={t.near}>

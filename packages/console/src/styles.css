@@ -172,6 +172,9 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
   gap: 16px;
   padding: 16px;
   align-items: start;
+  /* Ultra-wide screens: keep labels and values within reading distance. */
+  max-width: 1920px;
+  margin-inline: auto;
 }
 .workspace, .results { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .results { position: sticky; top: 0; }

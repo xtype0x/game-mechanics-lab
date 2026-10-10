@@ -130,3 +130,6 @@
 .pause-box small { opacity: 0.6; margin-top: 4px; }
 
 .battle.reduced .cutin-band, .battle.reduced .cutin-art, .battle.reduced .cutin-text, .battle.reduced .banner { animation-duration: 0.01s !important; }
+@media (prefers-reduced-motion: reduce) {
+  .battle .unit.broken::after, .unit.choosable .ground-ring, .reticle, .ult-tag { animation: none !important; }
+}

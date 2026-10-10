@@ -174,7 +174,7 @@ function Stages({ project, save, stages, onPlay }: { project: Project; save: Dem
         const enemies = [...new Set(s.waves.flat())];
         return (
           <div key={s.id} className={`stage-card theme-${s.theme} ${locked ? "locked" : ""}`}>
-            <div className="stage-art"><Backdrop theme={s.theme} /></div>
+            <div className="stage-art"><Backdrop theme={s.theme} view="card" /></div>
             <div className="stage-info">
               <b>{s.name}</b>
               <span>{s.subtitle}</span>

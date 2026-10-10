@@ -1,6 +1,10 @@
 /* Demo runs on a fixed 1280×720 stage scaled to fit the viewport. */
 .demo-root { position: fixed; inset: 0; background: #07050c; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 100; color: #f4eefc; font-family: system-ui, "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif; }
 .stage-frame { width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9; position: relative; container-type: inline-size; }
+/* Phone held upright (touch screens only, so narrow desktop windows are unaffected): turn the 16:9 stage sideways so it uses the long side instead of shrinking to ~25%. */
+@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
+  .stage-frame { width: min(100vh, calc(100vw * 16 / 9)); width: min(100dvh, calc(100vw * 16 / 9)); flex-shrink: 0; transform: rotate(90deg); }
+}
 .stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; transform: scale(calc(100cqw / 1280px)); overflow: hidden; user-select: none; }
 .backdrop { position: absolute; inset: 0; width: 100%; height: 100%; }
 .backdrop .bolt { animation: bolt 6s infinite; opacity: 0; }
