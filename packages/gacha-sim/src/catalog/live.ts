@@ -1,12 +1,12 @@
 /**
  * Current banners from public sources. Standalone (no imports) so the snapshot script can run it in Node.
  *
- * - Honkai: Star Rail, Genshin Impact: api.ennead.cc (open-source torikushiii/hoyoverse-api, built on the
+ * - Honkai: Star Rail, Genshin Impact, Zenless Zone Zero: api.ennead.cc (open-source torikushiii/hoyoverse-api, built on the
  *   official event calendar). No key; rate limit 2 requests/s per IP.
  * - Blue Archive: SchaleDB public data (config.min.json + students). Its "current gacha" can lag behind the game.
  */
 
-export type GameId = "hsr" | "genshin" | "ba";
+export type GameId = "hsr" | "genshin" | "zzz" | "ba" | "wuwa" | "endfield" | "nte";
 export type BannerKind = "character" | "weapon" | "pickup";
 
 export interface LiveUnit { id: string; name: string }
@@ -62,6 +62,28 @@ export function adaptHoyo(game: "hsr" | "genshin", json: { banners?: HoyoBanner[
   return out;
 }
 
+interface ZzzUnit { id: number; name: string; rarity: string }
+interface ZzzBanner { banner_type: string; version?: string; agents?: ZzzUnit[]; w_engines?: ZzzUnit[]; start_time: number; end_time: number }
+
+/**
+ * Zenless Zone Zero: one calendar entry lists the parallel channels of a phase together (every S-rank with the
+ * shared A-ranks), so each S-rank becomes its own banner. Unreleased names can be empty.
+ */
+export function adaptZzz(json: { banners?: ZzzBanner[] }): LiveBanner[] {
+  const out: LiveBanner[] = [];
+  for (const b of json.banners ?? []) {
+    const kind = b.banner_type === "GACHA_TYPE_CHARACTER_UP" ? "character" : b.banner_type === "GACHA_TYPE_WEAPON_UP" ? "weapon" : null;
+    if (!kind) continue;
+    const list = (kind === "character" ? b.agents : b.w_engines) ?? [];
+    const named = (u: ZzzUnit) => unit({ id: u.id, name: u.name || "（名稱未公開）" });
+    const a = list.filter((x) => x.rarity === "A").map(named);
+    for (const u of list.filter((x) => x.rarity === "S")) {
+      out.push({ id: `zzz-${kind}-${u.id}`, game: "zzz", kind, version: b.version, featured5: [named(u)], featured4: a, start: b.start_time, end: b.end_time });
+    }
+  }
+  return out;
+}
+
 interface SchaleConfig { Regions?: { Name: string; CurrentGacha?: { characters: number[]; start: number; end: number }[] }[] }
 
 /** SchaleDB: each current pickup becomes one banner per region. Student rarity 3 → featured5 slot. */
@@ -107,6 +129,12 @@ export async function fetchLive(timeoutMs = 8000): Promise<LiveData> {
         sources[key] = "ok";
       } catch (e) { sources[key] = String(e instanceof Error ? e.message : e); }
     }),
+    (async () => {
+      try {
+        banners.push(...adaptZzz((await getJson("https://api.ennead.cc/mihoyo/zenless/calendar?lang=zh-tw", timeoutMs)) as { banners?: ZzzBanner[] }));
+        sources["hoyo:zzz"] = "ok";
+      } catch (e) { sources["hoyo:zzz"] = String(e instanceof Error ? e.message : e); }
+    })(),
     (async () => {
       try {
         const [config, students] = await Promise.all([

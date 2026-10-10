@@ -113,6 +113,7 @@ function ModuleFields({ model, mod, set, tierName }: { model: Model; mod: Gacha.
           <Field label="稀有度"><TierSelect label="稀有度" model={model} value={mod.tier} onChange={(v) => S<"softPity">((x) => { x.tier = v; })} /></Field>
           <Field label="從第幾抽開始"><NumberInput label="起點" value={mod.start} min={1} onChange={(v) => S<"softPity">((x) => { x.start = Math.max(1, Math.round(v)); })} /></Field>
           <Field label="每抽增加"><NumberInput label="每抽增加" percent value={mod.step} min={0} max={1} onChange={(v) => S<"softPity">((x) => { x.step = v; })} /></Field>
+          <Field label="機率上限" hint="100% 為不設上限"><NumberInput label="機率上限" percent value={mod.max ?? 1} min={0} max={1} onChange={(v) => S<"softPity">((x) => { if (v >= 1) delete x.max; else x.max = v; })} /></Field>
         </div>
       );
     case "hardPity":

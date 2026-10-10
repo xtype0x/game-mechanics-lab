@@ -15,8 +15,10 @@ export function varDomain(m: GachaModel, v: string): number {
       if (hard && hard.at > 0) return hard.at;
       const soft = modOf(m, "softPity", id);
       if (soft && soft.start > 0 && soft.step > 0) {
+        // The rate stops changing once it reaches 1 or the soft pity ceiling.
+        const top = Math.min(1, soft.max ?? 1);
         let c = soft.start;
-        while (tierRate(m, ti, c) < 1 && c < 100000) c++;
+        while (tierRate(m, ti, c) < top && c < 100000) c++;
         return c;
       }
       return soft && soft.start > 0 ? soft.start : 1;

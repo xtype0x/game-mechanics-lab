@@ -176,6 +176,40 @@ describe("epitomized / chosen item (§1.2, §2.3)", () => {
   });
 });
 
+describe("soft pity ceiling (2.2, §2.1)", () => {
+  const jump = (rate: number, start: number, max: number, hard?: number): Gacha.GachaModel => ({
+    version: 2, id: "j", name: "j", pull: { cost: 1, currency: "c", batchSize: 10 },
+    tiers: [{ id: "s", name: "S", rate, items: ["s"] }, { id: "b", name: "B", rate: 0, items: ["b"] }],
+    items: ["s", "b"].map((id) => ({ id, name: id, kind: "resource" as const })),
+    modules: [{ kind: "softPity", tier: "s", start, step: 1, max }, ...(hard ? [{ kind: "hardPity" as const, tier: "s", at: hard }] : [])],
+  });
+
+  it("jumps to the ceiling and stays there until hard pity", () => {
+    const m = jump(0.0099, 71, 0.1959, 90);
+    expect([70, 71, 89, 90].map((c) => Gacha.tierRate(m, 0, c))).toEqual([0.0099, 0.1959, 0.1959, 1]);
+    // E = Σ_{n<70} q^n + q^70 Σ_{k<20} r^k, q = 1 − 0.0099, r = 1 − 0.1959.
+    const q = 1 - 0.0099, r = 1 - 0.1959;
+    const d = Gacha.targetDistribution(m, { tier: "s", mode: "tier", copies: 1 });
+    expect(d.mean).toBeCloseTo((1 - q ** 70) / 0.0099 + q ** 70 * (1 - r ** 20) / (1 - r), 9);
+    expect(1 / d.mean).toBeCloseTo(0.0188, 4); // the published consolidated rate is about 1.87%
+    expect(Gacha.worstCase(m, { tier: "s", mode: "tier", copies: 1 })).toBe(90);
+  });
+
+  it("without hard pity the counter stops where the ceiling is reached", () => {
+    const m = jump(0.1, 3, 0.5);
+    expect(Gacha.varDomain(m, "since:s")).toBe(3);
+    // 0.1, 0.1, then 0.5 forever: E = 1 + 0.9 + 0.81 / 0.5.
+    expect(Gacha.targetDistribution(m, { tier: "s", mode: "tier", copies: 1 }).mean).toBeCloseTo(3.52, 9);
+    expect(Gacha.worstCase(m, { tier: "s", mode: "tier", copies: 1 })).toBeNull();
+  });
+
+  it("a ceiling below the base rate or above 1 is an error", () => {
+    const errs = (max: number) => Gacha.validateModel(jump(0.1, 3, max)).filter((i) => i.level === "error").map((i) => i.message);
+    expect(errs(0.05)).toEqual(["軟保底上限不能低於基礎機率"]);
+    expect(errs(1.5)).toEqual(["軟保底上限必須在 0 到 100% 之間"]);
+  });
+});
+
 describe("guaranteed worst case (§3.6)", () => {
   it("matches the pity structure, and is null without a guarantee", () => {
     const wc = (id: string, copies = 1) => { const p = preset(id); return Gacha.worstCase(p.model, { ...p.target, copies }); };

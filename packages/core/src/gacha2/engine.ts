@@ -45,7 +45,10 @@ export function tierRate(m: GachaModel, tierIndex: number, c: number): number {
   if (hard && hard.at > 0 && c >= hard.at) return 1;
   let r = t.rate;
   const soft = modOf(m, "softPity", t.id);
-  if (soft && soft.start > 0 && c >= soft.start) r = r + (c - soft.start + 1) * soft.step;
+  if (soft && soft.start > 0 && c >= soft.start) {
+    r = r + (c - soft.start + 1) * soft.step;
+    if (soft.max !== undefined && r > soft.max) r = soft.max;
+  }
   return Math.min(1, Math.max(0, r));
 }
 

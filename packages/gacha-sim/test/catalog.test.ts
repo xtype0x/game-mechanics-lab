@@ -1,7 +1,7 @@
 import { Gacha } from "@ggt/core";
 import { describe, expect, it } from "vitest";
 import { GAMES, buildModel, typeFor } from "../src/catalog/games";
-import { adaptHoyo, adaptSchale, type LiveData } from "../src/catalog/live";
+import { adaptHoyo, adaptSchale, adaptZzz, type LiveData } from "../src/catalog/live";
 import snapshot from "../src/catalog/snapshot.json";
 
 describe("live adapters", () => {
@@ -28,11 +28,26 @@ describe("live adapters", () => {
     expect(out).toEqual([{ id: "ba-jp-5-0", game: "ba", kind: "pickup", region: "jp", featured5: [{ id: "10151", name: "安娜" }, { id: "20062", name: "艾莉娜" }], featured4: [], start: 5, end: 9 }]);
   });
 
+  it("ZZZ: one banner per S-rank channel, sharing the A-ranks; empty names get a placeholder", () => {
+    const out = adaptZzz({
+      banners: [
+        { banner_type: "GACHA_TYPE_CHARACTER_UP", version: "3.2", agents: [{ id: 1, name: "S1", rarity: "S" }, { id: 2, name: "S2", rarity: "S" }, { id: 3, name: "A1", rarity: "A" }], start_time: 5, end_time: 9 },
+        { banner_type: "GACHA_TYPE_WEAPON_UP", w_engines: [{ id: 7, name: "", rarity: "S" }, { id: 8, name: "w", rarity: "A" }], start_time: 5, end_time: 9 },
+        { banner_type: "GACHA_TYPE_OTHER", agents: [{ id: 9, name: "x", rarity: "S" }], start_time: 0, end_time: 0 },
+      ],
+    });
+    expect(out.map((b) => [b.id, b.kind, b.featured5.map((u) => u.name), b.featured4.map((u) => u.name)])).toEqual([
+      ["zzz-character-1", "character", ["S1"], ["A1"]],
+      ["zzz-character-2", "character", ["S2"], ["A1"]],
+      ["zzz-weapon-7", "weapon", ["（名稱未公開）"], ["w"]],
+    ]);
+  });
+
   it("the bundled snapshot has the expected shape", () => {
     const s = snapshot as LiveData;
     expect(typeof s.fetchedAt).toBe("string");
     expect(s.banners.length).toBeGreaterThan(0);
-    for (const b of s.banners) expect(["hsr", "genshin", "ba"]).toContain(b.game);
+    for (const b of s.banners) expect(GAMES.filter((g) => g.live).map((g) => g.id)).toContain(b.game);
   });
 });
 
@@ -41,7 +56,11 @@ describe("catalog models", () => {
   const worst: Record<string, number | null> = {
     "hsr:character": 180, "hsr:weapon": 160, "hsr:standard": 90,
     "genshin:character": 180, "genshin:weapon": 154, "genshin:standard": 90,
+    "zzz:character": 180, "zzz:weapon": 160, "zzz:standard": 90,
     "ba:pickup:global": 200, "ba:pickup:jp": 200,
+    "wuwa:character": 160, "wuwa:weapon": 80, "wuwa:standard": 80,
+    "endfield:character": 120, "endfield:standard": 80,
+    "nte:character": 90, "nte:standard": 90,
   };
   for (const g of GAMES) {
     for (const t of g.types) {
@@ -59,6 +78,19 @@ describe("catalog models", () => {
       });
     }
   }
+
+  it("mean pulls match the published consolidated rates where the soft pity was fitted or checked", () => {
+    const mean = (game: string, kind: string) => {
+      const g = GAMES.find((x) => x.id === game)!;
+      const m = buildModel(g, g.types.find((t) => t.kind === kind)!);
+      return Gacha.targetDistribution(m, { tier: "top", mode: "tier", copies: 1 }).mean;
+    };
+    expect(1 / mean("hsr", "character")).toBeCloseTo(0.016, 3);
+    expect(1 / mean("zzz", "character")).toBeCloseTo(0.016, 3);
+    expect(1 / mean("zzz", "weapon")).toBeCloseTo(0.02, 3);
+    expect(1 / mean("wuwa", "character")).toBeCloseTo(0.018, 3);
+    expect(1 / mean("nte", "character")).toBeCloseTo(0.0187, 3);
+  });
 
   it("live names fill the featured items; ids keep the source ids", () => {
     const g = GAMES.find((x) => x.id === "hsr")!;

@@ -1,5 +1,5 @@
 {
-  "rulesVersion": "2.1.0",
+  "rulesVersion": "2.2.0",
   "tolerance": 1e-9,
   "models": [
     {
@@ -553,6 +553,91 @@
         {
           "kind": "hardPity",
           "tier": "4",
+          "at": 10
+        }
+      ]
+    },
+    {
+      "version": 2,
+      "id": "jump",
+      "name": "jump",
+      "pull": {
+        "cost": 160,
+        "currency": "c",
+        "batchSize": 10
+      },
+      "tiers": [
+        {
+          "id": "S",
+          "name": "S",
+          "rate": 0.0099,
+          "items": [
+            "std"
+          ]
+        },
+        {
+          "id": "A",
+          "name": "A",
+          "rate": 0.1167,
+          "items": [
+            "a"
+          ]
+        },
+        {
+          "id": "B",
+          "name": "B",
+          "rate": 0,
+          "items": [
+            "b"
+          ]
+        }
+      ],
+      "items": [
+        {
+          "id": "f",
+          "name": "f",
+          "kind": "resource"
+        },
+        {
+          "id": "std",
+          "name": "std",
+          "kind": "resource"
+        },
+        {
+          "id": "a",
+          "name": "a",
+          "kind": "resource"
+        },
+        {
+          "id": "b",
+          "name": "b",
+          "kind": "resource"
+        }
+      ],
+      "modules": [
+        {
+          "kind": "softPity",
+          "tier": "S",
+          "start": 71,
+          "step": 1,
+          "max": 0.1959
+        },
+        {
+          "kind": "hardPity",
+          "tier": "S",
+          "at": 90
+        },
+        {
+          "kind": "featured",
+          "tier": "S",
+          "share": 1,
+          "items": [
+            "f"
+          ]
+        },
+        {
+          "kind": "hardPity",
+          "tier": "A",
           "at": 10
         }
       ]
@@ -18810,6 +18895,3634 @@
         },
         "pulls": 300
       }
+    },
+    {
+      "model": "jump",
+      "seed": 1,
+      "stream": "gacha2.pulls",
+      "results": [
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        }
+      ],
+      "finalState": {
+        "vars": {
+          "since:S": 13,
+          "since:A": 5
+        },
+        "pulls": 300
+      }
+    },
+    {
+      "model": "jump",
+      "seed": "g2",
+      "stream": "gacha2.pulls",
+      "results": [
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "S",
+          "itemId": "f",
+          "featured": true,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "B",
+          "itemId": "b",
+          "featured": false,
+          "forced": false
+        },
+        {
+          "tierId": "A",
+          "itemId": "a",
+          "featured": false,
+          "forced": false
+        }
+      ],
+      "finalState": {
+        "vars": {
+          "since:S": 11,
+          "since:A": 0
+        },
+        "pulls": 300
+      }
     }
   ],
   "contexts": [
@@ -19178,6 +22891,73 @@
                 ],
                 "chosen": "a",
                 "chosenForced": true
+              },
+              null,
+              null
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "model": "jump",
+      "cases": [
+        {
+          "vars": {
+            "since:S": 0,
+            "since:A": 0
+          },
+          "expected": {
+            "thresholds": [
+              0.0099,
+              0.1266,
+              null
+            ],
+            "chances": [
+              0.0099,
+              0.11669999999999998,
+              0.8734
+            ],
+            "forced": null,
+            "floor": null,
+            "featured": [
+              {
+                "forced": false,
+                "share": 1,
+                "items": [
+                  "f"
+                ]
+              },
+              null,
+              null
+            ]
+          }
+        },
+        {
+          "vars": {
+            "since:S": 9,
+            "since:A": 6
+          },
+          "expected": {
+            "thresholds": [
+              0.0099,
+              0.1266,
+              null
+            ],
+            "chances": [
+              0.0099,
+              0.11669999999999998,
+              0.8734
+            ],
+            "forced": null,
+            "floor": null,
+            "featured": [
+              {
+                "forced": false,
+                "share": 1,
+                "items": [
+                  "f"
+                ]
               },
               null,
               null
@@ -20075,6 +23855,123 @@
           3.08032203220479e-9,
           2.780085437828088e-10,
           1.48953767183805e-11
+        ]
+      }
+    },
+    {
+      "model": "jump",
+      "target": {
+        "tier": "S",
+        "mode": "featured",
+        "copies": 1
+      },
+      "expected": {
+        "states": 90,
+        "mean": 53.18315571916177,
+        "tail": 3.4677122284776374e-15,
+        "worstCase": 90,
+        "variance": 683.6525842224902,
+        "percentiles": {
+          "p10": 11,
+          "p25": 29,
+          "p50": 70,
+          "p75": 74,
+          "p90": 78,
+          "p95": 81,
+          "p99": 88
+        },
+        "pmf": [
+          0,
+          0.0099,
+          0.00980199,
+          0.009704950299,
+          0.009608871291039899,
+          0.009513743465258602,
+          0.009419557404952542,
+          0.009326303786643512,
+          0.00923397337915574,
+          0.009142557042702098,
+          0.009052045727979347,
+          0.00896243047527235,
+          0.008873702413567153,
+          0.008785852759672839,
+          0.008698872817352077,
+          0.00861275397646029,
+          0.008527487712093332,
+          0.008443065583743609,
+          0.008359479234464546,
+          0.008276720390043348,
+          0.008194780858181917,
+          0.008113652527685917,
+          0.008033327367661824,
+          0.007953797426721972,
+          0.007875054832197425,
+          0.0077970917893586695,
+          0.007719900580644017,
+          0.007643473564895641,
+          0.007567803176603174,
+          0.007492881925154802,
+          0.007418702394095769,
+          0.00734525724039422,
+          0.007272539193714317,
+          0.007200541055696545,
+          0.007129255699245149,
+          0.0070586760678226215,
+          0.006988795174751177,
+          0.006919606102521139,
+          0.006851102002106179,
+          0.006783276092285328,
+          0.006716121658971702,
+          0.006649632054547881,
+          0.0065838006972078564,
+          0.006518621070305499,
+          0.006454086721709474,
+          0.006390191263164549,
+          0.006326928369659219,
+          0.006264291778799593,
+          0.006202275290189477,
+          0.006140872764816601,
+          0.006080078124444917,
+          0.0060198853510129114,
+          0.005960288486037884,
+          0.005901281630026108,
+          0.005842858941888848,
+          0.005785014638364149,
+          0.005727742993444343,
+          0.005671038337809244,
+          0.005614895058264931,
+          0.005559307597188108,
+          0.005504270451975946,
+          0.005449778174501384,
+          0.005395825370573819,
+          0.005342406699405138,
+          0.005289516873081027,
+          0.005237150656037524,
+          0.005185302864542752,
+          0.005133968366183778,
+          0.0050831420793585585,
+          0.005032818972772908,
+          0.004982994064942456,
+          0.09762671402047847,
+          0.07850164074386673,
+          0.06312316932214324,
+          0.050757340451935376,
+          0.04081397745740124,
+          0.03281851927349634,
+          0.026389371347818404,
+          0.02121969350078078,
+          0.017062755543977823,
+          0.01372016173291257,
+          0.011032382049434998,
+          0.008871138405950682,
+          0.007133282392224943,
+          0.005735872371588077,
+          0.004612214973993973,
+          0.003708682060588553,
+          0.0029821512449192556,
+          0.0023979478160395733,
+          0.0019281898388774212,
+          0.007914535219200278
         ]
       }
     },
@@ -28227,6 +32124,24 @@
         0.036058188454849815,
         0.005639085110486721
       ]
+    },
+    {
+      "model": "jump",
+      "target": {
+        "tier": "S",
+        "mode": "featured",
+        "copies": 1
+      },
+      "pulls": 150,
+      "maxCopies": 5,
+      "expected": [
+        0,
+        0.09905431065572572,
+        0.512945186037615,
+        0.26377160574040626,
+        0.09314500175211787,
+        0.03108389581412633
+      ]
     }
   ],
   "longRun": [
@@ -28308,6 +32223,22 @@
           0
         ],
         "states": 3200
+      }
+    },
+    {
+      "model": "jump",
+      "expected": {
+        "tiers": [
+          0.018802945904053302,
+          0.16399184424694474,
+          0.8172052098488842
+        ],
+        "featuredShare": [
+          1,
+          0,
+          0
+        ],
+        "states": 900
       }
     }
   ],
@@ -28493,6 +32424,15 @@
         },
         "pulls": 25,
         "expected": 3020
+      },
+      {
+        "model": "jump",
+        "wallet": {
+          "currency": 500,
+          "freePulls": 3
+        },
+        "pulls": 25,
+        "expected": 3020
       }
     ],
     "spend": [
@@ -28569,6 +32509,21 @@
           "p90": 4770,
           "p99": 5070,
           "max": 5620
+        }
+      },
+      {
+        "model": "jump",
+        "target": {
+          "tier": "S",
+          "mode": "featured",
+          "copies": 1
+        },
+        "expected": {
+          "mean": 2056.5299996022814,
+          "p50": 2680,
+          "p90": 3040,
+          "p99": 3290,
+          "max": 3290
         }
       }
     ]

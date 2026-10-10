@@ -73,7 +73,7 @@ export function GameMenu({ live, status, current, onPick, onPreset, onRefresh }:
                     })}
                     {t.kind !== "standard" && !list.length && (
                       <button role="menuitem" className="menu-item" onClick={() => pick({ game: g.id, kind: t.kind, region: t.region })}>
-                        <b>規則試算</b><span className="chip-ended">目前沒有卡池資料，使用通用名稱</span>
+                        <b>規則試算</b><span className="chip-ended">{g.live ? "目前沒有卡池資料，使用通用名稱" : "暫無公開卡池資料，使用通用名稱"}</span>
                       </button>
                     )}
                   </div>

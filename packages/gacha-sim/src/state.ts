@@ -156,7 +156,7 @@ export function analyze(s: SimState): Analysis {
 }
 
 export const MODULE_LABELS: Record<Gacha.ModuleKind, { name: string; help: string }> = {
-  softPity: { name: "軟保底", help: "接近保底時，每抽機率逐步提高。" },
+  softPity: { name: "軟保底", help: "接近保底時，每抽機率逐步提高（可設上限，表示機率跳到固定值）。" },
   hardPity: { name: "硬保底", help: "連續沒抽到時，第 N 抽必定獲得。" },
   featured: { name: "限定（UP）", help: "抽中這個稀有度時，有一定機率是限定物品。" },
   guarantee: { name: "大保底", help: "抽中但不是限定（歪了）之後，下一次必定是限定。" },

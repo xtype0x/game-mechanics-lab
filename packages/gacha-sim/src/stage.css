@@ -9,6 +9,7 @@
 .game-slot { position: relative; }
 .game-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-weight: 600; }
 .game-btn.on { border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 640px) { .game-menu { gap: 6px; } .game-btn { padding: 5px 10px; font-size: 13px; } .data-status { margin-left: 0; width: 100%; } }
 .menu { position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; width: min(340px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 70vh; overflow-y: auto; }
 .menu-group { display: flex; flex-direction: column; gap: 2px; }
 .menu-title { font-size: 12px; color: var(--text-2); padding: 4px 8px 2px; }
@@ -31,6 +32,10 @@
 .game-hsr .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.22), transparent 55%), linear-gradient(140deg, #141a3d, #3b2f7a 50%, #a85ad6); }
 .game-genshin .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.28), transparent 55%), linear-gradient(140deg, #1c3b5a, #2f6f8f 50%, #e3b56b); }
 .game-ba .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.35), transparent 55%), linear-gradient(140deg, #1a5fb4, #3d8fe0 55%, #8fd0ff); }
+.game-zzz .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.22), transparent 55%), linear-gradient(140deg, #141414, #3a3a12 50%, #e0b21a); }
+.game-wuwa .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.25), transparent 55%), linear-gradient(140deg, #10202a, #1f4d5c 50%, #c9b98a); }
+.game-endfield .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.22), transparent 55%), linear-gradient(140deg, #1d1f22, #4a4f55 50%, #e8d64a); }
+.game-nte .banner { background: radial-gradient(120% 90% at 85% 10%, rgba(255, 255, 255, 0.25), transparent 55%), linear-gradient(140deg, #2a1240, #7a2a8a 50%, #ff8fb1); }
 .banner::after { content: ""; position: absolute; right: -20%; bottom: -40%; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 65%); pointer-events: none; }
 .banner-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; position: relative; z-index: 1; }
 .banner-head [class^="chip-"] { color: #fff; background: rgba(0, 0, 0, 0.25); border-radius: 999px; padding: 2px 10px; }

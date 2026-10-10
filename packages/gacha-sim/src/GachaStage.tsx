@@ -66,13 +66,13 @@ export function GachaStage({ s, live, onAnalyze, onTarget }: { s: SimState; live
   const spent = Gacha.currencyFor(m, st.pulls);
   const money = useMemo(() => { try { const t = Gacha.topUpTable(s.packs, spent); return Gacha.priceFor(m, t, st.pulls); } catch { return NaN; } }, [s.packs, spent, m, st.pulls]);
   const chips = [
-    `${top.name} ${(top.rate * 100).toFixed(top.rate < 0.01 ? 1 : 0)}%`,
+    `${top.name} ${+(top.rate * 100).toFixed(2)}%`,
     hard ? `${hard.at} 抽保底` : "",
     feat ? `${Math.round(feat.share * 100)}% 限定` : "",
     m.modules.some((x) => x.kind === "guarantee" && x.tier === top.id) ? "歪了必中" : "",
     epi ? `定軌 ${epi.points} 點` : "",
     m.modules.some((x) => x.kind === "batchFloor") ? "十連保底" : "",
-    mile ? `累計 ${mile.steps.map((x) => x.at).join("／")} 抽保底` : "",
+    mile ? `累計 ${mile.steps.map((x) => `${x.at} 抽${x.featuredShare >= 1 ? "必得限定" : "保底"}`).join("／")}` : "",
     ex ? `${ex.cost} 點兌換` : "",
   ].filter(Boolean);
 
@@ -105,9 +105,9 @@ export function GachaStage({ s, live, onAnalyze, onTarget }: { s: SimState; live
           {hard && <span>距保底 <b>{Math.max(0, hard.at - (st.vars[`since:${top.id}`] ?? 0))}</b> 抽</span>}
           {`guar:${top.id}` in st.vars && <span>大保底 <b>{st.vars[`guar:${top.id}`] ? "是" : "否"}</b></span>}
           {epi && <span>定軌點數 <b>{st.vars[`fate:${top.id}`] ?? 0}/{epi.points}</b></span>}
-          {mile && <span>累計 <b>{st.vars[`miss:${top.id}`] ?? 0}</b> 抽</span>}
+          {mile && <span>未出限定 <b>{st.vars[`miss:${top.id}`] ?? 0}</b> 抽</span>}
           {ex && <span>點數 <b>{st.vars.pts ?? 0}/{ex.cost}</b></span>}
-          <span>花費 <b>{fmt(spent, 0)}</b> {m.pull.currency}{Number.isFinite(money) && money > 0 ? <>（約 {twd(money)}）</> : null}</span>
+          <span>花費 <b>{fmt(spent, 0)}</b> {m.pull.currency}{cat?.twd !== false && Number.isFinite(money) && money > 0 ? <>（約 {twd(money)}）</> : null}</span>
         </div>
         {ex && (st.vars.pts ?? 0) >= ex.cost && (
           <div className="exchange">點數已滿：{ex.items.map((id) => <button key={id} className="btn small" onClick={() => doExchange(id)}>兌換 {name(id)}</button>)}</div>

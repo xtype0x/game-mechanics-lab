@@ -350,6 +350,18 @@ function gacha2Vectors() {
       { kind: "hardPity", tier: "4", at: 10 },
     ],
   });
+  // Rate that jumps to a fixed value (soft pity ceiling, 2.2) and a featured share of 1.
+  models.push({
+    version: 2, id: "jump", name: "jump", pull: { cost: 160, currency: "c", batchSize: 10 },
+    tiers: [{ id: "S", name: "S", rate: 0.0099, items: ["std"] }, { id: "A", name: "A", rate: 0.1167, items: ["a"] }, { id: "B", name: "B", rate: 0, items: ["b"] }],
+    items: ["f", "std", "a", "b"].map((id) => ({ id, name: id, kind: "resource" as const })),
+    modules: [
+      { kind: "softPity", tier: "S", start: 71, step: 1, max: 0.1959 },
+      { kind: "hardPity", tier: "S", at: 90 },
+      { kind: "featured", tier: "S", share: 1, items: ["f"] },
+      { kind: "hardPity", tier: "A", at: 10 },
+    ],
+  });
   const targetOf = (m: Gacha.GachaModel): Gacha.Target => ({ tier: m.tiers[0]!.id, mode: "featured", copies: 1 });
   const pulls = models.flatMap((m) => [1, "g2"].map((seed) => {
     const state = Gacha.newState(m);

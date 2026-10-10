@@ -1,6 +1,6 @@
 # 抽卡規格 2.0（模組化規則）
 
-規則版本 2.1.0（2.1：新增 `epitomized` 定軌模組；不含它的模型行為與 2.0 完全相同）。實作：`packages/core/src/gacha2/`（`@ggt/core` 匯出為命名空間 `Gacha`）。向量：`packages/core/vectors/gacha2.json`。
+規則版本 2.2.0（2.1：新增 `epitomized` 定軌模組；2.2：`softPity` 可選的上限 `max`。不使用新欄位的模型行為與 2.0 完全相同）。實作：`packages/core/src/gacha2/`（`@ggt/core` 匯出為命名空間 `Gacha`）。向量：`packages/core/vectors/gacha2.json`。
 
 1.0（[gacha.md](gacha.md)）的卡池可用 §6 轉換成 2.0 模型，**逐抽結果完全相同**。1.0 仍保留給主控台與 DEMO 使用。
 
@@ -17,7 +17,7 @@
 
 | kind | 欄位 | 意義 |
 |---|---|---|
-| `softPity` | tier, start, step | 從第 start 抽（自上次獲得該稀有度起算）起，每抽機率 + step |
+| `softPity` | tier, start, step, max? | 從第 start 抽（自上次獲得該稀有度起算）起，每抽機率 + step；有 max 時機率不超過 max（max 在基礎機率與 1 之間）。step 很大、max 較小可表示「到某抽後機率跳到固定值」 |
 | `hardPity` | tier, at | 第 at 抽必得該稀有度（除非被更高稀有度搶先） |
 | `featured` | tier, share, items | 抽中該稀有度時，有 share 機率是限定（物品改從 items 抽） |
 | `guarantee` | tier | 抽中該稀有度但不是限定後，下一次抽中必定是限定（需要 featured） |
@@ -42,7 +42,7 @@
 
 ## 2. 單抽
 ### 2.1 稀有度機率 `tierRate(i, c)`
-與 1.0 相同（gacha.md §2.1），只是 soft／hard 參數來自模組。c = `since:<tier> + 1`（沒有該計數器時為 1）。
+與 1.0 相同（gacha.md §2.1），只是 soft／hard 參數來自模組。c = `since:<tier> + 1`（沒有該計數器時為 1）。2.2：軟保底加上後若有 `max` 且 `r > max`，`r = max`（在 1.0 的夾限 [0, 1] 之前）。
 
 ### 2.2 本抽情境 `pullContext(vars)`
 1. **門檻**：`acc = 0`；對除最後一個以外的稀有度 i：`acc = acc + tierRate(i, c_i)`，`T_i = acc`（不夾限）。`T_last = ∞`。
@@ -73,7 +73,7 @@
 
 ## 3. 精確分析
 ### 3.1 計數器值域 `varDomain`
-`since:<t>`：與 1.0 的 tierCap 相同。`guar`：2。`fate:<t>`：points + 1。`miss:<t>`：最大的 at + 1（超過最大門檻後不再變化）。`pts`：兌換 cost（自動兌換後恆小於 cost）。`batch`：batchSize。分析時計數器超出值域時取最大值（pts 除外）。
+`since:<t>`：與 1.0 的 tierCap 相同；有 `max` 且沒有硬保底時，為機率第一次達到 min(1, max) 的 c。`guar`：2。`fate:<t>`：points + 1。`miss:<t>`：最大的 at + 1（超過最大門檻後不再變化）。`pts`：兌換 cost（自動兌換後恆小於 cost）。`batch`：batchSize。分析時計數器超出值域時取最大值（pts 除外）。
 
 ### 3.2 分支 `pullBranches(vars)`
 對每個 chance > 0 的稀有度 i：有限定分配時拆成「限定」（機率 chance × pf）與「非限定」（chance × (1 − pf)），pf ＝ 必定限定 ? 1 : 限定機率（夾在 [0, 1]）；否則一支。有定軌的稀有度另外標記 chosen：定軌觸發時只有一支（限定、chosen）；否則限定分支再拆成 chosen（× 1 ∕ 限定物品數）與非 chosen（其餘），非限定分支為非 chosen。只保留機率 > 0 的分支。順序：稀有度由高到低，限定（chosen 先）先於非限定。

@@ -9,4 +9,4 @@ export * from "./cost";
 export * from "./presets";
 
 /** Version of docs/spec/gacha2.md; carried by vectors/gacha2.json. */
-export const RULES_VERSION = "2.1.0";
+export const RULES_VERSION = "2.2.0";

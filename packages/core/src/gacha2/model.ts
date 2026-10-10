@@ -17,7 +17,7 @@ export interface TierDef {
 
 export type RuleModule =
   /** Rate rises from pull `start` (counted since this tier's last hit) by `step` per pull. */
-  | { kind: "softPity"; tier: string; start: number; step: number }
+  | { kind: "softPity"; tier: string; start: number; step: number; /** Optional ceiling on the raised rate (2.2). */ max?: number }
   /** Pull `at` since this tier's last hit always hits it (unless a higher tier is forced first). */
   | { kind: "hardPity"; tier: string; at: number }
   /** Rate-up: a hit of `tier` is featured with chance `share`; featured items replace the regular pool. */
@@ -120,6 +120,8 @@ export function validateModel(m: GachaModel, unitIds?: Set<string>): ModelIssue[
         if (tierOk(mod.tier)) once(`soft:${mod.tier}`, "軟保底");
         if (!(Number.isInteger(mod.start) && mod.start >= 1)) err("軟保底起點必須是正整數", w);
         if (!(mod.step >= 0)) err("軟保底每抽增加量不能是負數", w);
+        if (mod.max !== undefined && !(mod.max >= 0 && mod.max <= 1)) err("軟保底上限必須在 0 到 100% 之間", w);
+        else if (mod.max !== undefined && tierIds.has(mod.tier) && mod.max < m.tiers.find((t) => t.id === mod.tier)!.rate) err("軟保底上限不能低於基礎機率", w);
         break;
       case "hardPity":
         if (tierOk(mod.tier)) once(`hard:${mod.tier}`, "硬保底");
