@@ -24,13 +24,13 @@ export function CrossToolRow() {
 
 export function GamesIndex() {
   return <>
-    <PageIntro eyebrow="ALL GAMES / 遊戲一覽" title="選一款遊戲開始研究。" text="排在越前面，研究得越深。其他遊戲先從抽卡規則做起，之後再慢慢往機制深處挖。"/>
+    <PageIntro eyebrow="ALL GAMES / 遊戲一覽" title="選一款遊戲開始研究。" text="每款遊戲都會拆解戰鬥、配裝與抽卡規則，做成能調整、能模擬的工具。"/>
     <GameGrid/>
-    <p className="page-foot">想看的遊戲不在名單？目前依熱門程度與資料取得難度排隊，之後會陸續擴充。</p>
+    <p className="page-foot">更多遊戲整理中，之後會陸續加入。抽卡模擬器已內建多款遊戲的卡池，可在<a href="#/tools">跨遊戲工具</a>使用。</p>
   </>;
 }
 
-function ToolCard({ tool }: { tool: GameTool }) {
+export function ToolCard({ tool }: { tool: GameTool }) {
   const body = <><span className={`pill ${tool.status === 'available' ? 'available' : ''}`}>{tool.status === 'available' ? '可以玩囉' : '研究中'}</span><h3>{tool.title}</h3><p>{tool.summary}</p></>;
   return tool.status === 'available' && tool.href
     ? <a className="tool-card" href={toolHref(tool.href)}>{body}<span className="card-action">打開 <Arrow/></span></a>

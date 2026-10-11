@@ -13,13 +13,10 @@ footer{max-width:1440px;margin:auto;padding:35px 5vw;display:flex;justify-conten
 }
 @media(max-width:390px){.header{padding-inline:19px}.logo{font-size:16px;gap:10px}.header nav{font-size:10px;gap:5px}.launch-art{height:380px}.launch-copy{padding:324px 20px 134px}.hero-coordinate{left:20px;right:20px}.hero-coordinate span{display:none}.hero-bottom{left:20px;right:20px}.launch-copy h1{font-size:41px;letter-spacing:0}.launch-tagline{font-size:15px}.hero-actions{flex-direction:column;align-items:start;gap:22px}.launch-strip{padding-inline:20px;gap:10px}.launch-strip strong{font-size:10px}.launch-strip>span:last-child{font-size:9px;padding-left:25px}.section-header{display:block}.section-header .text-link{margin-top:16px;padding:0}.section{padding-inline:20px}.manifesto-teaser{margin-inline:20px}.about-marginal{gap:14px}.about-marginal strong{font-size:18px}.about-marginal small{font-size:10px}.page-intro h1{font-size:29px}.project-story blockquote{font-size:19px}}
 .page-intro h1{text-wrap:balance}
-.tool-launch{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;max-width:1152px;margin:0 0 90px;padding:44px;border:1px solid #35545e;background:radial-gradient(ellipse at left top,#1940498c,transparent 65%),#111f28;transition:border-color .2s}.tool-launch:hover{border-color:var(--gold)}.tool-launch h2{font-family:"PMingLiU","Microsoft JhengHei",serif;font-size:36px;line-height:1.5;margin:16px 0 14px}.tool-launch p{font-size:14px;line-height:2;color:var(--muted);margin-bottom:28px}.tool-launch-art{height:260px;background:linear-gradient(#08171a33,#102b3566),repeating-linear-gradient(0deg,transparent 0 24px,#d3eff008 24px 25px),repeating-linear-gradient(90deg,transparent 0 24px,#d3eff008 24px 25px);border:1px solid #36525c}.tool-launch-art .pack-art{height:100%}
-@media(max-width:760px){.tool-launch{grid-template-columns:1fr;gap:28px;padding:26px 20px;margin-bottom:55px}.tool-launch h2{font-size:28px}.tool-launch-art{height:190px}}
 .hero-image-credit{position:absolute;top:58px;right:6vw;margin:0;padding:6px 9px;border:1px solid #62757f;background:#0b141be6;color:#d0dee4;font-size:11px;line-height:1.5;letter-spacing:.4px;pointer-events:none}
 @media(max-width:760px){.launch-art{object-position:90% 26%}.hero-image-credit{top:48px;left:24px;right:auto;font-size:10px}}
 @media(max-width:390px){.hero-image-credit{left:20px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
-.tool-launch:not(:last-of-type){margin-bottom:28px}
 
 /* ---- games: hub, grid, coverage ---- */
 .acc-cyan{--acc:var(--cyan)}.acc-gold{--acc:var(--gold)}.acc-violet{--acc:#b9a4f2}.acc-rose{--acc:#f0a1b3}.acc-green{--acc:#9fdca6}.acc-sky{--acc:#8fc6f4}

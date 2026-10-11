@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CrossToolRow, GameGrid, GameHub, GamesIndex } from './pages/Games';
+import { CrossToolRow, GameGrid, GameHub, GamesIndex, ToolCard } from './pages/Games';
 import { Arrow, PageIntro, toolHref } from './pages/shared';
 import { crossTools, gameById } from './content/games';
 import { projectStory } from './content/project';
@@ -52,15 +52,12 @@ function Home() {
       <div className="hero-bottom"><span>FROM TAIWAN · OPEN TO EVERYONE</span><a href="#/games">探索遊戲 <span aria-hidden="true">↓</span></a><span className="hero-bottom-note">開發規模：一個人。好奇心：未設上限。</span></div>
     </section>
     <div className="launch-strip"><span className="strip-cross" aria-hidden="true">✦</span><strong>本計畫的稀有資源：你的好奇心。</strong><span>玩家 × 開發者 × 各種還沒試過的玩法</span></div>
-    <section className="section"><div className="section-header"><div><div className="eyebrow">SELECT YOUR GAME / 選擇遊戲</div><h2>你想研究<span>哪一款？</span></h2><p>星穹鐵道研究得最深：戰鬥、配裝、抽卡都有。其他遊戲先從抽卡規則開始。</p></div><a className="text-link" href="#/games">全部遊戲 <Arrow/></a></div><GameGrid/><div className="section-sub"><div className="eyebrow">CROSS-GAME TOOLS / 跨遊戲工具</div><CrossToolRow/></div></section>
+    <section className="section"><div className="section-header"><div><div className="eyebrow">SELECT YOUR GAME / 選擇遊戲</div><h2>你想研究<span>哪一款？</span></h2><p>星穹鐵道：戰鬥、配裝、抽卡都能拿來實驗。更多遊戲整理中。</p></div><a className="text-link" href="#/games">全部遊戲 <Arrow/></a></div><GameGrid/><div className="section-sub"><div className="eyebrow">CROSS-GAME TOOLS / 跨遊戲工具</div><CrossToolRow/></div></section>
     <section className="manifesto-teaser"><div><span className="eyebrow">BEHIND THE GRAND NARRATIVE / 華麗宣傳背後</span><h2>其實，只是一個玩家<br/>想玩到<span>更多好遊戲。</span></h2></div><div><p>我想把遊戲裡的「為什麼」和「如果」，做成真的能試的工具。從台灣開始，邀請世界各地的玩家與開發者，一起研究、一起創作。</p><a className="text-link" href="#/about">讀讀這個計畫的起點 <Arrow/></a></div></section>
   </>;
 }
-function ToolLaunch() {
-  return <>{crossTools.map(tool => <a className="tool-launch" key={tool.id} href={toolHref(tool.href!)}>
-    <div className="tool-launch-copy"><span className="category">給喜歡抽卡的你</span><h2>{tool.title}</h2><p>{tool.summary}</p><span className="button primary">開啟模擬器 <Arrow/></span></div>
-    <div className="tool-launch-art" aria-hidden="true"><div className="pack-art"><i/><i/><i/><span>✦</span></div></div>
-  </a>)}</>;
+function ToolList() {
+  return <div className="tool-grid">{crossTools.map(tool => <ToolCard key={tool.id} tool={tool}/>)}</div>;
 }
 function About() {
   return <><PageIntro eyebrow="ABOUT THE PROJECT / 計畫的起點" title="遊戲還可以有更多玩法。" text="遊戲機制研究室（game-mechanics-lab），一個從台灣出發、研究熱門遊戲機制的個人計畫。"/><div className="about-layout"><aside className="about-marginal"><span>PLAYER'S NOTE</span><strong>保持好奇。<br/>試著動手。<br/>讓點子發芽。</strong><small>給喜歡玩遊戲，<br/>也喜歡做遊戲的你。</small></aside><article className="prose project-story"><h2>為什麼做這個計畫？</h2>{projectStory.map(paragraph => <p key={paragraph}>{paragraph}</p>)}<blockquote>有更多值得期待的作品，<br/>也有更多從沒玩過的玩法。</blockquote><h2>工具會怎麼做？</h2><p>每個工具都會說明適用範圍與限制。工具裡的數值是模擬用的假設，不代表任何特定遊戲的官方設定。</p><a className="button primary" href="#/games">進來玩玩規則 <Arrow/></a></article></div></>;
@@ -77,6 +74,6 @@ function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
   useEffect(() => { document.title = `${titleOf(path)} — 遊戲機制研究室`; }, [path]);
-  return <><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); main.current?.focus(); }}>跳至內容</a><header className="header"><Logo/><nav aria-label="主要導覽">{navRoutes.map(route => <a key={route} href={`#${route}`} aria-current={path === route || (route === '/games' && path.startsWith('/games/')) ? 'page' : undefined}>{pages[route]}</a>)}</nav><a className="header-cta" href="#/games/hsr">立即開玩 <Arrow/></a></header><main id="main-content" ref={main} tabIndex={-1} className={path === '/' ? 'home-main' : undefined}>{path === '/' ? <Home/> : path === '/games' ? <GamesIndex/> : path === '/games/hsr/coverage' ? <Suspense fallback={<p className="loading" role="status">載入中……</p>}><Coverage/></Suspense> : hubId(path) ? <GameHub id={hubId(path)!}/> : path === '/tools' ? <><PageIntro eyebrow="CROSS-GAME TOOLS" title="跨遊戲工具" text="不綁定單一遊戲的通用工具，規則自己調。"/><ToolLaunch/></> : path === '/about' ? <About/> : path === '/privacy' ? <Privacy/> : <><PageIntro eyebrow="404" title="這關還沒做出來！" text="先回首頁挑一款遊戲玩玩吧。"/><a className="button primary" href="#/">回首頁 →</a></>}</main><footer><div><Logo/><p>從台灣出發，歡迎全世界的玩家與開發者。</p><p className="footer-homage">玩家自製的工具計畫 · 原創視覺與二遊官網語彙致敬</p></div><div className="footer-links"><a href="#/about">關於計畫</a><a href="#/privacy">資料與使用說明</a><span>持續開發中 · 2026</span></div></footer></>;
+  return <><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); main.current?.focus(); }}>跳至內容</a><header className="header"><Logo/><nav aria-label="主要導覽">{navRoutes.map(route => <a key={route} href={`#${route}`} aria-current={path === route || (route === '/games' && path.startsWith('/games/')) ? 'page' : undefined}>{pages[route]}</a>)}</nav><a className="header-cta" href="#/games/hsr">立即開玩 <Arrow/></a></header><main id="main-content" ref={main} tabIndex={-1} className={path === '/' ? 'home-main' : undefined}>{path === '/' ? <Home/> : path === '/games' ? <GamesIndex/> : path === '/games/hsr/coverage' ? <Suspense fallback={<p className="loading" role="status">載入中……</p>}><Coverage/></Suspense> : hubId(path) ? <GameHub id={hubId(path)!}/> : path === '/tools' ? <><PageIntro eyebrow="CROSS-GAME TOOLS" title="跨遊戲工具" text="不綁定單一遊戲的通用工具，規則自己調。"/><ToolList/></> : path === '/about' ? <About/> : path === '/privacy' ? <Privacy/> : <><PageIntro eyebrow="404" title="這關還沒做出來！" text="先回首頁挑一款遊戲玩玩吧。"/><a className="button primary" href="#/">回首頁 →</a></>}</main><footer><div><Logo/><p>從台灣出發，歡迎全世界的玩家與開發者。</p><p className="footer-homage">玩家自製的工具計畫 · 原創視覺與二遊官網語彙致敬</p></div><div className="footer-links"><a href="#/about">關於計畫</a><a href="#/privacy">資料與使用說明</a><span>持續開發中 · 2026</span></div></footer></>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);

@@ -56,42 +56,6 @@ export const games: Game[] = [
       GACHA_NOTE + '目前卡池內容即時取自公開活動日曆（api.ennead.cc）。',
     ],
   },
-  {
-    id: 'genshin', name: '原神', shortName: '原神', status: 'gachaOnly', accent: 'gold', tags: ['抽卡'],
-    blurb: '角色與武器活動祈願的保底、捉住五星 UP 的機率，還有定軌，一次幫你算清楚。',
-    tools: [gachaTool('genshin', '原神')],
-    notes: [notOfficial('HoYoverse（米哈遊）'), GACHA_NOTE + '卡池內容取自公開活動日曆（api.ennead.cc）。'],
-  },
-  {
-    id: 'zzz', name: '絕區零', shortName: '絕區零', status: 'gachaOnly', accent: 'rose', tags: ['抽卡'],
-    blurb: '獨家頻段與音擎頻段的保底差很多，要先抽誰比較划算？模擬看看。',
-    tools: [gachaTool('zzz', '絕區零')],
-    notes: [notOfficial('HoYoverse（米哈遊）'), GACHA_NOTE + '卡池內容取自公開活動日曆（api.ennead.cc）。'],
-  },
-  {
-    id: 'ba', name: '蔚藍檔案', shortName: '蔚藍檔案', status: 'gachaOnly', accent: 'sky', tags: ['抽卡'],
-    blurb: '十連保底、日服累計保底與國際服天井兌換，兩套規則並排比較。',
-    tools: [gachaTool('ba', '蔚藍檔案')],
-    notes: [notOfficial('NEXON Games／Yostar'), GACHA_NOTE + '卡池內容取自 SchaleDB 公開資料，可能比遊戲晚更新。'],
-  },
-  {
-    id: 'wuwa', name: '鳴潮', shortName: '鳴潮', status: 'gachaOnly', accent: 'violet', tags: ['抽卡'],
-    blurb: '角色、武器活動喚取各自獨立保底，拿來算算預算最剛好。',
-    tools: [gachaTool('wuwa', '鳴潮')],
-    notes: [notOfficial('庫洛遊戲（Kuro Games）'), GACHA_NOTE + '目前找不到可直接讀取的公開卡池資料，卡池內容為手動整理，可能比遊戲晚更新。'],
-  },
-  {
-    id: 'endfield', name: '明日方舟：終末地', shortName: '終末地', status: 'gachaOnly', accent: 'green', tags: ['抽卡'],
-    blurb: '特許尋訪的保底與兌換規則，抽之前先模擬一下心裡有底。',
-    tools: [gachaTool('endfield', '終末地')],
-    notes: [notOfficial('鷹角網路（Hypergryph）'), GACHA_NOTE + '卡池內容為手動整理，可能比遊戲晚更新；範例儲值方案不適用此遊戲的貨幣價格。'],
-  },
-  {
-    id: 'nte', name: '異環', shortName: '異環', status: 'gachaOnly', accent: 'gold', tags: ['抽卡'],
-    blurb: '新作的抽卡規則先收進來，之後有更多公開資訊再校正。',
-    tools: [gachaTool('nte', '異環')],
-    notes: [notOfficial('Hotta Studio／完美世界（Perfect World）'), GACHA_NOTE + '卡池內容為手動整理，規則可能隨公開資訊更新而調整。'],
-  },
 ];
 
 export const gameById = (id: string) => games.find(g => g.id === id);
@@ -99,4 +63,6 @@ export const gameById = (id: string) => games.find(g => g.id === id);
 /** Cross-game tools (not tied to one game). */
 export const crossTools: GameTool[] = [
   { id: 'gacha', title: '抽卡模擬器', status: 'available', href: 'gacha/index.html', summary: '調整保底、限定與天井規則，精確算出抽數分布、花費與機率。內建近期卡池資料，也能自己設定一套卡池。' },
+  { id: 'timing-lab', title: '格擋閃避判定研究室', status: 'available', href: 'timing-lab/index.html', summary: '精準格擋、精準閃避到底差幾幀？調整判定窗、防連打與獎勵，逐幀播放並看每次按鍵被怎麼判定，還能自訂新的互動。' },
+  { id: 'bullet-parry', title: '子彈格擋試玩', status: 'available', href: 'bullet-parry/index.html', summary: '2D 小遊戲：格擋、閃避、無敵技能撐過越來越刁鑽的彈幕。判定參數可調，也能換上自己的圖片。' },
 ];
