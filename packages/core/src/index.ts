@@ -19,4 +19,5 @@ export * from "./gacha/validate";
 export * from "./library/gacha-content";
 export * from "./modules";
 export * as Gacha from "./gacha2/index";
+export * as Timing from "./timing/index";
 export * from "./loadout";

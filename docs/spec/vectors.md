@@ -12,6 +12,7 @@
 | gacha.json | `banners`：三個卡池（DEMO 簡易池、限定池、手算用的 mini 池）。`pulls`：每個卡池、兩個種子（亂數流 `gacha.pulls`）的逐抽結果與最終狀態。`distributions`：目標的抽數分布 `pmf`、`mean`、`tail` 與保證上限 `worstCase`。`longRun`：各稀有度長期比例。`disclosure`：機率公示表。分析結果容許誤差見 `tolerance`（gacha.md §4） |
 | gacha2.json | `models`：三個預設與一個所有模組並用的組合模型。`pulls`：逐抽結果（亂數流 `gacha2.pulls`，每 50 抽嘗試一次兌換）與最終狀態。`contexts`：`pullContext`。`distributions`：各種目標（含起始進度、不兌換）的 pmf、mean、tail、保證上限、變異數與百分位。`copies`：150 抽後的份數分布。`longRun`。`cost`：儲值表、購買組合、`currencyFor`、`spend`。容許誤差見 `tolerance` |
 | loadout.json | `unit`、`projectStatuses`。`cases`：`applyLoadout` 的輸入配裝與預期的單位與狀態（空配裝、完整配裝、件數不足、只有百分比／固定的鍵）。`validation`：`validateLoadout` 的預期問題清單（`level:message` 的順序即輸出順序） |
+| timing.json | `version`、`presets`：五個內建設定。`cases`：完整設定（`config`，不需移植預設）、腳本 `script`（`frames`、`presses`、`attacks`）與預期的 `events`（完整事件序列）和 `final`（最終 `TimingState`）；涵蓋判定窗邊界、傷害與破防、防連打與鎖定、緩衝、充能（sequential／parallel）、慢動作與返還充能、`inputOffset`、技能無敵、自訂互動、敗北。`conversions`：`msToFrames`／`framesToMs`。`expand`：`expandAttack` |
 | modules.json | `modules`：DEMO 模組定義。`cases`：各種開關組合與 `resolveModules` 的結果（docs/demo-modules.md） |
 
 ### damage.json `cases[].expected`

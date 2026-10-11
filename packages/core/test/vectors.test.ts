@@ -39,6 +39,7 @@ import {
   type SkillDef,
   GACHA_RULES_VERSION,
   Gacha,
+  Timing,
   DEMO_MODULES,
   disclosure,
   newGachaState,
@@ -575,7 +576,90 @@ function loadoutVectors() {
   };
 }
 
-const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, gacha2: gacha2Vectors, modules: moduleVectors, loadout: loadoutVectors };
+function timingVectors() {
+  const preset = (id: string) => structuredClone(Timing.TIMING_PRESETS.find((p) => p.id === id)!);
+  const atk = (id: string, frame: number, tags: string[], damage?: number): Timing.AttackEvent => (damage === undefined ? { id, frame, tags } : { id, frame, tags, damage });
+  const pr = (frame: number, interaction: string) => ({ frame, interaction });
+  const raw: { id: string; config: Timing.TimingConfig; script: Timing.TimingScript }[] = [];
+  // souls: perfect (3), normal with chip damage, late hit.
+  raw.push({
+    id: "souls/parry-windows", config: preset("souls"),
+    script: { frames: 120, presses: [pr(0, "parry"), pr(40, "parry"), pr(80, "parry")], attacks: [atk("a1", 3, ["bullet"]), atk("a2", 48, ["bullet"]), atk("a3", 94, ["bullet"])] },
+  });
+  // souls: unblockable guard break, stun, busy drop and a later accepted press.
+  raw.push({
+    id: "souls/unblockable", config: preset("souls"),
+    script: { frames: 80, presses: [pr(0, "parry"), pr(10, "parry"), pr(30, "parry")], attacks: [atk("u1", 3, ["unblockable"], 2)] },
+  });
+  // souls: spam shrink then lockout.
+  raw.push({
+    id: "souls/spam", config: preset("souls"),
+    script: { frames: 160, presses: [pr(0, "parry"), pr(12, "parry"), pr(13, "parry"), pr(14, "parry"), pr(40, "parry"), pr(70, "parry"), pr(72, "parry"), pr(80, "parry")], attacks: [atk("s1", 83, ["bullet"])] },
+  });
+  // sekiro: buffered parry accepted without strict windows; buffer expiry.
+  raw.push({
+    id: "sekiro/buffer", config: preset("sekiro"),
+    script: { frames: 100, presses: [pr(0, "parry"), pr(30, "parry"), pr(60, "parry"), pr(55, "dodge")], attacks: [atk("b1", 36, ["bullet"]), atk("b2", 45, ["bullet"])] },
+  });
+  // sekiro: sequential dodge charges and recharge timeline.
+  raw.push({
+    id: "sekiro/dodge-charges", config: preset("sekiro"),
+    script: { frames: 400, presses: [pr(0, "dodge"), pr(20, "dodge"), pr(40, "dodge"), pr(160, "dodge")], attacks: [atk("d1", 2, ["bullet"]), atk("d2", 23, ["bullet"]), atk("d3", 170, ["bullet"])] },
+  });
+  // witch: parallel charges, slow-mo and refund on a perfect dodge barrage.
+  raw.push({
+    id: "witch/dodge-barrage", config: preset("witch"),
+    script: { frames: 300, presses: [pr(0, "dodge"), pr(20, "dodge"), pr(40, "dodge"), pr(60, "dodge")], attacks: [atk("w1", 1, ["bullet"]), atk("w2", 3, ["bullet"]), atk("w3", 21, ["bullet"]), atk("w4", 50, ["bullet"])] },
+  });
+  // lenient with inputOffset 3: impact frames resolve later.
+  const offset = preset("lenient");
+  offset.id = "lenient-offset3";
+  offset.inputOffset = 3;
+  raw.push({
+    id: "lenient/input-offset", config: offset,
+    script: { frames: 60, presses: [pr(0, "parry"), pr(30, "parry")], attacks: [atk("o1", 0, ["bullet"]), atk("o2", 40, ["bullet"])] },
+  });
+  // lenient with a full gauge: the skill grants invulnerability, presses afterwards need gauge again.
+  const full = preset("lenient");
+  full.id = "lenient-fullgauge";
+  full.resources.find((x) => x.id === "gauge")!.initial = 100;
+  raw.push({
+    id: "lenient/skill-invulnerable", config: full,
+    script: { frames: 300, presses: [pr(0, "skill"), pr(20, "skill")], attacks: [atk("k1", 0, ["bullet"]), atk("k2", 100, ["unblockable"]), atk("k3", 239, ["bullet"]), atk("k4", 240, ["bullet"])] },
+  });
+  // showcase: mikiri / jump / absorb against their intended tags and against the wrong ones.
+  raw.push({
+    id: "showcase/custom-interactions", config: preset("showcase"),
+    script: {
+      frames: 300,
+      presses: [pr(0, "mikiri"), pr(50, "jump"), pr(100, "absorb"), pr(150, "mikiri"), pr(200, "jump"), pr(250, "absorb")],
+      attacks: [atk("m1", 5, ["thrust"]), atk("j1", 55, ["sweep"]), atk("e1", 102, ["energy"]), atk("m2", 153, ["bullet"]), atk("j2", 205, ["thrust"]), atk("e2", 259, ["energy"])],
+    },
+  });
+  // defeat: lethal damage, same-frame second attack cleared, later presses dropped.
+  raw.push({
+    id: "souls/defeated", config: preset("souls"),
+    script: { frames: 20, presses: [pr(5, "parry")], attacks: [atk("x1", 0, ["bullet"], 4), atk("x2", 0, ["bullet"]), atk("x3", 30, ["bullet"])] },
+  });
+  const cases = raw.map(({ id, config, script }) => ({ id, config, script, expected: Timing.runTiming(config, script) }));
+  const conversions = [
+    { ms: 100, fps: 60 }, { ms: 25, fps: 60 }, { ms: 50, fps: 30 }, { ms: 0, fps: 60 }, { ms: 16.7, fps: 60 }, { ms: 1000, fps: 144 },
+  ].map((x) => ({ ...x, frames: Timing.msToFrames(x.ms, x.fps) }));
+  const frameMs = [{ frames: 3, fps: 60 }, { frames: 1, fps: 60 }, { frames: 45, fps: 30 }, { frames: 0, fps: 60 }].map((x) => ({ ...x, ms: Timing.framesToMs(x.frames, x.fps) }));
+  const defs: { def: Timing.AttackDef; start: number }[] = [
+    { def: { id: "combo", name: "combo", windup: 30, telegraph: 10, recovery: 20, hits: [{ offset: 0, damage: 2, tags: ["bullet"] }, { offset: 8, tags: ["thrust"] }] }, start: 100 },
+    { def: { id: "empty", name: "empty", windup: 5, telegraph: 5, recovery: 5, hits: [] }, start: 0 },
+  ];
+  return {
+    version: Timing.RULES_VERSION,
+    presets: Timing.TIMING_PRESETS,
+    cases,
+    conversions: { msToFrames: conversions, framesToMs: frameMs },
+    expand: defs.map((d) => ({ ...d, expected: Timing.expandAttack(d.def, d.start) })),
+  };
+}
+
+const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, gacha2: gacha2Vectors, modules: moduleVectors, loadout: loadoutVectors, timing: timingVectors };
 
 describe("test vectors", () => {
   for (const [name, gen] of Object.entries(SUITES)) {
