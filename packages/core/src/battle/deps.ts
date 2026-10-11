@@ -73,6 +73,7 @@ export function contentReferences(cfg: BattleConfig): DepRef[] {
       conditionRefs(from, p.when);
       if (p.chance !== undefined && typeof p.chance !== "number") conditionRefs(from, p.chance);
     }
+    for (const id of u.innateStatuses ?? []) push({ kind: "unit", id: u.id }, { kind: "status", id }, "applies");
     for (const r of u.ai ?? []) {
       const from: DepNode = { kind: "unit", id: u.id };
       push(from, { kind: "skill", id: r.skillId, unitId: u.id }, "ai");

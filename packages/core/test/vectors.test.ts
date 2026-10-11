@@ -12,6 +12,10 @@ import {
   DAMAGE_COMPONENTS,
   DAMAGE_TEMPLATES,
   RULES_VERSION,
+  applyLoadout,
+  validateLoadout,
+  type Loadout,
+  type UnitDef,
   Rng,
   DEFAULT_BATTLE_RULES,
   analyzeDamage,
@@ -382,7 +386,23 @@ function battleVectors() {
       for (const e of ult.effects) if (e.kind === "dispel") e.tag = "control";
     }),
   ];
-  return { rulesVersion: RULES_VERSION, timeline, battles: [...battles, ...extBattles, ...v09Battles] };
+  // Rules 0.10 (battle.md §17): innate statuses (stacking, speed modifier, shield from self) and energyRegen.
+  const v10 = structuredClone(project);
+  v10.battle.statuses.push(
+    { id: "v10-vigor", name: "v10-vigor", kind: "buff", duration: 0, maxStacks: 2, modifiers: [{ target: "stat:spd", op: "pct", value: 0.1 }, { target: "stat:energyRegen", op: "add", value: 0.5 }] },
+    { id: "v10-ward", name: "v10-ward", kind: "buff", duration: 0, maxStacks: 1, modifiers: [], shield: { scale: "hp", multiplier: 0.25, flat: 100 } },
+  );
+  const [first, second] = v10.battle.encounter.allies.map((id) => v10.battle.units.find((u) => u.id === id)!);
+  first!.innateStatuses = ["v10-vigor", "v10-vigor", "v10-ward"];
+  second!.stats.energyRegen = 0.25;
+  const v10Setup = battleSetupOf(v10);
+  const v10End = autoPlay(v10Setup, createBattle(v10Setup, 5), v10.battle.policy);
+  const v10Battle = {
+    id: "v10/regen-innate-seed-5",
+    input: { damageConfig: v10.damage.config, battle: v10.battle, seed: 5 },
+    expected: { result: v10End.result, cycle: v10End.cycle, turns: v10End.turns, time: v10End.time, sp: v10End.sp, units: v10End.units, events: v10End.events },
+  };
+  return { rulesVersion: RULES_VERSION, timeline, battles: [...battles, ...extBattles, ...v09Battles, v10Battle] };
 }
 
 function gachaVectors() {
@@ -516,7 +536,46 @@ function moduleVectors() {
   return { modules: DEMO_MODULES, cases: selections.map((selection) => ({ selection, expected: resolveModules(selection) })) };
 }
 
-const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, gacha2: gacha2Vectors, modules: moduleVectors };
+function loadoutVectors() {
+  const unit: UnitDef = {
+    id: "hero", name: "勇者", team: "ally", element: "fire", weaknesses: [],
+    stats: { hp: 1000, atk: 100, def: 50, spd: 100, maxEnergy: 100 },
+    skills: [{ id: "basic", name: "basic", type: "basic", spDelta: 0, energyGain: 0, targeting: "enemy", effects: [{ kind: "damage", target: "enemy", multiplier: 1, toughness: 0 }] }],
+    innateStatuses: ["base-aura"],
+  };
+  const fu = (id: string) => ({ id, name: id, type: "followup" as const, spDelta: 0, energyGain: 0, targeting: "none" as const, effects: [] });
+  const full: Loadout = {
+    pieces: [
+      { id: "w", name: "w", slot: "weapon", setId: "s", base: { atk: 50, hp: 200 }, bonuses: [{ key: "atk", op: "pct", value: 0.5 }], skills: [fu("w-fu")] },
+      { id: "a", name: "a", slot: "armor", setId: "s", base: { def: 30, critRate: 0.05 }, bonuses: [{ key: "def", op: "pct", value: 0.25 }, { key: "hp", op: "flat", value: 100 }], innateStatuses: ["a-i"] },
+      { id: "r", name: "r", slot: "ring", bonuses: [{ key: "atk", op: "flat", value: 10 }, { key: "atk", op: "pct", value: 0.25 }, { key: "spd", op: "flat", value: 5 }, { key: "energyRegen", op: "flat", value: 0.25 }] },
+    ],
+    sets: [{ id: "s", name: "S", tiers: [{ pieces: 2, bonuses: [{ key: "atk", op: "pct", value: 0.125 }, { key: "hp", op: "pct", value: 0.25 }], innateStatuses: ["s-i"] }, { pieces: 4, bonuses: [{ key: "atk", op: "flat", value: 999 }] }] }],
+    statuses: [{ id: "a-i", name: "a-i", kind: "buff", duration: 0, maxStacks: 1, modifiers: [] }, { id: "s-i", name: "s-i", kind: "buff", duration: 0, maxStacks: 1, modifiers: [] }],
+  };
+  const inputs: { id: string; loadout: Loadout }[] = [
+    { id: "empty", loadout: { pieces: [] } },
+    { id: "full", loadout: full },
+    { id: "one-piece", loadout: { ...full, pieces: [full.pieces[0]!] } },
+    { id: "pct-flat-only-keys", loadout: { pieces: [{ id: "x", name: "x", slot: "x", bonuses: [{ key: "ghost", op: "pct", value: 0.5 }, { key: "extra", op: "flat", value: 7 }] }] } },
+  ];
+  const project = [{ id: "base-aura", name: "base-aura", kind: "buff" as const, duration: 0, maxStacks: 1, modifiers: [] }];
+  const invalid: { id: string; loadout: Loadout }[] = [
+    { id: "duplicate-slot", loadout: { pieces: [{ id: "1", name: "1", slot: "a" }, { id: "2", name: "2", slot: "a" }] } },
+    { id: "unknown-set", loadout: { pieces: [{ id: "1", name: "1", slot: "a", setId: "none" }] } },
+    { id: "bad-tier", loadout: { pieces: [], sets: [{ id: "s", name: "S", tiers: [{ pieces: 0 }] }] } },
+    { id: "unknown-innate", loadout: { pieces: [{ id: "1", name: "1", slot: "a", innateStatuses: ["none"] }] } },
+    { id: "duplicate-skill", loadout: { pieces: [{ id: "1", name: "1", slot: "a", skills: [unit.skills[0]!] }] } },
+  ];
+  return {
+    unit,
+    projectStatuses: project,
+    cases: inputs.map(({ id, loadout }) => ({ id, loadout, expected: applyLoadout(unit, loadout) })),
+    validation: [{ id: "full", loadout: full }, ...invalid].map(({ id, loadout }) => ({ id, loadout, expected: validateLoadout(unit, loadout, project) })),
+  };
+}
+
+const SUITES = { rng: rngVectors, expr: exprVectors, damage: damageVectors, battle: battleVectors, gacha: gachaVectors, gacha2: gacha2Vectors, modules: moduleVectors, loadout: loadoutVectors };
 
 describe("test vectors", () => {
   for (const [name, gen] of Object.entries(SUITES)) {

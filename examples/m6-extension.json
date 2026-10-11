@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "rulesVersion": "0.9.0",
+  "rulesVersion": "0.10.0",
   "name": "M6 擴充驗證",
   "seed": 12345,
   "damage": {

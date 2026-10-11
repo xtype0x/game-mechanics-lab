@@ -1,0 +1,785 @@
+{
+  "unit": {
+    "id": "hero",
+    "name": "勇者",
+    "team": "ally",
+    "element": "fire",
+    "weaknesses": [],
+    "stats": {
+      "hp": 1000,
+      "atk": 100,
+      "def": 50,
+      "spd": 100,
+      "maxEnergy": 100
+    },
+    "skills": [
+      {
+        "id": "basic",
+        "name": "basic",
+        "type": "basic",
+        "spDelta": 0,
+        "energyGain": 0,
+        "targeting": "enemy",
+        "effects": [
+          {
+            "kind": "damage",
+            "target": "enemy",
+            "multiplier": 1,
+            "toughness": 0
+          }
+        ]
+      }
+    ],
+    "innateStatuses": [
+      "base-aura"
+    ]
+  },
+  "projectStatuses": [
+    {
+      "id": "base-aura",
+      "name": "base-aura",
+      "kind": "buff",
+      "duration": 0,
+      "maxStacks": 1,
+      "modifiers": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "empty",
+      "loadout": {
+        "pieces": []
+      },
+      "expected": {
+        "unit": {
+          "id": "hero",
+          "name": "勇者",
+          "team": "ally",
+          "element": "fire",
+          "weaknesses": [],
+          "stats": {
+            "hp": 1000,
+            "atk": 100,
+            "def": 50,
+            "spd": 100,
+            "maxEnergy": 100
+          },
+          "skills": [
+            {
+              "id": "basic",
+              "name": "basic",
+              "type": "basic",
+              "spDelta": 0,
+              "energyGain": 0,
+              "targeting": "enemy",
+              "effects": [
+                {
+                  "kind": "damage",
+                  "target": "enemy",
+                  "multiplier": 1,
+                  "toughness": 0
+                }
+              ]
+            }
+          ],
+          "innateStatuses": [
+            "base-aura"
+          ]
+        },
+        "statuses": []
+      }
+    },
+    {
+      "id": "full",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "w",
+            "name": "w",
+            "slot": "weapon",
+            "setId": "s",
+            "base": {
+              "atk": 50,
+              "hp": 200
+            },
+            "bonuses": [
+              {
+                "key": "atk",
+                "op": "pct",
+                "value": 0.5
+              }
+            ],
+            "skills": [
+              {
+                "id": "w-fu",
+                "name": "w-fu",
+                "type": "followup",
+                "spDelta": 0,
+                "energyGain": 0,
+                "targeting": "none",
+                "effects": []
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "name": "a",
+            "slot": "armor",
+            "setId": "s",
+            "base": {
+              "def": 30,
+              "critRate": 0.05
+            },
+            "bonuses": [
+              {
+                "key": "def",
+                "op": "pct",
+                "value": 0.25
+              },
+              {
+                "key": "hp",
+                "op": "flat",
+                "value": 100
+              }
+            ],
+            "innateStatuses": [
+              "a-i"
+            ]
+          },
+          {
+            "id": "r",
+            "name": "r",
+            "slot": "ring",
+            "bonuses": [
+              {
+                "key": "atk",
+                "op": "flat",
+                "value": 10
+              },
+              {
+                "key": "atk",
+                "op": "pct",
+                "value": 0.25
+              },
+              {
+                "key": "spd",
+                "op": "flat",
+                "value": 5
+              },
+              {
+                "key": "energyRegen",
+                "op": "flat",
+                "value": 0.25
+              }
+            ]
+          }
+        ],
+        "sets": [
+          {
+            "id": "s",
+            "name": "S",
+            "tiers": [
+              {
+                "pieces": 2,
+                "bonuses": [
+                  {
+                    "key": "atk",
+                    "op": "pct",
+                    "value": 0.125
+                  },
+                  {
+                    "key": "hp",
+                    "op": "pct",
+                    "value": 0.25
+                  }
+                ],
+                "innateStatuses": [
+                  "s-i"
+                ]
+              },
+              {
+                "pieces": 4,
+                "bonuses": [
+                  {
+                    "key": "atk",
+                    "op": "flat",
+                    "value": 999
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "statuses": [
+          {
+            "id": "a-i",
+            "name": "a-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          },
+          {
+            "id": "s-i",
+            "name": "s-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          }
+        ]
+      },
+      "expected": {
+        "unit": {
+          "id": "hero",
+          "name": "勇者",
+          "team": "ally",
+          "element": "fire",
+          "weaknesses": [],
+          "stats": {
+            "hp": 1600,
+            "atk": 291.25,
+            "def": 100,
+            "spd": 105,
+            "maxEnergy": 100,
+            "critRate": 0.05,
+            "energyRegen": 0.25
+          },
+          "skills": [
+            {
+              "id": "basic",
+              "name": "basic",
+              "type": "basic",
+              "spDelta": 0,
+              "energyGain": 0,
+              "targeting": "enemy",
+              "effects": [
+                {
+                  "kind": "damage",
+                  "target": "enemy",
+                  "multiplier": 1,
+                  "toughness": 0
+                }
+              ]
+            },
+            {
+              "id": "w-fu",
+              "name": "w-fu",
+              "type": "followup",
+              "spDelta": 0,
+              "energyGain": 0,
+              "targeting": "none",
+              "effects": []
+            }
+          ],
+          "innateStatuses": [
+            "base-aura",
+            "a-i",
+            "s-i"
+          ]
+        },
+        "statuses": [
+          {
+            "id": "a-i",
+            "name": "a-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          },
+          {
+            "id": "s-i",
+            "name": "s-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "one-piece",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "w",
+            "name": "w",
+            "slot": "weapon",
+            "setId": "s",
+            "base": {
+              "atk": 50,
+              "hp": 200
+            },
+            "bonuses": [
+              {
+                "key": "atk",
+                "op": "pct",
+                "value": 0.5
+              }
+            ],
+            "skills": [
+              {
+                "id": "w-fu",
+                "name": "w-fu",
+                "type": "followup",
+                "spDelta": 0,
+                "energyGain": 0,
+                "targeting": "none",
+                "effects": []
+              }
+            ]
+          }
+        ],
+        "sets": [
+          {
+            "id": "s",
+            "name": "S",
+            "tiers": [
+              {
+                "pieces": 2,
+                "bonuses": [
+                  {
+                    "key": "atk",
+                    "op": "pct",
+                    "value": 0.125
+                  },
+                  {
+                    "key": "hp",
+                    "op": "pct",
+                    "value": 0.25
+                  }
+                ],
+                "innateStatuses": [
+                  "s-i"
+                ]
+              },
+              {
+                "pieces": 4,
+                "bonuses": [
+                  {
+                    "key": "atk",
+                    "op": "flat",
+                    "value": 999
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "statuses": [
+          {
+            "id": "a-i",
+            "name": "a-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          },
+          {
+            "id": "s-i",
+            "name": "s-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          }
+        ]
+      },
+      "expected": {
+        "unit": {
+          "id": "hero",
+          "name": "勇者",
+          "team": "ally",
+          "element": "fire",
+          "weaknesses": [],
+          "stats": {
+            "hp": 1200,
+            "atk": 225,
+            "def": 50,
+            "spd": 100,
+            "maxEnergy": 100
+          },
+          "skills": [
+            {
+              "id": "basic",
+              "name": "basic",
+              "type": "basic",
+              "spDelta": 0,
+              "energyGain": 0,
+              "targeting": "enemy",
+              "effects": [
+                {
+                  "kind": "damage",
+                  "target": "enemy",
+                  "multiplier": 1,
+                  "toughness": 0
+                }
+              ]
+            },
+            {
+              "id": "w-fu",
+              "name": "w-fu",
+              "type": "followup",
+              "spDelta": 0,
+              "energyGain": 0,
+              "targeting": "none",
+              "effects": []
+            }
+          ],
+          "innateStatuses": [
+            "base-aura"
+          ]
+        },
+        "statuses": [
+          {
+            "id": "a-i",
+            "name": "a-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          },
+          {
+            "id": "s-i",
+            "name": "s-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "pct-flat-only-keys",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "x",
+            "name": "x",
+            "slot": "x",
+            "bonuses": [
+              {
+                "key": "ghost",
+                "op": "pct",
+                "value": 0.5
+              },
+              {
+                "key": "extra",
+                "op": "flat",
+                "value": 7
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "unit": {
+          "id": "hero",
+          "name": "勇者",
+          "team": "ally",
+          "element": "fire",
+          "weaknesses": [],
+          "stats": {
+            "hp": 1000,
+            "atk": 100,
+            "def": 50,
+            "spd": 100,
+            "maxEnergy": 100,
+            "ghost": 0,
+            "extra": 7
+          },
+          "skills": [
+            {
+              "id": "basic",
+              "name": "basic",
+              "type": "basic",
+              "spDelta": 0,
+              "energyGain": 0,
+              "targeting": "enemy",
+              "effects": [
+                {
+                  "kind": "damage",
+                  "target": "enemy",
+                  "multiplier": 1,
+                  "toughness": 0
+                }
+              ]
+            }
+          ],
+          "innateStatuses": [
+            "base-aura"
+          ]
+        },
+        "statuses": []
+      }
+    }
+  ],
+  "validation": [
+    {
+      "id": "full",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "w",
+            "name": "w",
+            "slot": "weapon",
+            "setId": "s",
+            "base": {
+              "atk": 50,
+              "hp": 200
+            },
+            "bonuses": [
+              {
+                "key": "atk",
+                "op": "pct",
+                "value": 0.5
+              }
+            ],
+            "skills": [
+              {
+                "id": "w-fu",
+                "name": "w-fu",
+                "type": "followup",
+                "spDelta": 0,
+                "energyGain": 0,
+                "targeting": "none",
+                "effects": []
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "name": "a",
+            "slot": "armor",
+            "setId": "s",
+            "base": {
+              "def": 30,
+              "critRate": 0.05
+            },
+            "bonuses": [
+              {
+                "key": "def",
+                "op": "pct",
+                "value": 0.25
+              },
+              {
+                "key": "hp",
+                "op": "flat",
+                "value": 100
+              }
+            ],
+            "innateStatuses": [
+              "a-i"
+            ]
+          },
+          {
+            "id": "r",
+            "name": "r",
+            "slot": "ring",
+            "bonuses": [
+              {
+                "key": "atk",
+                "op": "flat",
+                "value": 10
+              },
+              {
+                "key": "atk",
+                "op": "pct",
+                "value": 0.25
+              },
+              {
+                "key": "spd",
+                "op": "flat",
+                "value": 5
+              },
+              {
+                "key": "energyRegen",
+                "op": "flat",
+                "value": 0.25
+              }
+            ]
+          }
+        ],
+        "sets": [
+          {
+            "id": "s",
+            "name": "S",
+            "tiers": [
+              {
+                "pieces": 2,
+                "bonuses": [
+                  {
+                    "key": "atk",
+                    "op": "pct",
+                    "value": 0.125
+                  },
+                  {
+                    "key": "hp",
+                    "op": "pct",
+                    "value": 0.25
+                  }
+                ],
+                "innateStatuses": [
+                  "s-i"
+                ]
+              },
+              {
+                "pieces": 4,
+                "bonuses": [
+                  {
+                    "key": "atk",
+                    "op": "flat",
+                    "value": 999
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "statuses": [
+          {
+            "id": "a-i",
+            "name": "a-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          },
+          {
+            "id": "s-i",
+            "name": "s-i",
+            "kind": "buff",
+            "duration": 0,
+            "maxStacks": 1,
+            "modifiers": []
+          }
+        ]
+      },
+      "expected": []
+    },
+    {
+      "id": "duplicate-slot",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "1",
+            "name": "1",
+            "slot": "a"
+          },
+          {
+            "id": "2",
+            "name": "2",
+            "slot": "a"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "level": "error",
+          "message": "欄位「a」出現兩次"
+        }
+      ]
+    },
+    {
+      "id": "unknown-set",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "1",
+            "name": "1",
+            "slot": "a",
+            "setId": "none"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "level": "error",
+          "message": "裝備「1」的套裝「none」不在 sets 中"
+        }
+      ]
+    },
+    {
+      "id": "bad-tier",
+      "loadout": {
+        "pieces": [],
+        "sets": [
+          {
+            "id": "s",
+            "name": "S",
+            "tiers": [
+              {
+                "pieces": 0
+              }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "level": "error",
+          "message": "套裝「S」的件數必須至少為 1"
+        }
+      ]
+    },
+    {
+      "id": "unknown-innate",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "1",
+            "name": "1",
+            "slot": "a",
+            "innateStatuses": [
+              "none"
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "level": "error",
+          "message": "裝備「1」的開場狀態「none」不存在"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-skill",
+      "loadout": {
+        "pieces": [
+          {
+            "id": "1",
+            "name": "1",
+            "slot": "a",
+            "skills": [
+              {
+                "id": "basic",
+                "name": "basic",
+                "type": "basic",
+                "spDelta": 0,
+                "energyGain": 0,
+                "targeting": "enemy",
+                "effects": [
+                  {
+                    "kind": "damage",
+                    "target": "enemy",
+                    "multiplier": 1,
+                    "toughness": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": [
+        {
+          "level": "error",
+          "message": "裝備「1」的技能 ID「basic」與單位原有的重複"
+        }
+      ]
+    }
+  ]
+}

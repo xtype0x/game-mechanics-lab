@@ -1,5 +1,5 @@
 {
-  "rulesVersion": "0.9.0",
+  "rulesVersion": "0.10.0",
   "components": [
     {
       "id": "dmg.base-atk",

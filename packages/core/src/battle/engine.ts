@@ -74,6 +74,21 @@ function makeUnit(setup: BattleSetup, defId: string, team: "ally" | "enemy", slo
     counters: {},
   };
   if (def.timelineEvent) u.timelineEvent = true;
+  // Innate statuses (spec §17.2): applied to self, no events and no RNG, before the first action value.
+  for (const id of def.innateStatuses ?? []) {
+    const sd = statusDef(setup, id);
+    const shield = sd.shield ? applyRounding(scaleValue(setup, u, sd.shield.scale) * sd.shield.multiplier + sd.shield.flat, setup.rules.rounding) : undefined;
+    const existing = u.statuses.find((x) => x.statusId === id);
+    if (existing) {
+      existing.stacks = Math.min(sd.maxStacks, existing.stacks + 1);
+      existing.turnsLeft = sd.duration;
+      if (shield !== undefined) existing.shield = Math.max(existing.shield ?? 0, shield);
+    } else {
+      const inst: StatusInstance = { statusId: id, sourceUid: uid, stacks: 1, turnsLeft: sd.duration };
+      if (shield !== undefined) inst.shield = shield;
+      u.statuses.push(inst);
+    }
+  }
   return u;
 }
 
@@ -705,11 +720,11 @@ function execute(setup: BattleSetup, state: BattleState, actor: UnitState, skill
     state.events.push({ t: "sp", before, after: state.sp });
   }
   if (skill.type === "ultimate") setEnergy(state, actor, 0);
-  setEnergy(state, actor, actor.energy + skill.energyGain);
+  gainEnergy(setup, state, actor, skill.energyGain);
 
   const ctx: ExecCtx = { actor, skill, element: skill.element ?? actor.element, chosen, hitBy: new Set<UnitState>() };
   for (const eff of skill.effects) runEffect(setup, state, ctx, eff);
-  for (const t of ctx.hitBy) if (t.alive && t.team === "ally") setEnergy(state, t, t.energy + setup.rules.energyOnHitTaken);
+  for (const t of ctx.hitBy) if (t.alive && t.team === "ally") gainEnergy(setup, state, t, setup.rules.energyOnHitTaken);
 }
 
 /** What the effects of one skill execution share (spec §5 step 4, §16.1). */
@@ -785,6 +800,11 @@ function setCounter(state: BattleState, u: UnitState, key: string, after: number
   state.events.push({ t: "counter", uid: u.uid, key, before, after });
 }
 
+/** Energy change (spec §17.1): positive amounts are scaled by (1 + energyRegen); negative ones are not. */
+function gainEnergy(setup: BattleSetup, state: BattleState, u: UnitState, amount: number) {
+  setEnergy(state, u, u.energy + (amount > 0 ? amount * (1 + unitStat(setup, u, "energyRegen")) : amount));
+}
+
 function setEnergy(state: BattleState, u: UnitState, value: number) {
   const before = u.energy;
   u.energy = Math.min(u.maxEnergy, Math.max(0, value));
@@ -845,7 +865,7 @@ function applyEffect(setup: BattleSetup, state: BattleState, ctx: ExecCtx, eff: 
       break;
     }
     case "energy":
-      setEnergy(state, target, target.energy + ev(eff.amount));
+      gainEnergy(setup, state, target, ev(eff.amount));
       break;
     case "dispel": {
       const matching = target.statuses.filter((s) => {
@@ -1031,7 +1051,7 @@ function dealDamage(setup: BattleSetup, state: BattleState, srcUid: string, targ
     target.statuses = [];
     state.events.push({ t: "death", uid: target.uid, by: srcUid });
     const killer = state.units.find((u) => u.uid === srcUid);
-    if (killer?.alive && killer.team !== target.team) setEnergy(state, killer, killer.energy + setup.rules.energyOnKill);
+    if (killer?.alive && killer.team !== target.team) gainEnergy(setup, state, killer, setup.rules.energyOnKill);
     afterRemoval(setup, state, target);
   }
 }

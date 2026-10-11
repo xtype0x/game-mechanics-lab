@@ -1,5 +1,5 @@
 {
-  "rulesVersion": "0.9.0",
+  "rulesVersion": "0.10.0",
   "timeline": [
     {
       "input": {
@@ -64096,6 +64096,2766 @@
             "t": "end",
             "result": "win",
             "time": 784.313725490196
+          }
+        ]
+      }
+    },
+    {
+      "id": "v10/regen-innate-seed-5",
+      "input": {
+        "damageConfig": {
+          "components": [
+            "dmg.base-atk",
+            "dmg.crit",
+            "dmg.bonus",
+            "dmg.def-ratio",
+            "dmg.res",
+            "dmg.vuln",
+            "dmg.reduction",
+            "dmg.toughness"
+          ],
+          "customSteps": [],
+          "overrides": {},
+          "disabledSteps": [],
+          "finalRounding": "floor",
+          "minDamage": 1
+        },
+        "battle": {
+          "rules": {
+            "avBase": 10000,
+            "firstCycleAv": 150,
+            "cycleAv": 100,
+            "spStart": 3,
+            "spMax": 5,
+            "energyOnHitTaken": 10,
+            "energyOnKill": 10,
+            "breakDelay": 0.25,
+            "breakDamage": {
+              "op": "mul",
+              "args": [
+                {
+                  "op": "mul",
+                  "args": [
+                    {
+                      "ref": "attacker.atk"
+                    },
+                    {
+                      "op": "add",
+                      "args": [
+                        {
+                          "const": 1
+                        },
+                        {
+                          "ref": "attacker.breakEffect"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "add",
+                  "args": [
+                    {
+                      "const": 0.5
+                    },
+                    {
+                      "op": "div",
+                      "args": [
+                        {
+                          "ref": "defender.maxToughness"
+                        },
+                        {
+                          "const": 120
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "maxCycles": 20,
+            "rounding": "floor"
+          },
+          "units": [
+            {
+              "id": "homura",
+              "name": "焰華",
+              "team": "ally",
+              "element": "fire",
+              "role": "主輸出",
+              "weaknesses": [],
+              "description": "範圍火焰輸出。戰技擴散傷害，大招全體爆發。",
+              "stats": {
+                "level": 80,
+                "def": 700,
+                "critRate": 0.55,
+                "critDmg": 1.1,
+                "dmgBonus": 0.3,
+                "defIgnore": 0,
+                "res": 0,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0,
+                "effectHit": 0,
+                "effectRes": 0.1,
+                "breakEffect": 0,
+                "startEnergy": 0,
+                "hp": 3200,
+                "atk": 2300,
+                "spd": 105,
+                "maxEnergy": 120
+              },
+              "skills": [
+                {
+                  "id": "basic",
+                  "name": "普攻",
+                  "type": "basic",
+                  "spDelta": 1,
+                  "energyGain": 20,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1,
+                      "toughness": 10
+                    }
+                  ]
+                },
+                {
+                  "id": "skill",
+                  "name": "灼流",
+                  "type": "skill",
+                  "spDelta": -1,
+                  "energyGain": 30,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "blast",
+                      "multiplier": 2,
+                      "adjMultiplier": 0.8,
+                      "toughness": 20,
+                      "adjToughness": 10,
+                      "hits": [
+                        0.3,
+                        0.3,
+                        0.4
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "ult",
+                  "name": "焚天",
+                  "type": "ultimate",
+                  "spDelta": 0,
+                  "energyGain": 5,
+                  "energyCost": 120,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "allEnemies",
+                      "multiplier": 2.4,
+                      "toughness": 20
+                    }
+                  ]
+                },
+                {
+                  "id": "ember",
+                  "name": "餘燼",
+                  "type": "followup",
+                  "spDelta": 0,
+                  "energyGain": 10,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "allEnemies",
+                      "multiplier": 0.5,
+                      "toughness": 5
+                    }
+                  ]
+                }
+              ],
+              "passives": [
+                {
+                  "id": "ember",
+                  "name": "餘燼",
+                  "on": "allyUltimate",
+                  "skillId": "ember",
+                  "limitPerTurn": 1,
+                  "description": "隊友（含自己）施放大招後，追加一次全體火焰傷害。每回合一次。"
+                }
+              ],
+              "innateStatuses": [
+                "v10-vigor",
+                "v10-vigor",
+                "v10-ward"
+              ]
+            },
+            {
+              "id": "shimo",
+              "name": "霜語",
+              "team": "ally",
+              "element": "ice",
+              "role": "控制",
+              "weaknesses": [],
+              "description": "冰封單體並讓全體敵人出現破綻。",
+              "stats": {
+                "level": 80,
+                "def": 700,
+                "critRate": 0.3,
+                "critDmg": 0.8,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0,
+                "effectHit": 0.3,
+                "effectRes": 0.1,
+                "breakEffect": 0,
+                "startEnergy": 0,
+                "hp": 3500,
+                "atk": 1700,
+                "spd": 115,
+                "maxEnergy": 110,
+                "energyRegen": 0.25
+              },
+              "skills": [
+                {
+                  "id": "basic",
+                  "name": "普攻",
+                  "type": "basic",
+                  "spDelta": 1,
+                  "energyGain": 20,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1,
+                      "toughness": 10
+                    }
+                  ]
+                },
+                {
+                  "id": "skill",
+                  "name": "霜縛",
+                  "type": "skill",
+                  "spDelta": -1,
+                  "energyGain": 30,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1.5,
+                      "toughness": 20
+                    },
+                    {
+                      "kind": "status",
+                      "target": "enemy",
+                      "statusId": "freeze",
+                      "chance": 0.6
+                    }
+                  ]
+                },
+                {
+                  "id": "ult",
+                  "name": "雪幕",
+                  "type": "ultimate",
+                  "spDelta": 0,
+                  "energyGain": 5,
+                  "energyCost": 110,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "allEnemies",
+                      "multiplier": 1.2,
+                      "toughness": 20
+                    },
+                    {
+                      "kind": "status",
+                      "target": "allEnemies",
+                      "statusId": "exposed",
+                      "chance": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "raimei",
+              "name": "雷鳴",
+              "team": "ally",
+              "element": "thunder",
+              "role": "持續傷害",
+              "weaknesses": [],
+              "description": "施加感電，靠持續傷害累積總輸出。",
+              "stats": {
+                "level": 80,
+                "def": 700,
+                "critRate": 0.2,
+                "critDmg": 0.6,
+                "dmgBonus": 0.2,
+                "defIgnore": 0,
+                "res": 0,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0,
+                "effectHit": 0.2,
+                "effectRes": 0.1,
+                "breakEffect": 0,
+                "startEnergy": 0,
+                "hp": 3300,
+                "atk": 2000,
+                "spd": 108,
+                "maxEnergy": 120
+              },
+              "skills": [
+                {
+                  "id": "basic",
+                  "name": "普攻",
+                  "type": "basic",
+                  "spDelta": 1,
+                  "energyGain": 20,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1,
+                      "toughness": 10
+                    }
+                  ]
+                },
+                {
+                  "id": "skill",
+                  "name": "落雷",
+                  "type": "skill",
+                  "spDelta": -1,
+                  "energyGain": 30,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1.2,
+                      "toughness": 20
+                    },
+                    {
+                      "kind": "status",
+                      "target": "enemy",
+                      "statusId": "shock",
+                      "chance": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "ult",
+                  "name": "雷霆萬鈞",
+                  "type": "ultimate",
+                  "spDelta": 0,
+                  "energyGain": 5,
+                  "energyCost": 120,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "blast",
+                      "multiplier": 1.8,
+                      "adjMultiplier": 0.9,
+                      "toughness": 30,
+                      "adjToughness": 15
+                    },
+                    {
+                      "kind": "status",
+                      "target": "blast",
+                      "statusId": "shock",
+                      "chance": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "aoba",
+              "name": "蒼羽",
+              "team": "ally",
+              "element": "wind",
+              "role": "輔助",
+              "weaknesses": [],
+              "description": "加速隊友並提高其傷害。",
+              "stats": {
+                "level": 80,
+                "def": 700,
+                "critRate": 0.05,
+                "critDmg": 0.5,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0,
+                "effectHit": 0,
+                "effectRes": 0.1,
+                "breakEffect": 0,
+                "startEnergy": 0,
+                "hp": 3800,
+                "atk": 1400,
+                "spd": 134,
+                "maxEnergy": 100
+              },
+              "skills": [
+                {
+                  "id": "basic",
+                  "name": "普攻",
+                  "type": "basic",
+                  "spDelta": 1,
+                  "energyGain": 20,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1,
+                      "toughness": 10
+                    }
+                  ]
+                },
+                {
+                  "id": "skill",
+                  "name": "順風",
+                  "type": "skill",
+                  "spDelta": -1,
+                  "energyGain": 30,
+                  "targeting": "ally",
+                  "effects": [
+                    {
+                      "kind": "status",
+                      "target": "ally",
+                      "statusId": "haste",
+                      "chance": 1
+                    },
+                    {
+                      "kind": "advance",
+                      "target": "ally",
+                      "amount": 0.5
+                    }
+                  ]
+                },
+                {
+                  "id": "ult",
+                  "name": "長風",
+                  "type": "ultimate",
+                  "spDelta": 0,
+                  "energyGain": 5,
+                  "energyCost": 100,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "status",
+                      "target": "allAllies",
+                      "statusId": "haste",
+                      "chance": 1
+                    },
+                    {
+                      "kind": "energy",
+                      "target": "allAllies",
+                      "amount": 15
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "akari",
+              "name": "晨曦",
+              "team": "ally",
+              "element": "light",
+              "role": "治療",
+              "weaknesses": [],
+              "description": "單體與全體治療。",
+              "stats": {
+                "level": 80,
+                "def": 700,
+                "critRate": 0.05,
+                "critDmg": 0.5,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0,
+                "effectHit": 0,
+                "effectRes": 0.1,
+                "breakEffect": 0,
+                "startEnergy": 0,
+                "hp": 4200,
+                "atk": 1300,
+                "spd": 102,
+                "maxEnergy": 100
+              },
+              "skills": [
+                {
+                  "id": "basic",
+                  "name": "普攻",
+                  "type": "basic",
+                  "spDelta": 1,
+                  "energyGain": 20,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1,
+                      "toughness": 10
+                    }
+                  ]
+                },
+                {
+                  "id": "skill",
+                  "name": "祈光",
+                  "type": "skill",
+                  "spDelta": -1,
+                  "energyGain": 30,
+                  "targeting": "ally",
+                  "effects": [
+                    {
+                      "kind": "heal",
+                      "target": "ally",
+                      "scale": "atk",
+                      "multiplier": 0.6,
+                      "flat": 300
+                    }
+                  ]
+                },
+                {
+                  "id": "ult",
+                  "name": "曙光",
+                  "type": "ultimate",
+                  "spDelta": 0,
+                  "energyGain": 5,
+                  "energyCost": 100,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "heal",
+                      "target": "allAllies",
+                      "scale": "atk",
+                      "multiplier": 0.5,
+                      "flat": 400
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "yoru",
+              "name": "夜歌",
+              "team": "ally",
+              "element": "shadow",
+              "role": "擊破",
+              "weaknesses": [],
+              "description": "高削韌，擊破後造成大量擊破傷害並碎甲。",
+              "stats": {
+                "level": 80,
+                "def": 700,
+                "critRate": 0.05,
+                "critDmg": 0.5,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0,
+                "effectHit": 0,
+                "effectRes": 0.1,
+                "breakEffect": 1,
+                "startEnergy": 0,
+                "hp": 3300,
+                "atk": 1800,
+                "spd": 112,
+                "maxEnergy": 110
+              },
+              "skills": [
+                {
+                  "id": "basic",
+                  "name": "普攻",
+                  "type": "basic",
+                  "spDelta": 1,
+                  "energyGain": 20,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1,
+                      "toughness": 15
+                    }
+                  ]
+                },
+                {
+                  "id": "skill",
+                  "name": "影刃",
+                  "type": "skill",
+                  "spDelta": -1,
+                  "energyGain": 30,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1.6,
+                      "toughness": 30
+                    },
+                    {
+                      "kind": "status",
+                      "target": "enemy",
+                      "statusId": "armorBreak",
+                      "chance": 0.8
+                    }
+                  ]
+                },
+                {
+                  "id": "ult",
+                  "name": "夜幕斬",
+                  "type": "ultimate",
+                  "spDelta": 0,
+                  "energyGain": 5,
+                  "energyCost": 110,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 3,
+                      "toughness": 40
+                    }
+                  ]
+                },
+                {
+                  "id": "shade",
+                  "name": "影襲",
+                  "type": "followup",
+                  "spDelta": 0,
+                  "energyGain": 10,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 0.9,
+                      "toughness": 0
+                    },
+                    {
+                      "kind": "status",
+                      "target": "enemy",
+                      "statusId": "armorBreak",
+                      "chance": 1
+                    }
+                  ]
+                }
+              ],
+              "passives": [
+                {
+                  "id": "shade",
+                  "name": "影襲",
+                  "on": "allyBreak",
+                  "skillId": "shade",
+                  "limitPerTurn": 2,
+                  "description": "隊友擊破敵人時，對該敵人追加攻擊並施加碎甲。每回合最多兩次。"
+                }
+              ]
+            },
+            {
+              "id": "golem",
+              "name": "岩甲獸",
+              "team": "enemy",
+              "element": "fire",
+              "weaknesses": [
+                "ice",
+                "wind",
+                "shadow"
+              ],
+              "role": "普通",
+              "stats": {
+                "level": 80,
+                "critRate": 0,
+                "critDmg": 0,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0.2,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0.1,
+                "effectHit": 0,
+                "effectRes": 0.2,
+                "breakEffect": 0,
+                "maxEnergy": 0,
+                "def": 1000,
+                "hp": 22000,
+                "atk": 1700,
+                "spd": 83,
+                "toughness": 60
+              },
+              "skills": [
+                {
+                  "id": "bite",
+                  "name": "撕咬",
+                  "type": "basic",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1.8,
+                      "toughness": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "bat",
+              "name": "影翼蝠",
+              "team": "enemy",
+              "element": "shadow",
+              "weaknesses": [
+                "fire",
+                "light"
+              ],
+              "role": "普通",
+              "stats": {
+                "level": 80,
+                "critRate": 0,
+                "critDmg": 0,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0.2,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0.1,
+                "effectHit": 0,
+                "effectRes": 0.2,
+                "breakEffect": 0,
+                "maxEnergy": 0,
+                "def": 900,
+                "hp": 13000,
+                "atk": 1500,
+                "spd": 110,
+                "toughness": 30
+              },
+              "skills": [
+                {
+                  "id": "claw",
+                  "name": "利爪",
+                  "type": "basic",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1.5,
+                      "toughness": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "sentinel",
+              "name": "雷晶哨兵",
+              "team": "enemy",
+              "element": "thunder",
+              "weaknesses": [
+                "fire",
+                "shadow"
+              ],
+              "role": "普通",
+              "stats": {
+                "level": 80,
+                "critRate": 0,
+                "critDmg": 0,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0.2,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0.1,
+                "effectHit": 0,
+                "effectRes": 0.2,
+                "breakEffect": 0,
+                "maxEnergy": 0,
+                "def": 1000,
+                "hp": 16000,
+                "atk": 1450,
+                "spd": 95,
+                "toughness": 45
+              },
+              "skills": [
+                {
+                  "id": "shot",
+                  "name": "晶射",
+                  "type": "basic",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 1.6,
+                      "toughness": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "burst",
+                  "name": "電弧爆發",
+                  "type": "skill",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "allEnemies",
+                      "multiplier": 0.7,
+                      "toughness": 0
+                    }
+                  ]
+                }
+              ],
+              "ai": [
+                {
+                  "skillId": "shot",
+                  "weight": 3
+                },
+                {
+                  "skillId": "burst",
+                  "weight": 1
+                }
+              ]
+            },
+            {
+              "id": "colossus",
+              "name": "灰燼巨像",
+              "team": "enemy",
+              "element": "fire",
+              "weaknesses": [
+                "ice",
+                "thunder",
+                "light"
+              ],
+              "role": "首領",
+              "stats": {
+                "level": 80,
+                "critRate": 0,
+                "critDmg": 0,
+                "dmgBonus": 0,
+                "defIgnore": 0,
+                "res": 0.2,
+                "resPen": 0,
+                "vulnerability": 0,
+                "dmgReduction": 0.1,
+                "effectHit": 0,
+                "effectRes": 0.3,
+                "breakEffect": 0,
+                "maxEnergy": 0,
+                "def": 1100,
+                "hp": 70000,
+                "atk": 2250,
+                "spd": 100,
+                "toughness": 160
+              },
+              "skills": [
+                {
+                  "id": "smash",
+                  "name": "重擊",
+                  "type": "basic",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 2.2,
+                      "toughness": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "quake",
+                  "name": "震地",
+                  "type": "skill",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "allEnemies",
+                      "multiplier": 1.1,
+                      "toughness": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "roar",
+                  "name": "怒吼",
+                  "type": "skill",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "none",
+                  "effects": [
+                    {
+                      "kind": "status",
+                      "target": "self",
+                      "statusId": "rage",
+                      "chance": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "recoil",
+                  "name": "反震",
+                  "type": "followup",
+                  "spDelta": 0,
+                  "energyGain": 0,
+                  "targeting": "enemy",
+                  "effects": [
+                    {
+                      "kind": "damage",
+                      "target": "enemy",
+                      "multiplier": 0.5,
+                      "toughness": 0
+                    }
+                  ]
+                }
+              ],
+              "passives": [
+                {
+                  "id": "recoil",
+                  "name": "反震",
+                  "on": "selfHit",
+                  "skillId": "recoil",
+                  "limitPerTurn": 1,
+                  "when": {
+                    "op": "lt",
+                    "args": [
+                      {
+                        "ref": "self.hpPct"
+                      },
+                      {
+                        "const": 0.5
+                      }
+                    ]
+                  },
+                  "description": "血量低於 50% 後，受到攻擊時反擊攻擊者。每回合一次。"
+                }
+              ],
+              "ai": [
+                {
+                  "skillId": "smash",
+                  "weight": 3
+                },
+                {
+                  "skillId": "quake",
+                  "weight": 2,
+                  "when": {
+                    "op": "lt",
+                    "args": [
+                      {
+                        "ref": "self.hpPct"
+                      },
+                      {
+                        "const": 0.6
+                      }
+                    ]
+                  }
+                },
+                {
+                  "skillId": "roar",
+                  "weight": 1,
+                  "when": {
+                    "op": "gt",
+                    "args": [
+                      {
+                        "ref": "battle.turn"
+                      },
+                      {
+                        "const": 4
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "statuses": [
+            {
+              "id": "freeze",
+              "name": "冰封",
+              "kind": "debuff",
+              "category": "freeze",
+              "duration": 1,
+              "maxStacks": 1,
+              "modifiers": [],
+              "skipTurn": true,
+              "description": "無法行動一回合。"
+            },
+            {
+              "id": "exposed",
+              "name": "破綻",
+              "kind": "debuff",
+              "duration": 2,
+              "maxStacks": 1,
+              "modifiers": [
+                {
+                  "target": "stat:vulnerability",
+                  "op": "add",
+                  "value": 0.2
+                }
+              ],
+              "description": "受到的傷害提高 20%。"
+            },
+            {
+              "id": "shock",
+              "name": "感電",
+              "kind": "debuff",
+              "category": "shock",
+              "duration": 3,
+              "maxStacks": 1,
+              "modifiers": [],
+              "dot": {
+                "multiplier": 0.8,
+                "element": "thunder"
+              },
+              "description": "每回合開始時受到攻擊力 80% 的雷屬性傷害。"
+            },
+            {
+              "id": "armorBreak",
+              "name": "碎甲",
+              "kind": "debuff",
+              "duration": 2,
+              "maxStacks": 1,
+              "modifiers": [
+                {
+                  "target": "stat:def",
+                  "op": "pct",
+                  "value": -0.3
+                }
+              ],
+              "description": "防禦力降低 30%。"
+            },
+            {
+              "id": "haste",
+              "name": "疾風",
+              "kind": "buff",
+              "duration": 2,
+              "maxStacks": 1,
+              "modifiers": [
+                {
+                  "target": "stat:spd",
+                  "op": "pct",
+                  "value": 0.1
+                },
+                {
+                  "target": "stat:dmgBonus",
+                  "op": "add",
+                  "value": 0.25
+                }
+              ],
+              "description": "速度 +10%、增傷 +25%。"
+            },
+            {
+              "id": "rage",
+              "name": "狂怒",
+              "kind": "buff",
+              "duration": 3,
+              "maxStacks": 2,
+              "modifiers": [
+                {
+                  "target": "stat:dmgBonus",
+                  "op": "add",
+                  "value": 0.3
+                }
+              ],
+              "description": "增傷 +30%，可疊 2 層。"
+            },
+            {
+              "id": "v10-vigor",
+              "name": "v10-vigor",
+              "kind": "buff",
+              "duration": 0,
+              "maxStacks": 2,
+              "modifiers": [
+                {
+                  "target": "stat:spd",
+                  "op": "pct",
+                  "value": 0.1
+                },
+                {
+                  "target": "stat:energyRegen",
+                  "op": "add",
+                  "value": 0.5
+                }
+              ]
+            },
+            {
+              "id": "v10-ward",
+              "name": "v10-ward",
+              "kind": "buff",
+              "duration": 0,
+              "maxStacks": 1,
+              "modifiers": [],
+              "shield": {
+                "scale": "hp",
+                "multiplier": 0.25,
+                "flat": 100
+              }
+            }
+          ],
+          "encounter": {
+            "allies": [
+              "homura",
+              "shimo",
+              "raimei",
+              "akari"
+            ],
+            "enemies": [
+              "bat",
+              "golem",
+              "bat"
+            ]
+          },
+          "encounters": [
+            {
+              "id": "normal",
+              "name": "普通戰",
+              "enemies": [
+                "bat",
+                "golem",
+                "bat"
+              ],
+              "description": "兩隻高速的影翼蝠護著岩甲獸。"
+            },
+            {
+              "id": "elite",
+              "name": "精英戰",
+              "enemies": [
+                "sentinel",
+                "golem",
+                "sentinel"
+              ],
+              "description": "雷晶哨兵會隨機施放全體電弧。"
+            },
+            {
+              "id": "boss",
+              "name": "首領戰",
+              "enemies": [
+                "colossus"
+              ],
+              "description": "灰燼巨像：血量低時會震地與反擊。"
+            }
+          ],
+          "policy": {
+            "ult": "asap",
+            "skill": "whenSp",
+            "target": "weaknessFirst"
+          }
+        },
+        "seed": 5
+      },
+      "expected": {
+        "result": "win",
+        "cycle": 4,
+        "turns": 21,
+        "time": 396.82539682539687,
+        "sp": 0,
+        "units": [
+          {
+            "uid": "A1",
+            "defId": "homura",
+            "name": "焰華",
+            "team": "ally",
+            "slot": 0,
+            "element": "fire",
+            "base": {
+              "level": 80,
+              "def": 700,
+              "critRate": 0.55,
+              "critDmg": 1.1,
+              "dmgBonus": 0.3,
+              "defIgnore": 0,
+              "res": 0,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0,
+              "effectHit": 0,
+              "effectRes": 0.1,
+              "breakEffect": 0,
+              "startEnergy": 0,
+              "hp": 3200,
+              "atk": 2300,
+              "spd": 105,
+              "maxEnergy": 120
+            },
+            "weaknesses": [],
+            "hp": 3200,
+            "maxHp": 3200,
+            "energy": 110,
+            "maxEnergy": 120,
+            "toughness": 0,
+            "maxToughness": 0,
+            "broken": false,
+            "alive": true,
+            "av": 0,
+            "statuses": [
+              {
+                "statusId": "v10-vigor",
+                "sourceUid": "A1",
+                "stacks": 2,
+                "turnsLeft": 0
+              },
+              {
+                "statusId": "v10-ward",
+                "sourceUid": "A1",
+                "stacks": 1,
+                "turnsLeft": 0,
+                "shield": 900
+              }
+            ],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          },
+          {
+            "uid": "A2",
+            "defId": "shimo",
+            "name": "霜語",
+            "team": "ally",
+            "slot": 1,
+            "element": "ice",
+            "base": {
+              "level": 80,
+              "def": 700,
+              "critRate": 0.3,
+              "critDmg": 0.8,
+              "dmgBonus": 0,
+              "defIgnore": 0,
+              "res": 0,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0,
+              "effectHit": 0.3,
+              "effectRes": 0.1,
+              "breakEffect": 0,
+              "startEnergy": 0,
+              "hp": 3500,
+              "atk": 1700,
+              "spd": 115,
+              "maxEnergy": 110,
+              "energyRegen": 0.25
+            },
+            "weaknesses": [],
+            "hp": 3389,
+            "maxHp": 3500,
+            "energy": 6.25,
+            "maxEnergy": 110,
+            "toughness": 0,
+            "maxToughness": 0,
+            "broken": false,
+            "alive": true,
+            "av": 37.95721187025535,
+            "statuses": [],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          },
+          {
+            "uid": "A3",
+            "defId": "raimei",
+            "name": "雷鳴",
+            "team": "ally",
+            "slot": 2,
+            "element": "thunder",
+            "base": {
+              "level": 80,
+              "def": 700,
+              "critRate": 0.2,
+              "critDmg": 0.6,
+              "dmgBonus": 0.2,
+              "defIgnore": 0,
+              "res": 0,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0,
+              "effectHit": 0.2,
+              "effectRes": 0.1,
+              "breakEffect": 0,
+              "startEnergy": 0,
+              "hp": 3300,
+              "atk": 2000,
+              "spd": 108,
+              "maxEnergy": 120
+            },
+            "weaknesses": [],
+            "hp": 0,
+            "maxHp": 3300,
+            "energy": 90,
+            "maxEnergy": 120,
+            "toughness": 0,
+            "maxToughness": 0,
+            "broken": false,
+            "alive": false,
+            "av": 36.81392235609102,
+            "statuses": [],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          },
+          {
+            "uid": "A4",
+            "defId": "akari",
+            "name": "晨曦",
+            "team": "ally",
+            "slot": 3,
+            "element": "light",
+            "base": {
+              "level": 80,
+              "def": 700,
+              "critRate": 0.05,
+              "critDmg": 0.5,
+              "dmgBonus": 0,
+              "defIgnore": 0,
+              "res": 0,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0,
+              "effectHit": 0,
+              "effectRes": 0.1,
+              "breakEffect": 0,
+              "startEnergy": 0,
+              "hp": 4200,
+              "atk": 1300,
+              "spd": 102,
+              "maxEnergy": 100
+            },
+            "weaknesses": [],
+            "hp": 4200,
+            "maxHp": 4200,
+            "energy": 90,
+            "maxEnergy": 100,
+            "toughness": 0,
+            "maxToughness": 0,
+            "broken": false,
+            "alive": true,
+            "av": 93.37068160597575,
+            "statuses": [],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          },
+          {
+            "uid": "E1",
+            "defId": "bat",
+            "name": "影翼蝠",
+            "team": "enemy",
+            "slot": 0,
+            "element": "shadow",
+            "base": {
+              "level": 80,
+              "critRate": 0,
+              "critDmg": 0,
+              "dmgBonus": 0,
+              "defIgnore": 0,
+              "res": 0.2,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0.1,
+              "effectHit": 0,
+              "effectRes": 0.2,
+              "breakEffect": 0,
+              "maxEnergy": 0,
+              "def": 900,
+              "hp": 13000,
+              "atk": 1500,
+              "spd": 110,
+              "toughness": 30
+            },
+            "weaknesses": [
+              "fire",
+              "light"
+            ],
+            "hp": 0,
+            "maxHp": 13000,
+            "energy": 0,
+            "maxEnergy": 0,
+            "toughness": 0,
+            "maxToughness": 30,
+            "broken": true,
+            "alive": false,
+            "av": 19.360269360269356,
+            "statuses": [],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          },
+          {
+            "uid": "E2",
+            "defId": "golem",
+            "name": "岩甲獸",
+            "team": "enemy",
+            "slot": 1,
+            "element": "fire",
+            "base": {
+              "level": 80,
+              "critRate": 0,
+              "critDmg": 0,
+              "dmgBonus": 0,
+              "defIgnore": 0,
+              "res": 0.2,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0.1,
+              "effectHit": 0,
+              "effectRes": 0.2,
+              "breakEffect": 0,
+              "maxEnergy": 0,
+              "def": 1000,
+              "hp": 22000,
+              "atk": 1700,
+              "spd": 83,
+              "toughness": 60
+            },
+            "weaknesses": [
+              "ice",
+              "wind",
+              "shadow"
+            ],
+            "hp": 0,
+            "maxHp": 22000,
+            "energy": 0,
+            "maxEnergy": 0,
+            "toughness": 40,
+            "maxToughness": 60,
+            "broken": false,
+            "alive": false,
+            "av": 115.22279594568752,
+            "statuses": [],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          },
+          {
+            "uid": "E3",
+            "defId": "bat",
+            "name": "影翼蝠",
+            "team": "enemy",
+            "slot": 2,
+            "element": "shadow",
+            "base": {
+              "level": 80,
+              "critRate": 0,
+              "critDmg": 0,
+              "dmgBonus": 0,
+              "defIgnore": 0,
+              "res": 0.2,
+              "resPen": 0,
+              "vulnerability": 0,
+              "dmgReduction": 0.1,
+              "effectHit": 0,
+              "effectRes": 0.2,
+              "breakEffect": 0,
+              "maxEnergy": 0,
+              "def": 900,
+              "hp": 13000,
+              "atk": 1500,
+              "spd": 110,
+              "toughness": 30
+            },
+            "weaknesses": [
+              "fire",
+              "light"
+            ],
+            "hp": 0,
+            "maxHp": 13000,
+            "energy": 0,
+            "maxEnergy": 0,
+            "toughness": 24,
+            "maxToughness": 30,
+            "broken": false,
+            "alive": false,
+            "av": 57.359307359307344,
+            "statuses": [],
+            "passiveUses": {},
+            "phase": 1,
+            "counters": {}
+          }
+        ],
+        "events": [
+          {
+            "t": "cycle",
+            "cycle": 1,
+            "time": 0
+          },
+          {
+            "t": "turn",
+            "uid": "A1",
+            "time": 79.36507936507937
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "skill",
+            "skillName": "灼流",
+            "skillType": "skill",
+            "targetUid": "E1",
+            "time": 79.36507936507937
+          },
+          {
+            "t": "sp",
+            "before": 3,
+            "after": 2
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 0,
+            "after": 60
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E1",
+            "amount": 1284,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 11716,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E1",
+            "before": 30,
+            "after": 24
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E1",
+            "amount": 611,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 11105,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E1",
+            "before": 24,
+            "after": 18
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E1",
+            "amount": 1713,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 9392,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E1",
+            "before": 18,
+            "after": 10
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 488,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 21512,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 488,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 21024,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 651,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 20373,
+            "skillId": "skill"
+          },
+          {
+            "t": "turn",
+            "uid": "A2",
+            "time": 86.95652173913044
+          },
+          {
+            "t": "action",
+            "uid": "A2",
+            "skillId": "skill",
+            "skillName": "霜縛",
+            "skillType": "skill",
+            "targetUid": "E2",
+            "time": 86.95652173913044
+          },
+          {
+            "t": "sp",
+            "before": 2,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 0,
+            "after": 37.5
+          },
+          {
+            "t": "damage",
+            "src": "A2",
+            "dst": "E2",
+            "amount": 1487,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 18886,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E2",
+            "before": 60,
+            "after": 40
+          },
+          {
+            "t": "status",
+            "src": "A2",
+            "dst": "E2",
+            "statusId": "freeze",
+            "result": "applied"
+          },
+          {
+            "t": "turn",
+            "uid": "E1",
+            "time": 90.9090909090909
+          },
+          {
+            "t": "action",
+            "uid": "E1",
+            "skillId": "claw",
+            "skillName": "利爪",
+            "skillType": "basic",
+            "targetUid": "A2",
+            "time": 90.9090909090909
+          },
+          {
+            "t": "damage",
+            "src": "E1",
+            "dst": "A2",
+            "amount": 1191,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 2309,
+            "skillId": "claw"
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 37.5,
+            "after": 50
+          },
+          {
+            "t": "turn",
+            "uid": "E3",
+            "time": 90.9090909090909
+          },
+          {
+            "t": "action",
+            "uid": "E3",
+            "skillId": "claw",
+            "skillName": "利爪",
+            "skillType": "basic",
+            "targetUid": "A3",
+            "time": 90.9090909090909
+          },
+          {
+            "t": "damage",
+            "src": "E3",
+            "dst": "A3",
+            "amount": 1191,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 2109,
+            "skillId": "claw"
+          },
+          {
+            "t": "energy",
+            "uid": "A3",
+            "before": 0,
+            "after": 10
+          },
+          {
+            "t": "turn",
+            "uid": "A3",
+            "time": 92.5925925925926
+          },
+          {
+            "t": "action",
+            "uid": "A3",
+            "skillId": "skill",
+            "skillName": "落雷",
+            "skillType": "skill",
+            "targetUid": "E1",
+            "time": 92.5925925925926
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A3",
+            "before": 10,
+            "after": 40
+          },
+          {
+            "t": "damage",
+            "src": "A3",
+            "dst": "E1",
+            "amount": 982,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 8410,
+            "skillId": "skill"
+          },
+          {
+            "t": "status",
+            "src": "A3",
+            "dst": "E1",
+            "statusId": "shock",
+            "result": "applied"
+          },
+          {
+            "t": "turn",
+            "uid": "A4",
+            "time": 98.03921568627452
+          },
+          {
+            "t": "action",
+            "uid": "A4",
+            "skillId": "basic",
+            "skillName": "普攻",
+            "skillType": "basic",
+            "targetUid": "E1",
+            "time": 98.03921568627452
+          },
+          {
+            "t": "sp",
+            "before": 0,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A4",
+            "before": 0,
+            "after": 20
+          },
+          {
+            "t": "damage",
+            "src": "A4",
+            "dst": "E1",
+            "amount": 443,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 7967,
+            "skillId": "basic"
+          },
+          {
+            "t": "toughness",
+            "dst": "E1",
+            "before": 10,
+            "after": 0
+          },
+          {
+            "t": "break",
+            "src": "A4",
+            "dst": "E1"
+          },
+          {
+            "t": "damage",
+            "src": "A4",
+            "dst": "E1",
+            "amount": 975,
+            "crit": false,
+            "kind": "break",
+            "hpAfter": 6992
+          },
+          {
+            "t": "advance",
+            "uid": "E1",
+            "before": 83.7789661319073,
+            "after": 106.50623885918003
+          },
+          {
+            "t": "turn",
+            "uid": "E2",
+            "time": 120.48192771084338
+          },
+          {
+            "t": "skip",
+            "uid": "E2",
+            "reason": "冰封"
+          },
+          {
+            "t": "status",
+            "src": "A2",
+            "dst": "E2",
+            "statusId": "freeze",
+            "result": "expired"
+          },
+          {
+            "t": "cycle",
+            "cycle": 2,
+            "time": 158.73015873015873
+          },
+          {
+            "t": "turn",
+            "uid": "A1",
+            "time": 158.73015873015873
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "skill",
+            "skillName": "灼流",
+            "skillType": "skill",
+            "targetUid": "E3",
+            "time": 158.73015873015873
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 60,
+            "after": 120
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 611,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 12389,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E3",
+            "before": 30,
+            "after": 24
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 1284,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 11105,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E3",
+            "before": 24,
+            "after": 18
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 1713,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 9392,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E3",
+            "before": 18,
+            "after": 10
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 488,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 18398,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 232,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 18166,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 651,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 17515,
+            "skillId": "skill"
+          },
+          {
+            "t": "turn",
+            "uid": "A2",
+            "time": 173.91304347826087
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "ult",
+            "skillName": "焚天",
+            "skillType": "ultimate",
+            "time": 173.91304347826087
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 120,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 0,
+            "after": 10
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E1",
+            "amount": 5710,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 1282,
+            "skillId": "ult"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 4882,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 12633,
+            "skillId": "ult"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 5139,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 4253,
+            "skillId": "ult"
+          },
+          {
+            "t": "toughness",
+            "dst": "E3",
+            "before": 10,
+            "after": 0
+          },
+          {
+            "t": "break",
+            "src": "A1",
+            "dst": "E3"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 1725,
+            "crit": false,
+            "kind": "break",
+            "hpAfter": 2528
+          },
+          {
+            "t": "advance",
+            "uid": "E3",
+            "before": 7.9051383399209385,
+            "after": 30.632411067193665
+          },
+          {
+            "t": "trigger",
+            "uid": "A1",
+            "passiveId": "ember",
+            "passiveName": "餘燼"
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "ember",
+            "skillName": "餘燼",
+            "skillType": "followup",
+            "time": 173.91304347826087
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 10,
+            "after": 30
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E1",
+            "amount": 1189,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 93,
+            "skillId": "ember"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 1017,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 11616,
+            "skillId": "ember"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 566,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 1962,
+            "skillId": "ember"
+          },
+          {
+            "t": "action",
+            "uid": "A2",
+            "skillId": "basic",
+            "skillName": "普攻",
+            "skillType": "basic",
+            "targetUid": "E2",
+            "time": 173.91304347826087
+          },
+          {
+            "t": "sp",
+            "before": 0,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 50,
+            "after": 75
+          },
+          {
+            "t": "damage",
+            "src": "A2",
+            "dst": "E2",
+            "amount": 991,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 10625,
+            "skillId": "basic"
+          },
+          {
+            "t": "toughness",
+            "dst": "E2",
+            "before": 40,
+            "after": 30
+          },
+          {
+            "t": "turn",
+            "uid": "A3",
+            "time": 185.1851851851852
+          },
+          {
+            "t": "action",
+            "uid": "A3",
+            "skillId": "skill",
+            "skillName": "落雷",
+            "skillType": "skill",
+            "targetUid": "E1",
+            "time": 185.1851851851852
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A3",
+            "before": 40,
+            "after": 70
+          },
+          {
+            "t": "damage",
+            "src": "A3",
+            "dst": "E1",
+            "amount": 1091,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 0,
+            "skillId": "skill"
+          },
+          {
+            "t": "death",
+            "uid": "E1",
+            "by": "A3"
+          },
+          {
+            "t": "energy",
+            "uid": "A3",
+            "before": 70,
+            "after": 80
+          },
+          {
+            "t": "turn",
+            "uid": "A4",
+            "time": 196.07843137254903
+          },
+          {
+            "t": "action",
+            "uid": "A4",
+            "skillId": "basic",
+            "skillName": "普攻",
+            "skillType": "basic",
+            "targetUid": "E3",
+            "time": 196.07843137254903
+          },
+          {
+            "t": "sp",
+            "before": 0,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A4",
+            "before": 20,
+            "after": 40
+          },
+          {
+            "t": "damage",
+            "src": "A4",
+            "dst": "E3",
+            "amount": 492,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 1470,
+            "skillId": "basic"
+          },
+          {
+            "t": "turn",
+            "uid": "E3",
+            "time": 204.54545454545453
+          },
+          {
+            "t": "recover",
+            "uid": "E3"
+          },
+          {
+            "t": "action",
+            "uid": "E3",
+            "skillId": "claw",
+            "skillName": "利爪",
+            "skillType": "basic",
+            "targetUid": "A3",
+            "time": 204.54545454545453
+          },
+          {
+            "t": "damage",
+            "src": "E3",
+            "dst": "A3",
+            "amount": 1191,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 918,
+            "skillId": "claw"
+          },
+          {
+            "t": "energy",
+            "uid": "A3",
+            "before": 80,
+            "after": 90
+          },
+          {
+            "t": "turn",
+            "uid": "A1",
+            "time": 238.0952380952381
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "skill",
+            "skillName": "灼流",
+            "skillType": "skill",
+            "targetUid": "E3",
+            "time": 238.0952380952381
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 30,
+            "after": 90
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 611,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 859,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E3",
+            "before": 30,
+            "after": 24
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E3",
+            "amount": 1284,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 0,
+            "skillId": "skill"
+          },
+          {
+            "t": "death",
+            "uid": "E3",
+            "by": "A1"
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 90,
+            "after": 110
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 488,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 10137,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 232,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 9905,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 310,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 9595,
+            "skillId": "skill"
+          },
+          {
+            "t": "turn",
+            "uid": "E2",
+            "time": 240.96385542168676
+          },
+          {
+            "t": "action",
+            "uid": "E2",
+            "skillId": "bite",
+            "skillName": "撕咬",
+            "skillType": "basic",
+            "targetUid": "A3",
+            "time": 240.96385542168676
+          },
+          {
+            "t": "damage",
+            "src": "E2",
+            "dst": "A3",
+            "amount": 1620,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 0,
+            "skillId": "bite"
+          },
+          {
+            "t": "death",
+            "uid": "A3",
+            "by": "E2"
+          },
+          {
+            "t": "cycle",
+            "cycle": 3,
+            "time": 260.8695652173913
+          },
+          {
+            "t": "turn",
+            "uid": "A2",
+            "time": 260.8695652173913
+          },
+          {
+            "t": "action",
+            "uid": "A2",
+            "skillId": "basic",
+            "skillName": "普攻",
+            "skillType": "basic",
+            "targetUid": "E2",
+            "time": 260.8695652173913
+          },
+          {
+            "t": "sp",
+            "before": 0,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 75,
+            "after": 100
+          },
+          {
+            "t": "damage",
+            "src": "A2",
+            "dst": "E2",
+            "amount": 550,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 9045,
+            "skillId": "basic"
+          },
+          {
+            "t": "toughness",
+            "dst": "E2",
+            "before": 30,
+            "after": 20
+          },
+          {
+            "t": "turn",
+            "uid": "A4",
+            "time": 294.11764705882354
+          },
+          {
+            "t": "action",
+            "uid": "A4",
+            "skillId": "skill",
+            "skillName": "祈光",
+            "skillType": "skill",
+            "targetUid": "A2",
+            "time": 294.11764705882354
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A4",
+            "before": 40,
+            "after": 70
+          },
+          {
+            "t": "heal",
+            "src": "A4",
+            "dst": "A2",
+            "amount": 1080
+          },
+          {
+            "t": "turn",
+            "uid": "A1",
+            "time": 317.46031746031747
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "basic",
+            "skillName": "普攻",
+            "skillType": "basic",
+            "targetUid": "E2",
+            "time": 317.46031746031747
+          },
+          {
+            "t": "sp",
+            "before": 0,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 110,
+            "after": 120
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 968,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 8077,
+            "skillId": "basic"
+          },
+          {
+            "t": "turn",
+            "uid": "A2",
+            "time": 347.82608695652175
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "ult",
+            "skillName": "焚天",
+            "skillType": "ultimate",
+            "time": 347.82608695652175
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 120,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 0,
+            "after": 10
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 2325,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 5752,
+            "skillId": "ult"
+          },
+          {
+            "t": "trigger",
+            "uid": "A1",
+            "passiveId": "ember",
+            "passiveName": "餘燼"
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "ember",
+            "skillName": "餘燼",
+            "skillType": "followup",
+            "time": 347.82608695652175
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 10,
+            "after": 30
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 484,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 5268,
+            "skillId": "ember"
+          },
+          {
+            "t": "action",
+            "uid": "A2",
+            "skillId": "skill",
+            "skillName": "霜縛",
+            "skillType": "skill",
+            "targetUid": "E2",
+            "time": 347.82608695652175
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 100,
+            "after": 110
+          },
+          {
+            "t": "damage",
+            "src": "A2",
+            "dst": "E2",
+            "amount": 826,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 4442,
+            "skillId": "skill"
+          },
+          {
+            "t": "toughness",
+            "dst": "E2",
+            "before": 20,
+            "after": 0
+          },
+          {
+            "t": "break",
+            "src": "A2",
+            "dst": "E2"
+          },
+          {
+            "t": "damage",
+            "src": "A2",
+            "dst": "E2",
+            "amount": 1700,
+            "crit": false,
+            "kind": "break",
+            "hpAfter": 2742
+          },
+          {
+            "t": "advance",
+            "uid": "E2",
+            "before": 13.619696176008382,
+            "after": 43.74017810371923
+          },
+          {
+            "t": "status",
+            "src": "A2",
+            "dst": "E2",
+            "statusId": "freeze",
+            "result": "applied"
+          },
+          {
+            "t": "cycle",
+            "cycle": 4,
+            "time": 391.566265060241
+          },
+          {
+            "t": "turn",
+            "uid": "E2",
+            "time": 391.566265060241
+          },
+          {
+            "t": "recover",
+            "uid": "E2"
+          },
+          {
+            "t": "skip",
+            "uid": "E2",
+            "reason": "冰封"
+          },
+          {
+            "t": "status",
+            "src": "A2",
+            "dst": "E2",
+            "statusId": "freeze",
+            "result": "expired"
+          },
+          {
+            "t": "turn",
+            "uid": "A4",
+            "time": 392.15686274509807
+          },
+          {
+            "t": "action",
+            "uid": "A2",
+            "skillId": "ult",
+            "skillName": "雪幕",
+            "skillType": "ultimate",
+            "time": 392.15686274509807
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 110,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A2",
+            "before": 0,
+            "after": 6.25
+          },
+          {
+            "t": "damage",
+            "src": "A2",
+            "dst": "E2",
+            "amount": 660,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 2082,
+            "skillId": "ult"
+          },
+          {
+            "t": "toughness",
+            "dst": "E2",
+            "before": 60,
+            "after": 40
+          },
+          {
+            "t": "status",
+            "src": "A2",
+            "dst": "E2",
+            "statusId": "exposed",
+            "result": "applied"
+          },
+          {
+            "t": "action",
+            "uid": "A4",
+            "skillId": "basic",
+            "skillName": "普攻",
+            "skillType": "basic",
+            "targetUid": "E2",
+            "time": 392.15686274509807
+          },
+          {
+            "t": "sp",
+            "before": 0,
+            "after": 1
+          },
+          {
+            "t": "energy",
+            "uid": "A4",
+            "before": 70,
+            "after": 90
+          },
+          {
+            "t": "damage",
+            "src": "A4",
+            "dst": "E2",
+            "amount": 505,
+            "crit": false,
+            "kind": "hit",
+            "hpAfter": 1577,
+            "skillId": "basic"
+          },
+          {
+            "t": "turn",
+            "uid": "A1",
+            "time": 396.82539682539687
+          },
+          {
+            "t": "action",
+            "uid": "A1",
+            "skillId": "skill",
+            "skillName": "灼流",
+            "skillType": "skill",
+            "targetUid": "E2",
+            "time": 396.82539682539687
+          },
+          {
+            "t": "sp",
+            "before": 1,
+            "after": 0
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 30,
+            "after": 90
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 1464,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 113,
+            "skillId": "skill"
+          },
+          {
+            "t": "damage",
+            "src": "A1",
+            "dst": "E2",
+            "amount": 1464,
+            "crit": true,
+            "kind": "hit",
+            "hpAfter": 0,
+            "skillId": "skill"
+          },
+          {
+            "t": "death",
+            "uid": "E2",
+            "by": "A1"
+          },
+          {
+            "t": "energy",
+            "uid": "A1",
+            "before": 90,
+            "after": 110
+          },
+          {
+            "t": "end",
+            "result": "win",
+            "time": 396.82539682539687
           }
         ]
       }
