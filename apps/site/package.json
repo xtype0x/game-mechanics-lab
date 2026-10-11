@@ -17,10 +17,12 @@
     "preview": "vite preview --host 127.0.0.1 --port 5180 --strictPort"
   },
   "dependencies": {
+    "@gml/bullet-parry": "*",
     "@gml/core": "*",
     "@gml/data-hsr": "*",
     "@gml/gacha-sim": "*",
     "@gml/hsr-battle": "*",
+    "@gml/timing-lab": "*",
     "@gml/ui": "*",
     "react": "19.3.0",
     "react-dom": "19.3.0"
