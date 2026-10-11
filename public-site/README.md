@@ -20,11 +20,15 @@ npm run dev
 ## 目前內容
 
 - 首頁：原創二遊主視覺、青金配色，以宣傳官網語彙致敬與幽默文案介紹遊戲機制工具。
-- 工具遊樂場：抽卡模擬器入口，開啟獨立頁面 `gacha/`（從 `packages/gacha-sim` 搬入，核心規則取自 `src/lib/core/`，`@ggt/core` 以別名指向它）。另有戰鬥實驗室入口，開啟獨立頁面 `battle/`（規則核心同樣複製自 `packages/core`；動畫戰鬥畫面取自研究 repo 的試玩 DEMO，不含標題畫面、關卡、抽卡與升級）。
+- 工具遊樂場：抽卡模擬器入口，開啟獨立頁面 `gacha/`（從 `packages/gacha-sim` 搬入，核心規則取自 `src/lib/core/`，`@ggt/core` 以別名指向它）。另有星穹鐵道戰鬥研究室（原「戰鬥實驗室」）入口，開啟獨立頁面 `battle/`（規則核心同樣複製自 `packages/core`；動畫戰鬥畫面取自研究 repo 的試玩 DEMO，不含標題畫面、關卡、抽卡與升級）。
 - 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。
 
-戰鬥實驗室可選隊伍與敵人、改角色數值與技能（存在瀏覽器 localStorage，「重設」回範本）、預覽行動順序、批量模擬勝率並用動畫畫面開打；角色預設選單由 `src/tools/battle/presets/index.ts` 的 `presetGroups` 提供（型別見同資料夾 `types.ts`），有「範本角色」與「星穹鐵道」（98 位，由 `node scripts/build-hsr-presets.mjs` 從研究資料產生 `presets/hsr.generated.json`；目前 2 位可用，其餘標示尚缺的規則模組；資料為未核實的社群整理，著作權屬 HoYoverse）。
+星穹鐵道戰鬥研究室可選隊伍與敵人、改角色數值與技能（存在瀏覽器 localStorage，「重設」回範本）、預覽行動順序、批量模擬勝率並用動畫畫面開打；角色預設選單由 `src/tools/battle/presets/index.ts` 的 `presetGroups` 提供（型別見同資料夾 `types.ts`），有「範本角色」與「星穹鐵道」（98 位，由 `node scripts/build-hsr-presets.mjs` 從研究資料產生 `presets/hsr.generated.json`；目前 2 位可用，其餘標示尚缺的規則模組；資料為未核實的社群整理，著作權屬 HoYoverse）。
+
+「敵方」選單另有「星穹鐵道敵人」10 組（普通 3、精英 4、首領 3，Lv 60／70／80，預設 80）：由 `node scripts/build-hsr-encounters.mjs` 從研究資料產生 `presets/hsr-enemies.generated.json`（連同 `scripts/validate-hsr-encounters.mjs` 驗證；`--rates=200 --gear` 可印勝率表）。屬性、弱點、抗性與等級曲線來自 KQM 社群資料，技能倍率、AI 與狀態數值皆為標示【佔位】的估計值，韌性換算（×1/3）未核實。
+
+「配裝」面板（`src/tools/battle/EquipPanel.tsx`，邏輯在 `equip.ts`）可為每位我方角色選光錐（疊影 1–5、Lv80）、6 件遺器（套裝、主詞條、4 條副詞條）與行跡，並以核心 `applyLoadout`（`docs/spec/loadout.md`）編譯後用於行動順序、批量模擬與動畫戰鬥；資料來自 `presets/hsr-equipment.generated.json`（`scripts/build-hsr-equipment.mjs`），只套用無條件數值，條件效果僅列出、尚未模擬；配裝存在 localStorage 的 `ggt.site.battle.loadouts.v1`。
 
 網站本身沒有帳號或分析追蹤功能。抽卡模擬器的設定存在瀏覽器本機，開啟時會讀取公開卡池資料，說明見資料與使用說明頁。
 

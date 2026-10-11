@@ -1,0 +1,21 @@
+.equip { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.equip select, .equip input[type="search"], .equip input[type="number"] { min-width: 0; max-width: 100%; }
+.equip-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.equip-block { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; background: var(--panel-2); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.equip-block > h4 { font-size: 13px; margin: 0; }
+.equip-row { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.equip-row > select { flex: 1 1 140px; }
+.equip-desc { font-size: 12px; color: var(--text-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.equip-note { font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--warn-soft); color: var(--warn); overflow-wrap: anywhere; }
+.equip-sub { display: grid; grid-template-columns: minmax(0, 1.6fr) 62px 66px minmax(0, 1fr); gap: 4px 6px; align-items: center; }
+.equip-sub .val { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; }
+.equip-sub .num-field input { width: 100%; }
+.equip-set-tier { font-size: 12px; padding: 3px 0; border-bottom: 1px dashed var(--line); overflow-wrap: anywhere; }
+.equip-set-tier.on { color: var(--text); }
+.equip-set-tier.off { color: var(--text-3); }
+.equip-stats td.up { color: var(--ok); }
+.equip details summary { cursor: pointer; font-size: 12px; color: var(--text-2); }
+@media (max-width: 640px) {
+  .equip-sub { grid-template-columns: minmax(0, 1fr) 62px 66px; }
+  .equip-sub .val { grid-column: 1 / -1; text-align: left; }
+}

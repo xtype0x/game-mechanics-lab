@@ -15,3 +15,4 @@ export * from "./library/reference";
 export * from "./library/showcase-content";
 export * from "./library/gacha-content";
 export * from "./modules";
+export * from "./loadout";

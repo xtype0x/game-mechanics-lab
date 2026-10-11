@@ -414,3 +414,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .preset-grid.compact .preset-reason { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .preset-btn .preset-approx { color: var(--warn); }
 .preset-source { overflow-wrap: anywhere; }
+
+.hsre-note { margin: 4px 0 8px; }
+.hsre-note p { margin: 2px 0; }
+.hsre-note details { margin-top: 4px; }

@@ -173,6 +173,11 @@ export function validateBattle(cfg: BattleConfig, damage: DamageRules): BattleIs
       if (ph.stats?.spd !== undefined && !(ph.stats.spd > 0)) err(`「${u.name}」第 ${i + 2} 階段的速度必須大於 0`, { ...w, field: "phases" });
     });
     if (u.boundToSummoner && !cfg.units.some((x) => x.skills.some((sk) => sk.effects.some((e) => e.kind === "summon" && e.unitId === u.id)))) warn(`「${u.name}」設定為隨召喚者消失，但沒有任何技能召喚它`, w);
+    for (const id of u.innateStatuses ?? []) {
+      const sd = cfg.statuses.find((x) => x.id === id);
+      if (!sd) err(`「${u.name}」的開場狀態「${id}」不存在`, { ...w, field: "innateStatuses" });
+      else if (sd.dot) err(`「${u.name}」的開場狀態「${sd.name}」是持續傷害，不能作為開場狀態`, { ...w, field: "innateStatuses" });
+    }
     for (const p of u.passives ?? []) {
       const wp = { ...w, passiveId: p.id };
       const sk = u.skills.find((s) => s.id === p.skillId);

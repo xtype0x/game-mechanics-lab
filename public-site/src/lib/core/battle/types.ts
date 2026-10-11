@@ -248,6 +248,8 @@ export interface UnitDef {
   /** Enemy behaviour. Allies controlled by the simulator use the ally policy instead. */
   ai?: AiRule[];
   passives?: PassiveDef[];
+  /** Statuses the unit starts the battle with (battle.md §17.2); no events, no RNG. */
+  innateStatuses?: string[];
   // --- Extension fields (docs/spec/battle.md §13) ---
   /** Per-element damage resistance; replaces stat `res` when hit by that element. */
   elementRes?: Record<string, number>;

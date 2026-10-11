@@ -3,12 +3,14 @@ import { Lab } from "./Lab";
 import { Play } from "./Play";
 import { clearSaved, freshProject, loadSaved, saveProject } from "./state";
 import type { Updater } from "./common";
+import { useEquip } from "./useEquip";
 
 export function App() {
   const [project, setProject] = useState(loadSaved);
   const [view, setView] = useState<"lab" | "play">("lab");
   const [saved, setSaved] = useState(true);
   const timer = useRef<number | undefined>(undefined);
+  const equip = useEquip(project);
 
   // Autosave is a convenience; the page works without storage.
   useEffect(() => {
@@ -25,17 +27,17 @@ export function App() {
     });
   }, []);
 
-  if (view === "play") return <Play project={project} onBack={() => setView("lab")} />;
+  if (view === "play") return <Play project={equip.compiled.problems.length ? project : equip.compiled.project} onBack={() => setView("lab")} />;
 
   return (
     <div className="lab">
       <header className="top">
         <a className="back-link" href="../index.html#/lab">← gacha-game-tool 工具遊樂場</a>
-        <h1>戰鬥實驗室</h1>
-        <p className="tagline">挑隊伍和敵人、改數值與技能，看看誰先出手、勝率多少，最後親手打一場。範本角色與數字是原創範例；「星穹鐵道」角色為未核實的社群資料，僅供模擬。</p>
+        <h1>星穹鐵道戰鬥研究室</h1>
+        <p className="tagline">把星穹鐵道的角色、光錐、遺器與敵人拆成可調整的機制：換隊伍、改配裝，看看誰先出手、勝率多少，最後親手打一場。星穹鐵道資料為未核實的社群整理，僅供模擬；另附原創範本角色。</p>
       </header>
       <main>
-        <Lab project={project} update={update} saved={saved} onPlay={() => setView("play")} onReset={() => { clearSaved(); setProject(freshProject()); }} />
+        <Lab project={project} update={update} saved={saved} equip={equip} onPlay={() => setView("play")} onReset={() => { clearSaved(); equip.resetAll(); setProject(freshProject()); }} />
       </main>
     </div>
   );

@@ -10,7 +10,7 @@ const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 /** Original template content: the boss-mechanics template holds every sample ally, enemy and status. */
 export function freshProject(): Project {
   const t = PROJECT_TEMPLATES.find((x) => x.id === "boss-mechanics") ?? PROJECT_TEMPLATES[0]!;
-  const p = t.create("戰鬥實驗室");
+  const p = t.create("星穹鐵道戰鬥研究室");
   const normal = p.battle.encounters.find((e) => e.id === "normal");
   p.battle.encounter = { allies: ["homura", "shimo", "raimei", "akari"], enemies: [...(normal?.enemies ?? p.battle.encounter.enemies)] };
   return p;

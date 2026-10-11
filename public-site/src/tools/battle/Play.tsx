@@ -40,14 +40,14 @@ export function Play({ project, onBack }: { project: Project; onBack: () => void
                 </ul>
                 <div className="play-result-actions">
                   <button type="button" onClick={() => { setOutcome(null); setRound((r) => r + 1); }}>再打一次</button>
-                  <button type="button" onClick={onBack}>返回實驗室</button>
+                  <button type="button" onClick={onBack}>返回研究室</button>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
-      <button type="button" className="play-back" onClick={onBack}>← 返回實驗室</button>
+      <button type="button" className="play-back" onClick={onBack}>← 返回研究室</button>
     </div>
   );
 }

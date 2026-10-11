@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { Field, NumberField, Section, fmt } from "./ui";
 import { elementLabel, type Updater } from "./common";
 
-export function ActionOrder({ project, update }: { project: Project; update: Updater }) {
+/** `rawProject` (optional): the project before loadouts; speed is then read-only for units whose loadout changes it. */
+export function ActionOrder({ project, update, rawProject }: { project: Project; update: Updater; rawProject?: Project }) {
   const [cycles, setCycles] = useState(3);
   const { rules, units, encounter } = project.battle;
   const roster = useMemo(
@@ -33,7 +34,9 @@ export function ActionOrder({ project, update }: { project: Project; update: Upd
                   <td>{r.def.name}{sharedDefs.has(r.id) && <span className="pill">×{roster.filter((x) => x.id === r.id).length}</span>}</td>
                   <td>{elementLabel(r.def.element)}</td>
                   <td className="r" style={{ width: 110 }}>
-                    <NumberField ariaLabel={`${r.def.name} 速度`} value={r.def.stats.spd ?? 0} min={1} onChange={(v) => update((p) => { const u = p.battle.units.find((x) => x.id === r.id); if (u && v > 0) u.stats.spd = v; })} />
+                    {rawProject && rawProject.battle.units.find((u) => u.id === r.id)?.stats.spd !== r.def.stats.spd ? (
+                      <span className="mono" title="已套用配裝，請在「配裝」調整">{fmt(r.def.stats.spd ?? 0, 1)}</span>
+                    ) : <NumberField ariaLabel={`${r.def.name} 速度`} value={r.def.stats.spd ?? 0} min={1} onChange={(v) => update((p) => { const u = p.battle.units.find((x) => x.id === r.id); if (u && v > 0) u.stats.spd = v; })} />}
                   </td>
                   <td className="r mono">{r.def.stats.spd ? fmt(rules.avBase / r.def.stats.spd, 2) : "—"}</td>
                 </tr>

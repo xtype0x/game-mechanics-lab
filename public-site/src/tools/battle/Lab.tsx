@@ -3,10 +3,14 @@ import { useState } from "react";
 import { ActionOrder } from "./ActionOrder";
 import { BatchSim } from "./BatchSim";
 import { CharacterEditor } from "./CharacterEditor";
-import { ErrorBox, Field, Section } from "./ui";
+import { EnemyPicker } from "./EnemyPicker";
+import { ErrorBox, Section } from "./ui";
 import { elementLabel, useBattleSetup, type Updater } from "./common";
 import { PresetMenu } from "./PresetMenu";
 import { MAX_ALLIES, applyPreset } from "./state";
+import { EquipPanel } from "./EquipPanel";
+import { sanitize } from "./equip";
+import type { EquipApi } from "./useEquip";
 
 interface Props {
   project: Project;
@@ -14,10 +18,12 @@ interface Props {
   onPlay: () => void;
   onReset: () => void;
   saved: boolean;
+  /** Loadouts and the project with them compiled in (used by the timeline, batch sim and play). */
+  equip: EquipApi;
 }
 
-export function Lab({ project, update, onPlay, onReset, saved }: Props) {
-  const { units, encounter, encounters } = project.battle;
+export function Lab({ project, update, onPlay, onReset, saved, equip }: Props) {
+  const { units, encounter } = project.battle;
   const unitOf = (id: string) => units.find((u) => u.id === id);
   const team = encounter.allies.map(unitOf).filter((u): u is UnitDef => !!u);
   const foes = [...new Set(encounter.enemies)].map(unitOf).filter((u): u is UnitDef => !!u);
@@ -25,10 +31,9 @@ export function Lab({ project, update, onPlay, onReset, saved }: Props) {
   const selected = [...team, ...foes].some((u) => u.id === sel) ? sel : team[0]?.id ?? "";
   const selUnit = unitOf(selected);
   const slotName = selUnit?.team === "ally" ? selUnit.name : undefined;
-  const { error } = useBattleSetup(project);
-  const preset = encounters.find((p) => p.enemies.join() === encounter.enemies.join())?.id ?? "custom";
+  const compiledError = useBattleSetup(equip.compiled.project).error;
+  const error = compiledError ?? (equip.compiled.problems.length ? "配裝有錯誤，請先修正：\n" + equip.compiled.problems.slice(0, 4).map((m) => "・" + m).join("\n") : null);
   const benched = units.filter((u) => u.team === "ally" && !encounter.allies.includes(u.id));
-  const nameOf = (id: string) => unitOf(id)?.name ?? id;
 
   return (
     <div className="lab-grid">
@@ -63,18 +68,7 @@ export function Lab({ project, update, onPlay, onReset, saved }: Props) {
               )}
             </div>
           </div>
-          <Field label="敵方">
-            <select
-              value={preset}
-              onChange={(e) => {
-                const p = encounters.find((x) => x.id === e.target.value);
-                if (p) update((d) => { d.battle.encounter.enemies = [...p.enemies]; });
-              }}
-            >
-              {encounters.map((p) => <option key={p.id} value={p.id}>{p.name}：{p.enemies.map(nameOf).join("、")}</option>)}
-              {preset === "custom" && <option value="custom">自訂：{encounter.enemies.map(nameOf).join("、")}</option>}
-            </select>
-          </Field>
+          <EnemyPicker project={project} update={update} />
           <div className="field">
             <span className="field-label">要調整敵人的話，點這裡</span>
             <div className="chips">
@@ -97,6 +91,12 @@ export function Lab({ project, update, onPlay, onReset, saved }: Props) {
         <Section title="角色編輯">
           <CharacterEditor project={project} update={update} unitId={selected} />
         </Section>
+
+        {selUnit?.team === "ally" && equip.compiled.units[selUnit.id] && (
+          <Section title={`配裝：${selUnit.name}`}>
+            <EquipPanel unit={selUnit} sel={sanitize(equip.store[selUnit.id], selUnit)} compiled={equip.compiled.units[selUnit.id]!} onChange={(s) => equip.setSel(selUnit.id, s)} />
+          </Section>
+        )}
       </div>
 
       <div className="col col-results">
@@ -109,8 +109,8 @@ export function Lab({ project, update, onPlay, onReset, saved }: Props) {
           </div>
           <p className="muted small">{saved ? "修改會自動存在這個瀏覽器（localStorage）。" : "這個瀏覽器無法儲存，重新整理後修改會消失。"}</p>
         </Section>
-        <ActionOrder project={project} update={update} />
-        <BatchSim project={project} update={update} />
+        <ActionOrder project={equip.compiled.project} rawProject={project} update={update} />
+        <BatchSim project={equip.compiled.project} update={update} />
       </div>
     </div>
   );
