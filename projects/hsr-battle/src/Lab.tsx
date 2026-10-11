@@ -5,7 +5,7 @@ import { EnemyPicker } from "./EnemyPicker";
 import { PresetMenu } from "./PresetMenu";
 import { MAX_ALLIES, applyPreset } from "./state";
 import { EquipPanel } from "./EquipPanel";
-import { sanitize } from "./equip";
+import { sanitize } from "@gml/data-hsr/equipment";
 import type { EquipApi } from "./useEquip";
 
 interface Props {

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@gml/core": "*",
+    "@gml/data-hsr": "*",
     "@gml/gacha-sim": "*",
     "@gml/hsr-battle": "*",
     "@gml/ui": "*",

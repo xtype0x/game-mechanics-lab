@@ -1,0 +1,16 @@
+{
+  "name": "@gml/data-hsr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./presets": "./src/presets.ts",
+    "./enemies": "./src/enemies.ts",
+    "./equipment": "./src/equipment.ts",
+    "./characters": "./src/characters.ts",
+    "./generated/*": "./src/generated/*"
+  },
+  "dependencies": {
+    "@gml/core": "*"
+  }
+}

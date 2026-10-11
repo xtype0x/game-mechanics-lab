@@ -32,7 +32,7 @@ npm run site:dev
 - 首頁：原創二遊主視覺、青金配色，以宣傳官網語彙致敬與幽默文案介紹遊戲機制工具。
 - 網站以「遊戲」為主軸（2026-10-11 由工具分類改版）。導覽（hash 路由）：`#/` 首頁、`#/games` 遊戲一覽、`#/games/<id>` 各遊戲的研究基地（工具卡片、資料來源與免責聲明）、`#/games/hsr/coverage` 星穹鐵道角色機制拆解進度、`#/tools` 跨遊戲工具、`#/about`、`#/privacy`；舊的 `#/lab` 會自動轉到 `#/tools`，舊的 `battle/index.html` 是轉址頁，會跳到 `hsr/battle/index.html`。
 - 新增遊戲：在 `src/content/games.ts` 的 `games` 陣列加一筆（順序＝研究深度，其次熱門程度；`id` 要與抽卡模擬器目錄 `projects/gacha-sim/src/catalog/games.ts` 一致，抽卡深連結才會生效）。`src/content/experiments.ts` 已移除，併入 `games.ts`。
-- 頁面檔：`src/pages/Games.tsx`（一覽與研究基地）、`src/pages/Coverage.tsx`（進度頁，以動態 import 載入 `@gml/hsr-battle/presets/hsr.generated.json`，首頁 JS 不增加）、`src/pages/shared.tsx`。
+- 頁面檔：`src/pages/Games.tsx`（一覽與研究基地）、`src/pages/Coverage.tsx`（進度頁，以動態 import 載入 `@gml/data-hsr/generated/presets.generated.json`，首頁 JS 不增加）、`src/pages/shared.tsx`。
 - 專案頁面：抽卡模擬器 `gacha/`（[projects/gacha-sim](../../projects/gacha-sim/README.md)，支援 `?game=<id>` 預選遊戲），以及星穹鐵道戰鬥研究室 `hsr/battle/`（[projects/hsr-battle](../../projects/hsr-battle/README.md)）。
 - 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。

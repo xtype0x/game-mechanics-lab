@@ -1,8 +1,8 @@
 import { applyLoadout, validateLoadout, type EquipmentPiece, type Loadout, type Project, type SetDef, type StatBonus, type UnitDef } from "@gml/core";
-import raw from "./presets/hsr-equipment.generated.json";
-import { hsrGroup } from "./presets/hsr";
+import raw from "./generated/equipment.generated.json";
+import { hsrGroup } from "./presets";
 
-/** Pure equipment logic (no React): selections -> core Loadout (docs/spec/loadout.md), templates, storage. */
+/** Pure equipment logic (no React, no storage): selections -> core Loadout (docs/spec/loadout.md), templates. */
 
 export interface HsrBonus { key: string; op: "flat" | "pct"; value: number; element?: string }
 export interface HsrLightCone { id: string; name: string; rarity: number; path: string; base: { hp: number; atk: number; def: number }; ranks: { rank: number; desc: string; bonuses: HsrBonus[] }[]; conditional: boolean }
@@ -193,22 +193,6 @@ export function compileProject(project: Project, store: LoadoutStore): CompiledP
     return c.unit;
   });
   return { project: out, units, problems };
-}
-
-export function loadStore(): LoadoutStore {
-  try {
-    const raw0 = localStorage.getItem(STORE_KEY);
-    const x = raw0 ? (JSON.parse(raw0) as unknown) : null;
-    if (x && typeof x === "object") return x as LoadoutStore;
-  } catch { /* storage unavailable or corrupt */ }
-  return {};
-}
-const STORE_KEY = "ggt.site.battle.loadouts.v1";
-export function saveStore(s: LoadoutStore): void {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch { /* ignore */ }
-}
-export function clearStore(): void {
-  try { localStorage.removeItem(STORE_KEY); } catch { /* ignore */ }
 }
 
 // ---------- generic templates ----------

@@ -5,7 +5,7 @@ import {
   DATA, MAX_SUB_ROLLS_EACH, MAX_SUB_ROLLS_TOTAL, PATH_NAME, PERCENT_KEYS, QUALITY_LABEL, SLOTS, SLOT_LABEL, SUMMARY_KEYS, TEMPLATE_LABEL,
   applyTemplate, defaultSel, findLightCone, findSet, hsrInfo, mainDef, slotKind, statLabel, subDef, subRollTotal, subValue,
   type CompiledUnit, type LoadoutSel, type RelicSlot, type SubSel, type TemplateId,
-} from "./equip";
+} from "@gml/data-hsr/equipment";
 import { NumberField, elementLabel, fmt } from "@gml/ui";
 
 const showValue = (key: string, op: "flat" | "pct", v: number) => (op === "pct" || PERCENT_KEYS.has(key) ? `${fmt(v * 100, 2)}%` : fmt(v, 1));

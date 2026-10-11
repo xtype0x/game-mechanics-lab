@@ -2,7 +2,7 @@ import {
   DEFAULT_STATUSES, DEFAULT_UNITS, SHOWCASE_ALLIES, SHOWCASE_STATUSES, SHOWCASE_V07_ALLIES, SHOWCASE_V07_STATUSES,
   type StatusDef, type UnitDef,
 } from "@gml/core";
-import type { Preset, PresetGroup } from "./types";
+import type { Preset, PresetGroup } from "@gml/data-hsr/presets";
 
 const statusPool: StatusDef[] = [...DEFAULT_STATUSES, ...SHOWCASE_STATUSES, ...SHOWCASE_V07_STATUSES];
 

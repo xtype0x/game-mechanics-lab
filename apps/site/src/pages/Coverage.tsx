@@ -14,7 +14,7 @@ export default function Coverage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   // Dynamic import keeps the ~half-megabyte character data out of the home page bundle.
-  useEffect(() => { let alive = true; import('@gml/hsr-battle/presets/hsr.generated.json').then(m => { if (alive) setRows((m.default as { presets: Row[] }).presets); }); return () => { alive = false; }; }, []);
+  useEffect(() => { let alive = true; import('@gml/data-hsr/generated/presets.generated.json').then(m => { if (alive) setRows((m.default as { presets: Row[] }).presets); }); return () => { alive = false; }; }, []);
   const counts = useMemo(() => {
     const c: Record<Kind, number> = { ready: 0, pending: 0, missing: 0 };
     rows?.forEach(r => { c[kindOf(r)]++; });

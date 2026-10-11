@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Validates every available preset in hsr.generated.json with the core's own code (loaded as TypeScript through
-// vite's SSR loader, the same packages/core source the battle lab bundles):
+// Validates every available preset in presets.generated.json with the core's own code (loaded as TypeScript through
+// vite's SSR loader, the same packages/core source the site bundles):
 //   - the preset is placed into a default project's first ally slot (like PresetMenu does) and validateBattle
 //     must report no errors for the whole battle config;
 //   - one auto-battle per preset against the default encounter must run to an end without throwing.
@@ -11,13 +11,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const project = join(root, "projects/hsr-battle");
-const generated = JSON.parse(readFileSync(process.env.HSR_PRESETS_OUT ?? join(project, "src/presets/hsr.generated.json"), "utf8"));
+const dataDir = join(root, "packages/data-hsr");
+const generated = JSON.parse(readFileSync(process.env.HSR_PRESETS_OUT ?? join(dataDir, "src/generated/presets.generated.json"), "utf8"));
 
-const req = createRequire(join(project, "package.json"));
+const req = createRequire(join(dataDir, "package.json"));
 const viteEntry = (() => { try { return req.resolve("vite"); } catch { return createRequire(join(root, "package.json")).resolve("vite"); } })();
 const { createServer } = await import(pathToFileURL(viteEntry).href);
-const server = await createServer({ root: project, configFile: false, appType: "custom", logLevel: "error", server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] } });
+const server = await createServer({ root: dataDir, configFile: false, appType: "custom", logLevel: "error", server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] } });
 
 let problems = 0;
 try {

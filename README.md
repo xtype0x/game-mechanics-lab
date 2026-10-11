@@ -16,6 +16,7 @@
 | 位置 | 內容 |
 |---|---|
 | `packages/core` | 規則核心（純 TypeScript，附規格與測試向量） |
+| `packages/data-hsr` | 星穹鐵道資料（角色成長表、技能參數、敵人、裝備） |
 | `packages/ui` | 共用 React 元件（戰鬥編輯器、模擬器、動畫戰鬥畫面） |
 | `projects/<id>` | 小專案：一個工具或 DEMO 一個資料夾（目前有 `gacha-sim`、`hsr-battle`） |
 | `apps/site` | 公開網站外殼，自動替每個小專案產生頁面 |

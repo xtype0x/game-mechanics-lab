@@ -6,6 +6,7 @@
 | 層 | 位置 | 內容 |
 |---|---|---|
 | 共用函式庫 | `packages/core`（`@gml/core`） | 規則核心。**純 TypeScript，禁止 DOM／Node API**（tsconfig 只引入 ES2022 lib）。只寫純函式：資料進、資料出。 |
+| | `packages/data-hsr`（`@gml/data-hsr`） | 星穹鐵道資料（角色、成長表、敵人、裝備）與轉成核心資料的純函式。依模組分開匯入（`/presets`、`/characters`、`/enemies`、`/equipment`），用不到的資料不會被打包進頁面。不含 React，也不讀寫瀏覽器儲存。 |
 | | `packages/ui`（`@gml/ui`） | 共用 React 元件：基礎元件、戰鬥編輯器與模擬器、動畫戰鬥畫面（`@gml/ui/scene.css`、`demo.css`），以及小專案掛載契約 `MountProject`／`ProjectHost`。 |
 | 小專案 | `projects/<id>`（`@gml/<id>`） | 一個工具或 DEMO 一個資料夾，例如 `gacha-sim`、`hsr-battle`。 |
 | 宿主 | `apps/site`（`@gml/site`） | 公開網站外殼：首頁、遊戲頁，並依 `project.json` 自動產生每個小專案的頁面。 |
@@ -16,17 +17,18 @@
 
 ### 依賴方向（只能往下依賴，不能反向，也不能橫向）
 ```
-apps/site ──► projects/* ──► packages/ui ──► packages/core
-apps/console ───────────────► packages/ui ──► packages/core
+apps/site ──► projects/* ──► packages/ui ──────► packages/core
+                         └─► packages/data-* ─► packages/core
+apps/console ───────────────► packages/ui ──────► packages/core
 ```
 - 小專案**不可** import 其他小專案或 `apps/*`；`apps/console` 不 import 小專案。
-- 跨套件只能用套件名稱與 `package.json` 的 `exports`（例如 `@gml/hsr-battle/presets/*`），**不可**用相對路徑伸進別的套件的 `src/`。
+- 跨套件只能用套件名稱與 `package.json` 的 `exports`（例如 `@gml/data-hsr/presets`），**不可**用相對路徑伸進別的套件的 `src/`。
 - 依賴一律宣告成 workspace 依賴（`"@gml/core": "*"`）。**不要**用 Vite alias 或 tsconfig `paths`，也**不可**複製別的套件的程式碼。
-- `data/` 不進網站與小專案；研究資料只透過 `scripts/` 產生 `*.generated.json`，放進負責的小專案。
+- `data/` 不進網站與小專案；研究資料只透過 `scripts/` 產生 `*.generated.json`，放進該遊戲的資料套件（例如 `packages/data-hsr/src/generated/`）。資料套件只依賴 core；瀏覽器儲存和畫面留在小專案。
 
 ## 機制與模組共用（避免日後大重構）
 1. **遊戲機制一律寫在 `packages/core`**，附規格與向量，即使目前只有一個專案用到。小專案只放畫面、內容資料與組裝方式。新 DEMO 要「混用機制」時，應該是組合 core 既有的模組加上資料，而不是在專案裡另寫一套規則。
-2. **兩處需要就提升（rule of two）**：程式先寫在小專案裡；當第二個專案或 App 也需要時，在**同一個變更**中搬到 `packages/`。規則邏輯搬到 `core`；React 元件搬到 `ui`；某款遊戲的共用資料開新套件 `packages/data-<game>`（例如之後的 `data-hsr`）。不准複製一份過去，也不准跨專案 import。
+2. **兩處需要就提升（rule of two）**：程式先寫在小專案裡；當第二個專案或 App 也需要時，在**同一個變更**中搬到 `packages/`。規則邏輯搬到 `core`；React 元件搬到 `ui`；某款遊戲的共用資料放進 `packages/data-<game>`（已有 `data-hsr`）。不准複製一份過去，也不准跨專案 import。
 3. **共用元件不帶宿主專屬的版面或導覽**。差異用 props、插槽（例如 `before`、`actions`）或 context（例如 `RefLinkProvider`）處理，宿主自己的外層包裝留在宿主裡。範例：console 的 `tools/battle/CharacterEditor.tsx` 包住共用的單一角色編輯器。
 4. **改 packages 的公開介面時，同一個變更要修好所有使用者**。`npm run typecheck` 會檢查每個工作區。
 5. 共用元件只用 class 名稱，編輯器的樣式由各宿主或專案自己的 CSS 負責；只有動畫戰鬥畫面附帶自己的 CSS。

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Builds projects/hsr-battle/src/presets/hsr.generated.json from the local HSR reference pack and the
+// Builds packages/data-hsr/src/generated/presets.generated.json (Lv80 units) and characters.generated.json (growth
+// tables + every skill level) from the local HSR reference pack and the
 // kit-coverage catalog. No dependencies; output is deterministic (no timestamps).
 //   node scripts/build-hsr-presets.mjs
 import { spawnSync } from "node:child_process";
@@ -12,7 +13,8 @@ const pack = JSON.parse(readFileSync(join(root, "data/reference/hsr/pack.json"),
 const catalog = JSON.parse(readFileSync(join(root, "docs/research/hsr-kit/catalog.json"), "utf8"));
 const KITS_DIR = process.env.HSR_KITS_DIR ?? join(root, "data/reference/hsr/kits"); // env overrides exist for testing the generator
 const implemented = new Set(JSON.parse(readFileSync(join(KITS_DIR, "implemented.json"), "utf8")).modules);
-const OUT = process.env.HSR_PRESETS_OUT ?? join(root, "projects/hsr-battle/src/presets/hsr.generated.json");
+const OUT = process.env.HSR_PRESETS_OUT ?? join(root, "packages/data-hsr/src/generated/presets.generated.json");
+const CHAR_OUT = process.env.HSR_CHARACTERS_OUT ?? join(root, "packages/data-hsr/src/generated/characters.generated.json");
 
 const LEVEL = 80;
 const LV = { basic: 6, skill: 10, ultimate: 10, talent: 10 };
@@ -189,6 +191,21 @@ const out = {
 };
 writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");
 console.log(`wrote ${presets.length} presets (${presets.filter((p) => p.available).length} available) -> ${OUT}`);
+
+// ---- raw character data (growth tables, every skill level) for research across levels: @gml/data-hsr/characters ----
+const characters = sorted.map((ch) => ({
+  id: ch.id, name: ch.name, displayName: displayName(ch), rarity: ch.rarity, path: ch.path, element: ch.element, maxEnergy: ch.maxEnergy,
+  promotions: ch.promotions,
+  skills: ch.skills.map(({ id, name, type, typeText, maxLevel, desc, params }) => ({ id, name, type, typeText, maxLevel, desc, params })),
+}));
+const charOut = {
+  source: { text: out.source.text, version: rs.version },
+  presetLevel: LEVEL,
+  presetSkillLevels: LV,
+  characters,
+};
+writeFileSync(CHAR_OUT, JSON.stringify(charOut) + "\n");
+console.log(`wrote ${characters.length} characters (growth + skill params) -> ${CHAR_OUT}`);
 
 // ---- validation: kit file problems first, then the core validator + an auto-battle per available preset ----
 if (kitErrors.length) {

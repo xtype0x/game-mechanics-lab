@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const project = join(root, "projects/hsr-battle");
+const dataDir = join(root, "packages/data-hsr");
 const args = process.argv.slice(2);
 const ratesArg = args.find((a) => a.startsWith("--rates"));
 const RUNS = ratesArg ? Number(ratesArg.split("=")[1] ?? 200) : 0;
@@ -24,17 +24,17 @@ const ONLY_LEVELS = opt("levels")?.map(Number);
 const ONLY_IDS = opt("only");
 const TEAM = (process.env.HSR_TEAM ?? "hsr-1209,hsr-1003,hsr-1107,hsr-1104").split(",");
 
-const req = createRequire(join(project, "package.json"));
+const req = createRequire(join(dataDir, "package.json"));
 const viteEntry = (() => { try { return req.resolve("vite"); } catch { return createRequire(join(root, "package.json")).resolve("vite"); } })();
 const { createServer } = await import(pathToFileURL(viteEntry).href);
-const server = await createServer({ root: project, configFile: false, appType: "custom", logLevel: "error", server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] } });
+const server = await createServer({ root: dataDir, configFile: false, appType: "custom", logLevel: "error", server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] } });
 
 const clone = (x) => JSON.parse(JSON.stringify(x));
 let problems = 0;
 try {
   const core = await server.ssrLoadModule(join(root, "packages/core/src/index.ts"));
-  const enemies = await server.ssrLoadModule("/src/presets/hsr-enemies.ts");
-  const chars = JSON.parse(readFileSync(join(project, "src/presets/hsr.generated.json"), "utf8"));
+  const enemies = await server.ssrLoadModule("/src/enemies.ts");
+  const chars = JSON.parse(readFileSync(join(dataDir, "src/generated/presets.generated.json"), "utf8"));
 
   // Same starting point as the lab (state.ts freshProject).
   const fresh = () => {

@@ -1,6 +1,7 @@
 import type { Project } from "@gml/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { clearStore, compileProject, loadStore, saveStore, type LoadoutSel, type LoadoutStore } from "./equip";
+import { compileProject, type LoadoutSel, type LoadoutStore } from "@gml/data-hsr/equipment";
+import { clearStore, loadStore, saveStore } from "./loadoutStorage";
 
 /** Per-unit loadouts (kept apart from the project) and the project with every loadout compiled in. */
 export function useEquip(project: Project) {
