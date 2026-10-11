@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Builds apps/site/src/tools/battle/presets/hsr.generated.json from the local HSR reference pack and the
+// Builds projects/hsr-battle/src/presets/hsr.generated.json from the local HSR reference pack and the
 // kit-coverage catalog. No dependencies; output is deterministic (no timestamps).
 //   node scripts/build-hsr-presets.mjs
 import { spawnSync } from "node:child_process";
@@ -12,7 +12,7 @@ const pack = JSON.parse(readFileSync(join(root, "data/reference/hsr/pack.json"),
 const catalog = JSON.parse(readFileSync(join(root, "docs/research/hsr-kit/catalog.json"), "utf8"));
 const KITS_DIR = process.env.HSR_KITS_DIR ?? join(root, "data/reference/hsr/kits"); // env overrides exist for testing the generator
 const implemented = new Set(JSON.parse(readFileSync(join(KITS_DIR, "implemented.json"), "utf8")).modules);
-const OUT = process.env.HSR_PRESETS_OUT ?? join(root, "apps/site/src/tools/battle/presets/hsr.generated.json");
+const OUT = process.env.HSR_PRESETS_OUT ?? join(root, "projects/hsr-battle/src/presets/hsr.generated.json");
 
 const LEVEL = 80;
 const LV = { basic: 6, skill: 10, ultimate: 10, talent: 10 };

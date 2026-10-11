@@ -1,7 +1,7 @@
 import { Gacha } from "@gml/core";
 import { describe, expect, it } from "vitest";
-import { GAMES, buildModel } from "../../src/tools/gacha/catalog/games";
-import { decodeRules, encodeRules, parseRules, rulesInHash, serializeRules } from "../../src/tools/gacha/share";
+import { GAMES, buildModel } from "../src/catalog/games";
+import { decodeRules, encodeRules, parseRules, rulesInHash, serializeRules } from "../src/share";
 
 const hsr = () => { const g = GAMES.find((x) => x.id === "hsr")!; return buildModel(g, g.types[0]!); };
 const target: Gacha.Target = { tier: "top", mode: "featured", copies: 2 };

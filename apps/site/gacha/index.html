@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Generated from projects/gacha-sim/project.json by apps/site/build/pages.mjs; do not edit. -->
 <html lang="zh-Hant-TW">
   <head>
     <meta charset="UTF-8" />
@@ -9,6 +10,9 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/tools/gacha/main.tsx"></script>
+    <script type="module">
+      import { mount } from "@gml/gacha-sim";
+      mount(document.getElementById("root"), {"back":{"href":"../index.html#/tools","label":"遊戲機制研究室・跨遊戲工具"}});
+    </script>
   </body>
 </html>

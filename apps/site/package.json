@@ -7,13 +7,19 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "pages": "node build/pages.mjs",
+    "predev": "node build/pages.mjs",
     "dev": "vite --host 127.0.0.1 --port 5180 --strictPort",
+    "prebuild": "node build/pages.mjs",
     "build": "tsc --noEmit && vite build",
-    "build:offline": "tsc --noEmit && vite build --config vite.offline.config.ts && vite build --config vite.offline.config.ts --mode gacha && vite build --config vite.offline.config.ts --mode hsr-battle && vite build --config vite.offline.config.ts --mode battle",
+    "prebuild:offline": "node build/pages.mjs",
+    "build:offline": "tsc --noEmit && node build/offline.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5180 --strictPort"
   },
   "dependencies": {
     "@gml/core": "*",
+    "@gml/gacha-sim": "*",
+    "@gml/hsr-battle": "*",
     "@gml/ui": "*",
     "react": "19.3.0",
     "react-dom": "19.3.0"

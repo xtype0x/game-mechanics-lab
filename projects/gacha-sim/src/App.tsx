@@ -1,4 +1,5 @@
 import { Gacha } from "@gml/core";
+import type { ProjectHost } from "@gml/ui";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { GAMES } from "./catalog/games";
 import { useLiveBanners } from "./catalog/useLive";
@@ -15,7 +16,7 @@ import { analyze, fromCatalog, fromPreset, fromShared, hasSavedState, loadState,
 
 type View = "gacha" | "lab";
 
-export function App() {
+export function App({ host = {} }: { host?: ProjectHost }) {
   const { data: live, status, refresh } = useLiveBanners();
   const [s, setS] = useState<SimState>(() => {
     // Deep link from a game hub (?game=<id>): pre-selects that game on this load only. A shared-rules link (#rules=) wins.
@@ -64,7 +65,7 @@ export function App() {
     <div className="app">
       <header className="top">
         <div className="brand">
-          <a className="back-link" href="../index.html#/tools">← 遊戲機制研究室・跨遊戲工具</a>
+          {host.back && <a className="back-link" href={host.back.href}>← {host.back.label}</a>}
           <h1>抽卡模擬器</h1>
           <p className="tagline">選一款遊戲直接抽，或到「設定與分析」調整規則、精確計算要抽幾抽與花費。</p>
         </div>

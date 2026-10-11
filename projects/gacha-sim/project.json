@@ -1,0 +1,7 @@
+{
+  "id": "gacha-sim",
+  "title": "抽卡模擬器",
+  "description": "可調整規則的抽卡模擬器：保底、限定、天井與累計保底，精確計算抽數分布與花費。",
+  "path": "gacha",
+  "back": { "route": "#/tools", "label": "遊戲機制研究室・跨遊戲工具" }
+}

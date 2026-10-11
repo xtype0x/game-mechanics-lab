@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Builds apps/site/src/tools/battle/presets/hsr-equipment.generated.json from the pinned StarRailRes snapshot
+// Builds projects/hsr-battle/src/presets/hsr-equipment.generated.json from the pinned StarRailRes snapshot
 // (data/reference/hsr/latest.json -> snapshots/<id>/cht). No dependencies; output is deterministic (no timestamps).
 //   node scripts/build-hsr-equipment.mjs
 //
@@ -42,7 +42,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = process.env.HSR_EQUIPMENT_OUT ?? join(root, "apps/site/src/tools/battle/presets/hsr-equipment.generated.json");
+const OUT = process.env.HSR_EQUIPMENT_OUT ?? join(root, "projects/hsr-battle/src/presets/hsr-equipment.generated.json");
 
 const latest = JSON.parse(readFileSync(join(root, "data/reference/hsr/latest.json"), "utf8"));
 const dir = join(root, "data/reference/hsr/snapshots", latest.snapshotId, "cht");

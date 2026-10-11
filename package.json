@@ -4,18 +4,19 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "projects/*"
   ],
   "scripts": {
     "dev": "npm run dev -w @gml/console",
     "build": "npm run build -w @gml/console",
     "test": "vitest run",
-    "typecheck": "tsc -p packages/core && tsc -p packages/ui && tsc -p apps/console --noEmit && tsc -p apps/site",
+    "typecheck": "node scripts/typecheck.mjs",
     "vectors": "node scripts/update-vectors.mjs",
     "site:dev": "npm run dev -w @gml/site",
     "site:build": "npm run build -w @gml/site",
     "site:build:offline": "npm run build:offline -w @gml/site",
-    "site:snapshot": "node apps/site/scripts/update-gacha-snapshot.ts"
+    "gacha:snapshot": "npm run snapshot -w @gml/gacha-sim"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

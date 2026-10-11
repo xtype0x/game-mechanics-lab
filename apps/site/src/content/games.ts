@@ -1,6 +1,6 @@
 /**
  * Games the lab covers. To add a game: append an entry (order = how much research exists, then popularity).
- * `id` matches the gacha simulator catalog (src/tools/gacha/catalog/games.ts) so `gacha/index.html?game=<id>` works.
+ * `id` matches the gacha simulator catalog (projects/gacha-sim/src/catalog/games.ts) so `gacha/index.html?game=<id>` works.
  * Tool hrefs are relative to the site root (index.html); routes starting with `#` are in-page hash routes.
  */
 export type GameStatus = 'researching' | 'gachaOnly' | 'planned';

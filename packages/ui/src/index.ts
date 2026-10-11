@@ -3,6 +3,7 @@
 // import "@gml/ui/scene.css" and "@gml/ui/demo.css" once in the page that shows <BattleScene>.
 
 export * from "./base";
+export type { MountProject, ProjectHost } from "./host";
 
 export * from "./battle/common";
 export * from "./battle/elements";
