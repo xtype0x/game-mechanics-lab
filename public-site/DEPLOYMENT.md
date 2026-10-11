@@ -1,4 +1,4 @@
-# gacha-game-tool：怎麼上線與費用規劃
+# 遊戲機制研究室（game-mechanics-lab）：怎麼上線與費用規劃
 
 查核日期：2026-10-10。以下依當日官方文件；平台限制與方案之後可能調整。
 
@@ -25,7 +25,7 @@ Cloudflare 靜態資源請求免費且不限次數，這不代表資料庫或 AP
 
 ## 推薦：Cloudflare Pages 上線步驟
 
-1. 把 `public-site/` 的內容移到獨立 repo 根目錄，建議名稱 `gacha-game-tool-site`。保留 lockfile，不帶外層研究資料與 `.git/`。
+1. 把 `public-site/` 的內容移到獨立 repo 根目錄，建議名稱 `game-mechanics-lab-site`。保留 lockfile，不帶外層研究資料與 `.git/`。
 2. 執行 `npm ci`、`npm run build`，確認成功後推送到 GitHub。
 3. 在 Cloudflare Pages 建立專案，選 Git 整合，連接這個新 repo。
 4. 設定正式分支為你的預設分支。建置命令 `npm run build`、輸出資料夾 `dist`；新 repo 根目錄就是網站根目錄。Node 版本選已驗證的 24。

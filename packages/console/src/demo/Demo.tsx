@@ -117,7 +117,7 @@ function Title({ project, onStart, onExit }: { project: Project; onStart: () => 
       </div>
       <div className="logo">
         <b>星火迴響</b>
-        <span>Gacha Game Tool ・ 回合制戰鬥試玩 DEMO</span>
+        <span>Game Mechanics Lab ・ 回合制戰鬥試玩 DEMO</span>
       </div>
       <div className="title-actions">
         <button className="big-btn" onClick={onStart}>開始遊戲</button>

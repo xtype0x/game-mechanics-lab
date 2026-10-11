@@ -114,7 +114,7 @@ export function App() {
       <header className="topbar">
         <button className="btn icon nav-toggle" aria-label="機制庫" onClick={() => setNavOpen((o) => !o)}>☰</button>
         <div className="brand">
-          <strong>Gacha Game Tool</strong>
+          <strong>Game Mechanics Lab</strong>
           <span>機制模擬主控台</span>
         </div>
         <div className="tool-title">

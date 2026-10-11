@@ -96,7 +96,7 @@ export function App() {
         </>
       )}
       <footer className="foot">
-        <p>計算核心：Gacha Game Tool 抽卡規則 {Gacha.RULES_VERSION}（開放規格與測試向量）。遊戲名稱與角色名稱只用來說明卡池內容，著作權屬各遊戲公司；本工具與任何遊戲公司無關。規則依公開資料整理，可能與實際遊戲有出入；儲值價格為範例。</p>
+        <p>計算核心：Game Mechanics Lab 抽卡規則 {Gacha.RULES_VERSION}（開放規格與測試向量）。遊戲名稱與角色名稱只用來說明卡池內容，著作權屬各遊戲公司；本工具與任何遊戲公司無關。規則依公開資料整理，可能與實際遊戲有出入；儲值價格為範例。</p>
       </footer>
     </div>
   );

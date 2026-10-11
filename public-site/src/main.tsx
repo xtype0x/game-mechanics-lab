@@ -12,7 +12,7 @@ function Gamepad() {
   return <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 19h24c8 0 12 7 14 22 1 8-4 12-10 7l-7-6H23l-7 6C10 53 5 49 6 41c2-15 6-22 14-22Z"/><path d="M21 26v12m-6-6h12" className="pad-lines"/><circle cx="43" cy="28" r="3" className="pad-dot"/><circle cx="49" cy="35" r="3" className="pad-dot"/></svg>;
 }
 function Logo() {
-  return <a className="logo" href="#/" aria-label="gacha-game-tool 首頁"><span className="logo-icon"><Gamepad/></span><span>gacha-game-tool<small>個人遊戲機制工具計畫</small></span></a>;
+  return <a className="logo" href="#/" aria-label="遊戲機制研究室 首頁"><span className="logo-icon"><Gamepad/></span><span>遊戲機制研究室<small>game-mechanics-lab</small></span></a>;
 }
 function Arrow() { return <span aria-hidden="true">↗</span>; }
 function ExperimentCards() {
@@ -63,7 +63,7 @@ function PageIntro({ eyebrow, title, text }: { eyebrow: string; title: string; t
   return <div className="page-intro"><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{text}</p></div>;
 }
 function About() {
-  return <><PageIntro eyebrow="ABOUT THE PROJECT / 計畫的起點" title="遊戲還可以有更多玩法。" text="gacha-game-tool，一個從台灣出發的個人遊戲機制工具計畫。"/><div className="about-layout"><aside className="about-marginal"><span>PLAYER'S NOTE</span><strong>保持好奇。<br/>試著動手。<br/>讓點子發芽。</strong><small>給喜歡玩遊戲，<br/>也喜歡做遊戲的你。</small></aside><article className="prose project-story"><h2>為什麼做這個計畫？</h2>{projectStory.map(paragraph => <p key={paragraph}>{paragraph}</p>)}<blockquote>有更多值得期待的作品，<br/>也有更多從沒玩過的玩法。</blockquote><h2>工具會怎麼做？</h2><p>每個工具都會說明適用範圍與限制。工具裡的數值是模擬用的假設，不代表任何特定遊戲的官方設定。</p><a className="button primary" href="#/lab">進來玩玩規則 <Arrow/></a></article></div></>;
+  return <><PageIntro eyebrow="ABOUT THE PROJECT / 計畫的起點" title="遊戲還可以有更多玩法。" text="遊戲機制研究室（game-mechanics-lab），一個從台灣出發、研究熱門遊戲機制的個人計畫。"/><div className="about-layout"><aside className="about-marginal"><span>PLAYER'S NOTE</span><strong>保持好奇。<br/>試著動手。<br/>讓點子發芽。</strong><small>給喜歡玩遊戲，<br/>也喜歡做遊戲的你。</small></aside><article className="prose project-story"><h2>為什麼做這個計畫？</h2>{projectStory.map(paragraph => <p key={paragraph}>{paragraph}</p>)}<blockquote>有更多值得期待的作品，<br/>也有更多從沒玩過的玩法。</blockquote><h2>工具會怎麼做？</h2><p>每個工具都會說明適用範圍與限制。工具裡的數值是模擬用的假設，不代表任何特定遊戲的官方設定。</p><a className="button primary" href="#/lab">進來玩玩規則 <Arrow/></a></article></div></>;
 }
 function Privacy() {
   return <><PageIntro eyebrow="YOUR DATA" title="資料與使用說明" text="玩得輕鬆，也知道自己的資料放在哪裡。"/><div className="prose"><h2>網站本身</h2><p>網站沒有帳號、分析追蹤或資料上傳功能。</p><h2>抽卡模擬器</h2><p>模擬設定與分享規則都只存在你的瀏覽器本機（localStorage），網址的分享連結也只在你的瀏覽器中產生與解讀。清除瀏覽器資料就會消失。</p><p>開啟模擬器時，會向公開來源讀取近期卡池資料（api.ennead.cc 與 SchaleDB）。這些請求不含個人資料，但會讓來源看到你的 IP 位址，與一般瀏覽網頁相同。</p><h2>星穹鐵道戰鬥研究室</h2><p>你選的隊伍、敵人、配裝與修改過的角色數值、技能，只存在你的瀏覽器本機（localStorage），不會上傳；按「重設」即可清除並回到範本。這個頁面不會向外部讀取資料。</p><h2>工具的結果怎麼看？</h2><p>工具會標示假設與限制。簡化的範例用來理解規則，實際遊戲仍可能包含尚未建模的條件。這是一個個人的開發與研究計畫。</p></div></>;
@@ -76,7 +76,7 @@ function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  useEffect(() => { document.title = `${pages[path] ?? '找不到頁面'} — gacha-game-tool`; }, [path]);
+  useEffect(() => { document.title = `${pages[path] ?? '找不到頁面'} — 遊戲機制研究室`; }, [path]);
   return <><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); main.current?.focus(); }}>跳至內容</a><header className="header"><Logo/><nav aria-label="主要導覽">{['/', '/lab', '/about'].map(route => <a key={route} href={`#${route}`} aria-current={path === route || (route === '/lab' && path.startsWith('/lab')) ? 'page' : undefined}>{pages[route]}</a>)}</nav><a className="header-cta" href="#/lab">立即開玩 <Arrow/></a></header><main id="main-content" ref={main} tabIndex={-1} className={path === '/' ? 'home-main' : undefined}>{path === '/' ? <Home/> : path === '/lab' ? <><PageIntro eyebrow="PICK YOUR TOOL" title="工具遊樂場" text="找個好奇的機制，動手玩玩。"/><ToolLaunch/></> : path === '/about' ? <About/> : path === '/privacy' ? <Privacy/> : <><PageIntro eyebrow="404" title="這關還沒做出來！" text="先回首頁找個工具玩玩吧。"/><a className="button primary" href="#/">回首頁 →</a></>}</main><footer><div><Logo/><p>從台灣出發，歡迎全世界的玩家與開發者。</p><p className="footer-homage">玩家自製的工具計畫 · 原創視覺與二遊官網語彙致敬</p></div><div className="footer-links"><a href="#/about">關於計畫</a><a href="#/privacy">資料與使用說明</a><span>持續開發中 · 2026</span></div></footer></>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);

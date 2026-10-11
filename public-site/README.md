@@ -1,4 +1,6 @@
-# gacha-game-tool — 給玩家與開發者的個人遊戲工具網站
+# 遊戲機制研究室（game-mechanics-lab）— 研究熱門遊戲機制的個人網站
+
+2026-10-11 由 `gacha-game-tool` 改名；舊的驗證紀錄與設計提示詞保留原名。程式內部的 `@ggt/*` 套件名與瀏覽器儲存鍵 `ggt.*` 刻意沿用，避免訪客的本機設定失效。
 
 可整包移到獨立 GitHub repo 的本機原型。此資料夾有自己的依賴、型別設定與建置設定，不屬於外層 npm workspace，不引用外層 core、console、data，也沒有修改目前正在開發的工具。
 
@@ -42,7 +44,7 @@ npm run dev
 
 ## 建立獨立 repo
 
-1. 將整個 `public-site/` 複製到目前研究 repo **以外**的新資料夾，例如 `gacha-game-tool-site/`；不要複製 `node_modules/`、`dist/`、`offline/` 或任何 `.git/`。
+1. 將整個 `public-site/` 複製到目前研究 repo **以外**的新資料夾，例如 `game-mechanics-lab-site/`；不要複製 `node_modules/`、`dist/`、`offline/` 或任何 `.git/`。
 2. 在新資料夾執行 `npm ci`、`npm run build`，確認可獨立建置。
 3. 在新資料夾建立 Git repo，建立獨立的 GitHub repo 再推送。不要把外層研究 repo 的歷史直接公開。
 4. 先補作者介紹、聯絡入口、採用的程式碼授權與實際 GitHub 連結，再開放訪客試用。

@@ -1,4 +1,4 @@
-# Gacha Game Tool 計畫 v0.3
+# Game Mechanics Lab 計畫 v0.3（原名 Gacha Game Tool）
 
 狀態：M2–M5 完成；M1 抽卡實驗室完成；戰鬥擴充機制（規則 0.6–0.9）完成
 最後更新：2026-10-09

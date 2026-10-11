@@ -2,7 +2,7 @@
 
 ## 建議決策
 
-建立獨立 repo，建議 repo 名為 `gacha-game-tool-site`，網站品牌保留 `gacha-game-tool`，中文名稱待定。現有 `gacha-game-tool` 是研究與開發工作台，新 repo 是面向台灣手遊愛好者與遊戲開發者的個人網站。採 React + TypeScript + Vite，延續現有 UI 技術，減少移植成本。首階段靜態部署、無登入、無後端資料庫；需要的使用者設定與進度先儲存在瀏覽器並支援 JSON 匯入匯出。
+建立獨立 repo，建議 repo 名為 `game-mechanics-lab-site`，網站品牌為「遊戲機制研究室」（英文 `game-mechanics-lab`，原名 `gacha-game-tool`）。現有 `gacha-game-tool` 是研究與開發工作台，新 repo 是面向台灣手遊愛好者與遊戲開發者的個人網站。採 React + TypeScript + Vite，延續現有 UI 技術，減少移植成本。首階段靜態部署、無登入、無後端資料庫；需要的使用者設定與進度先儲存在瀏覽器並支援 JSON 匯入匯出。
 
 這次做的是首頁與網站結構原型，沒有啟用遊玩存檔。`src/domain/contracts.ts` 只定義未來的存檔邊界，尚無 storage 或 API adapter。
 
@@ -53,7 +53,7 @@ flowchart LR
 ## 新 repo 的成長結構
 
 ```text
-gacha-game-tool-site/
+game-mechanics-lab-site/
 ├─ src/
 │  ├─ main.tsx                 # 現有原型入口；之後可拆成 app/、pages/
 │  ├─ styles.css              # 網站外殼樣式
@@ -116,7 +116,7 @@ gacha-game-tool-site/
 
 所有實驗元件都向 `SaveRepository` 存取，不直接呼叫 localStorage 或資料庫。接口使用 Promise，讓未來 HTTP 的非同步行為不必從 UI 開始重寫。
 
-`SaveEnvelope` 至少包含 schemaVersion、experimentId、engineVersion、ruleVersion、seed、updatedAt、payload。每個實驗保留獨立 slot，瀏覽器 key 應使用 `gacha-game-tool-site:<experimentId>:<slotId>`，避免與工作台現有 `ggt.project` 混用。
+`SaveEnvelope` 至少包含 schemaVersion、experimentId、engineVersion、ruleVersion、seed、updatedAt、payload。每個實驗保留獨立 slot，瀏覽器 key 應使用 `game-mechanics-lab-site:<experimentId>:<slotId>`，避免與工作台現有 `ggt.project` 混用。
 
 第一階段：少量設定用 localStorage，較大遊玩紀錄用 IndexedDB。只保存需要恢復的狀態，不保存無限增加的完整逐步歷史。大批量模擬結果預設只保留摘要，提供匯出。存檔必須在讀取與匯入時驗證格式、限制大小、處理版本遷移與儲存失敗；無法儲存時仍讓工具可用並提供匯出。
 

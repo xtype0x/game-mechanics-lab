@@ -1,4 +1,4 @@
-# Gacha Game Tool — 開發規則
+# Game Mechanics Lab（遊戲機制研究室）— 開發規則
 
 計畫：`docs/PLAN.md`（v0.3）。核心規格：`docs/spec/`。
 
