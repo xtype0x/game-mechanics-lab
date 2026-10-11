@@ -25,6 +25,8 @@ Cloudflare 靜態資源請求免費且不限次數，這不代表資料庫或 AP
 
 ## 推薦：Cloudflare Pages 上線步驟
 
+> **2026-10-11 更新：** 網站已改為留在研究 repo 的 `apps/site/`（npm workspace），不搬獨立 repo。從研究 repo 部署時：根目錄維持 repo 根、建置命令 `npm ci && npm run site:build`、輸出資料夾 `apps/site/dist`。以下步驟 1 的搬移已不適用。
+
 1. 把 `public-site/` 的內容移到獨立 repo 根目錄，建議名稱 `game-mechanics-lab-site`。保留 lockfile，不帶外層研究資料與 `.git/`。
 2. 執行 `npm ci`、`npm run build`，確認成功後推送到 GitHub。
 3. 在 Cloudflare Pages 建立專案，選 Git 整合，連接這個新 repo。

@@ -3,16 +3,20 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "dev": "npm run dev -w @ggt/console",
     "build": "npm run build -w @ggt/console",
     "test": "vitest run",
-    "typecheck": "tsc -p packages/core && tsc -p packages/console --noEmit && tsc -p packages/gacha-sim --noEmit",
+    "typecheck": "tsc -p packages/core && tsc -p packages/console --noEmit && tsc -p packages/gacha-sim --noEmit && tsc -p apps/site",
     "vectors": "node scripts/update-vectors.mjs",
     "sim:dev": "npm run dev -w @ggt/gacha-sim",
     "sim:build": "npm run build -w @ggt/gacha-sim",
+    "site:dev": "npm run dev -w @ggt/site",
+    "site:build": "npm run build -w @ggt/site",
+    "site:build:offline": "npm run build:offline -w @ggt/site",
     "sim:snapshot": "node packages/gacha-sim/scripts/update-snapshot.ts"
   },
   "devDependencies": {

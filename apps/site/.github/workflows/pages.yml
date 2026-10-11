@@ -1,4 +1,6 @@
-# Copy public-site contents to a standalone repository root before using this.
+# Template written for a standalone site repo (2026-10-10); the site now lives in the monorepo at apps/site.
+# A workflow inside a subfolder never runs. To use it, move it to the repo-root .github/workflows/,
+# build with `npm run site:build`, and upload apps/site/dist.
 # Manual publication initially; enable push only after choosing GitHub Pages.
 name: Deploy website to GitHub Pages
 

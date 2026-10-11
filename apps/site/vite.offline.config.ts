@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), viteSingleFile()],
     base: './',
-    resolve: { alias: { '@ggt/core': fileURLToPath(new URL('./src/lib/core/index.ts', import.meta.url)) } },
+    resolve: { alias: { '@ggt/core': fileURLToPath(new URL('../../packages/core/src/index.ts', import.meta.url)) } },
     build: {
       outDir: 'offline',
       emptyOutDir: page === null,

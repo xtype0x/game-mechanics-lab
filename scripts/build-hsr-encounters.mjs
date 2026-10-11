@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Builds public-site/src/tools/battle/presets/hsr-enemies.generated.json from the local HSR reference pack
+// Builds apps/site/src/tools/battle/presets/hsr-enemies.generated.json from the local HSR reference pack
 // (data/reference/hsr/pack.json). No dependencies; output is deterministic (no timestamps).
 //   node scripts/build-hsr-encounters.mjs
 // Stats come from the pack's level curves exactly like packages/core/src/library/reference.ts (unitFromEnemy);
@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pack = JSON.parse(readFileSync(join(root, "data/reference/hsr/pack.json"), "utf8"));
-const OUT = process.env.HSR_ENEMIES_OUT ?? join(root, "public-site/src/tools/battle/presets/hsr-enemies.generated.json");
+const OUT = process.env.HSR_ENEMIES_OUT ?? join(root, "apps/site/src/tools/battle/presets/hsr-enemies.generated.json");
 
 /** Levels shipped as fixed variants. Lv80 is the default (same as the character presets). */
 const LEVELS = [60, 70, 80];

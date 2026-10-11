@@ -2,22 +2,22 @@
 
 2026-10-11 由 `gacha-game-tool` 改名；舊的驗證紀錄與設計提示詞保留原名。程式內部的 `@ggt/*` 套件名與瀏覽器儲存鍵 `ggt.*` 刻意沿用，避免訪客的本機設定失效。
 
-可整包移到獨立 GitHub repo 的本機原型。此資料夾有自己的依賴、型別設定與建置設定，不屬於外層 npm workspace，不引用外層 core、console、data，也沒有修改目前正在開發的工具。
+研究 repo 的 npm workspace 成員 `@ggt/site`（`apps/site/`；2026-10-11 由 `public-site/` 搬入，決定與研究 repo 放在同一個 repo）。規則核心直接使用 `packages/core`（`@ggt/core` 別名指向 `../../packages/core/src/index.ts`），不再複製一份。不引用 `data/` 的本機研究資料；HSR 資料只透過 `scripts/build-hsr-*.mjs` 產生的 `*.generated.json` 進入網站。
 
-目前以二遊官網致敬版作為主要視覺方向，完整計畫動機已放入「關於計畫」。尚未建立獨立 GitHub 遠端 repo、推送或上線；中文名稱、作者身份、聯絡方式與遠端 repo 連結待補。
+目前以二遊官網致敬版作為主要視覺方向，完整計畫動機已放入「關於計畫」。尚未正式上線；中文名稱、作者身份、聯絡方式與遠端 repo 連結待補。
 
 ## 使用
 
-Node.js 22.12+（建議 Node 24）。在此資料夾執行：
+Node.js 22.12+（建議 Node 24）。依賴由 repo 根目錄統一安裝，在**根目錄**執行：
 
 ```powershell
 npm ci
-npm run dev
+npm run site:dev
 ```
 
-預覽：<http://127.0.0.1:5180/>。`npm run build` 會先檢查型別，再產生 `dist/`；`npm run preview` 預覽建置結果。本網站有自己的依賴，請在此資料夾執行 `npm ci`，搬到新 repo 後也同樣操作。
+預覽：<http://127.0.0.1:5180/>。`npm run site:build` 會先檢查型別，再產生 `apps/site/dist/`；`npm run preview -w @ggt/site` 預覽建置結果。根目錄的 `npm run typecheck` 也會檢查本網站。
 
-`npm run build:offline` 另外產生 `offline/index.html`、`offline/gacha/index.html`、`offline/hsr/battle/index.html` 與舊連結用的 `offline/battle/index.html`（轉址頁）。離線建置以 `--mode hsr-battle` 對應巢狀的 `hsr/battle/`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
+`npm run site:build:offline` 另外產生 `offline/index.html`、`offline/gacha/index.html`、`offline/hsr/battle/index.html` 與舊連結用的 `offline/battle/index.html`（轉址頁）。離線建置以 `--mode hsr-battle` 對應巢狀的 `hsr/battle/`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
 
 ## 目前內容
 
@@ -25,8 +25,8 @@ npm run dev
 - 網站以「遊戲」為主軸（2026-10-11 由工具分類改版）。導覽（hash 路由）：`#/` 首頁、`#/games` 遊戲一覽、`#/games/<id>` 各遊戲的研究基地（工具卡片、資料來源與免責聲明）、`#/games/hsr/coverage` 星穹鐵道角色機制拆解進度、`#/tools` 跨遊戲工具、`#/about`、`#/privacy`；舊的 `#/lab` 會自動轉到 `#/tools`，舊的 `battle/index.html` 是轉址頁，會跳到 `hsr/battle/index.html`。
 - 新增遊戲：在 `src/content/games.ts` 的 `games` 陣列加一筆（順序＝研究深度，其次熱門程度；`id` 要與抽卡模擬器目錄 `src/tools/gacha/catalog/games.ts` 一致，抽卡深連結才會生效）。`src/content/experiments.ts` 已移除，併入 `games.ts`。
 - 頁面檔：`src/pages/Games.tsx`（一覽與研究基地）、`src/pages/Coverage.tsx`（進度頁，以動態 import 載入 `hsr.generated.json`，首頁 JS 不增加）、`src/pages/shared.tsx`。
-- 抽卡模擬器：入口 `gacha/`，從 `packages/gacha-sim` 搬入，核心規則取自 `src/lib/core/`，`@ggt/core` 以別名指向它。**與 `packages/gacha-sim` 已有差異**：支援網址參數 `?game=<id>`（例如 `gacha/index.html?game=genshin`），載入時預選該遊戲的第一種卡池，只影響該次載入（會蓋過已存的選擇，但帶有 `#rules=` 分享連結時以分享為準）；返回連結改指向 `#/tools`。同步更新時要保留這些改動（`src/tools/gacha/App.tsx`）。
-- 星穹鐵道戰鬥研究室（原「戰鬥實驗室」）：獨立頁面 `hsr/battle/`（規則核心同樣複製自 `packages/core`；動畫戰鬥畫面取自研究 repo 的試玩 DEMO，不含標題畫面、關卡、抽卡與升級）。
+- 抽卡模擬器：入口 `gacha/`，從 `packages/gacha-sim` 搬入，核心規則取自 `packages/core`。**與 `packages/gacha-sim` 已有差異**：支援網址參數 `?game=<id>`（例如 `gacha/index.html?game=genshin`），載入時預選該遊戲的第一種卡池，只影響該次載入（會蓋過已存的選擇，但帶有 `#rules=` 分享連結時以分享為準）；返回連結改指向 `#/tools`。同步更新時要保留這些改動（`src/tools/gacha/App.tsx`）。
+- 星穹鐵道戰鬥研究室（原「戰鬥實驗室」）：獨立頁面 `hsr/battle/`（規則核心同樣直接使用 `packages/core`；動畫戰鬥畫面取自研究 repo 的試玩 DEMO，不含標題畫面、關卡、抽卡與升級）。
 - 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。
 
@@ -46,14 +46,11 @@ npm run dev
 
 主要視覺與生成提示詞：[docs/HOMEPAGE-V4-DESIGN.md](./docs/HOMEPAGE-V4-DESIGN.md)。首頁畫面：[docs/homepage-hero-v4.jpg](./docs/homepage-hero-v4.jpg)。主視覺角落保留 AI 生成圖像註記，桌面與手機皆可見。
 
-## 建立獨立 repo
+## 上線前
 
-1. 將整個 `public-site/` 複製到目前研究 repo **以外**的新資料夾，例如 `game-mechanics-lab-site/`；不要複製 `node_modules/`、`dist/`、`offline/` 或任何 `.git/`。
-2. 在新資料夾執行 `npm ci`、`npm run build`，確認可獨立建置。
-3. 在新資料夾建立 Git repo，建立獨立的 GitHub repo 再推送。不要把外層研究 repo 的歷史直接公開。
-4. 先補作者介紹、聯絡入口、採用的程式碼授權與實際 GitHub 連結，再開放訪客試用。
-5. 可把建置產物 `dist/` 放到靜態網站主機。選 GitHub Pages 時使用 Vite 官方建置部署流程；網站目前用相對資產路徑與 hash 導覽，可放在 repo 子路徑，不需伺服器路由回退。
+1. 先補作者介紹、聯絡入口、採用的程式碼授權與實際 GitHub 連結，再開放訪客試用。
+2. 只部署建置產物 `apps/site/dist/`，不要公開研究 repo 本身（含 `data/` 與歷史）。網站用相對資產路徑與 hash 導覽，可放在子路徑，不需伺服器路由回退。
 
-上線方案與費用比較：[DEPLOYMENT.md](./DEPLOYMENT.md)。建議 GitHub + Cloudflare Pages 免費起步；備選 GitHub Pages 的手動部署 workflow 已附上，尚未實際推送或部署。瀏覽器導覽採 `#/games/hsr` 等路徑；研究文章數量增加並需要搜尋曝光時，加入靜態預渲染並轉成實體 URL。
+上線方案與費用比較：[DEPLOYMENT.md](./DEPLOYMENT.md)（其中「搬到獨立 repo」的步驟寫於 2026-10-10，已被同 repo 的決定取代；部署平台尚未決定）。`.github/workflows/pages.yml` 是當時為獨立 repo 準備的範本，放在子資料夾內不會執行。瀏覽器導覽採 `#/games/hsr` 等路徑；研究文章數量增加並需要搜尋曝光時，加入靜態預渲染並轉成實體 URL。
 
 參考：[Vite 靜態部署](https://vite.dev/guide/static-deploy.html)。

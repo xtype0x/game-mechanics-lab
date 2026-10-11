@@ -2,6 +2,8 @@
 
 ## 建議決策
 
+> **2026-10-11 更新：** 改為與研究 repo 同一個 repo（monorepo），網站在 `apps/site/`，直接使用 `packages/core`，不再複製核心或拆獨立 repo。下文的獨立 repo 規劃保留作歷史紀錄；部署時只公開 `apps/site/dist/`。
+
 建立獨立 repo，建議 repo 名為 `game-mechanics-lab-site`，網站品牌為「遊戲機制研究室」（英文 `game-mechanics-lab`，原名 `gacha-game-tool`）。現有 `gacha-game-tool` 是研究與開發工作台，新 repo 是面向台灣手遊愛好者與遊戲開發者的個人網站。採 React + TypeScript + Vite，延續現有 UI 技術，減少移植成本。首階段靜態部署、無登入、無後端資料庫；需要的使用者設定與進度先儲存在瀏覽器並支援 JSON 匯入匯出。
 
 這次做的是首頁與網站結構原型，沒有啟用遊玩存檔。`src/domain/contracts.ts` 只定義未來的存檔邊界，尚無 storage 或 API adapter。

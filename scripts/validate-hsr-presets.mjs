@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Validates every available preset in hsr.generated.json with the core's own code (loaded as TypeScript through
-// vite's SSR loader, so the public-site copy of the core is what gets checked):
+// vite's SSR loader, the same packages/core source the site bundles):
 //   - the preset is placed into a default project's first ally slot (like PresetMenu does) and validateBattle
 //     must report no errors for the whole battle config;
 //   - one auto-battle per preset against the default encounter must run to an end without throwing.
@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const site = join(root, "public-site");
+const site = join(root, "apps/site");
 const generated = JSON.parse(readFileSync(process.env.HSR_PRESETS_OUT ?? join(site, "src/tools/battle/presets/hsr.generated.json"), "utf8"));
 
 const req = createRequire(join(site, "package.json"));
@@ -21,7 +21,7 @@ const server = await createServer({ root: site, configFile: false, appType: "cus
 
 let problems = 0;
 try {
-  const core = await server.ssrLoadModule("/src/lib/core/index.ts");
+  const core = await server.ssrLoadModule(join(root, "packages/core/src/index.ts"));
   const clone = (x) => JSON.parse(JSON.stringify(x));
   const available = generated.presets.filter((p) => p.available);
   for (const p of available) {

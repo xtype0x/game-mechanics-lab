@@ -5,6 +5,8 @@
 ## 結構
 - `packages/core`：規則核心。**純 TypeScript，禁止 DOM／Node API**（tsconfig 只引入 ES2022 lib）。只寫純函式：資料進、資料出。
 - `packages/console`：機制模擬主控台（Vite + React）。只能透過 `@ggt/core` 的公開匯出使用核心。
+- `packages/gacha-sim`：獨立抽卡模擬器（舊來源，網站版已是超集，預計淘汰）。
+- `apps/site`：公開個人網站（`@ggt/site`）。`@ggt/core` 以別名直接指向 `packages/core`，**不可再複製核心**。不可引用 `data/`；研究資料只透過 `scripts/build-hsr-*.mjs` 產生的 `*.generated.json` 進入網站。
 - `packages/core/vectors/`：跨語言測試向量（由測試產生，提交進 git）。
 - `docs/spec/`：權威規格。改變核心行為時，**同一個變更**要更新規格與向量。
 
@@ -12,9 +14,10 @@
 | 指令 | 用途 |
 |---|---|
 | `npm test` | 全部測試（含向量比對） |
-| `npm run typecheck` | core 與 console 型別檢查 |
+| `npm run typecheck` | core、console、gacha-sim、site 型別檢查 |
 | `npm run dev` | 主控台開發伺服器 http://localhost:5173 |
 | `npm run build` | 產生單檔 HTML：`packages/console/dist/index.html` |
+| `npm run site:dev` / `site:build` / `site:build:offline` | 網站開發伺服器 http://127.0.0.1:5180 ／建置到 `apps/site/dist/` ／離線單檔到 `apps/site/offline/` |
 | `npm run vectors` | 重新產生測試向量（核心行為**有意**改變時才用，並檢查 diff） |
 
 ## 核心可移植守則

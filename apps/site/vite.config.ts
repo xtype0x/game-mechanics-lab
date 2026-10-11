@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   base: './',
-  resolve: { alias: { '@ggt/core': fileURLToPath(new URL('./src/lib/core/index.ts', import.meta.url)) } },
+  resolve: { alias: { '@ggt/core': fileURLToPath(new URL('../../packages/core/src/index.ts', import.meta.url)) } },
   optimizeDeps: { entries: ['index.html', 'gacha/index.html', 'hsr/battle/index.html', 'battle/index.html'] },
   build: {
     rollupOptions: {

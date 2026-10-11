@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const site = join(root, "public-site");
+const site = join(root, "apps/site");
 const args = process.argv.slice(2);
 const ratesArg = args.find((a) => a.startsWith("--rates"));
 const RUNS = ratesArg ? Number(ratesArg.split("=")[1] ?? 200) : 0;
@@ -32,7 +32,7 @@ const server = await createServer({ root: site, configFile: false, appType: "cus
 const clone = (x) => JSON.parse(JSON.stringify(x));
 let problems = 0;
 try {
-  const core = await server.ssrLoadModule("/src/lib/core/index.ts");
+  const core = await server.ssrLoadModule(join(root, "packages/core/src/index.ts"));
   const enemies = await server.ssrLoadModule("/src/tools/battle/presets/hsr-enemies.ts");
   const chars = JSON.parse(readFileSync(join(site, "src/tools/battle/presets/hsr.generated.json"), "utf8"));
 
