@@ -16,7 +16,7 @@ import {
   type Project,
   type SkillDef,
   type UnitDef,
-} from "@ggt/core";
+} from "@gml/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Backdrop, type Theme } from "../art/Backdrop";
 import { Sprite, elementColor, spriteScale } from "../art/Sprite";

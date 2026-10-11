@@ -1,4 +1,4 @@
-import type { StatusDef, UnitDef } from "@ggt/core";
+import type { StatusDef, UnitDef } from "@gml/core";
 
 /**
  * One entry of the preset menu. `apply` is the unit that replaces the selected team slot (its team is forced to

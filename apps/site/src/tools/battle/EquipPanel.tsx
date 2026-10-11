@@ -1,4 +1,4 @@
-import type { UnitDef } from "@ggt/core";
+import type { UnitDef } from "@gml/core";
 import { useState } from "react";
 import "./equip.css";
 import {

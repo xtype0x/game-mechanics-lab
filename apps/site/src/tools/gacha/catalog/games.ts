@@ -2,7 +2,7 @@
  * Game catalog: per-game banner rules (stable mechanics, with source notes) + current banner contents from
  * live data (live.ts). Only names come from the sources; no game art is used.
  */
-import type { Gacha } from "@ggt/core";
+import type { Gacha } from "@gml/core";
 import type { BannerKind, GameId, LiveBanner } from "./live";
 
 type Model = Gacha.GachaModel;

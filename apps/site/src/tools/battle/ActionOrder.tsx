@@ -1,4 +1,4 @@
-import { predictTimeline, type Project } from "@ggt/core";
+import { predictTimeline, type Project } from "@gml/core";
 import { useMemo, useState } from "react";
 import { Field, NumberField, Section, fmt } from "./ui";
 import { elementLabel, type Updater } from "./common";

@@ -2,7 +2,7 @@
  * Sharing rule sets: a link (#rules=… in the URL, nothing is sent to a server) and a JSON file.
  * Everything that comes in is untrusted: it is shape-checked here, then validated by Gacha.validateModel.
  */
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 
 export const SHARE_FORMAT = "ggt-gacha-rules";
 const HASH_KEY = "rules";

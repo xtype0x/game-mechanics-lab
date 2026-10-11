@@ -1,4 +1,4 @@
-import type { StatusDef, UnitDef } from "@ggt/core";
+import type { StatusDef, UnitDef } from "@gml/core";
 import data from "./hsr.generated.json";
 import type { Preset, PresetGroup } from "./types";
 

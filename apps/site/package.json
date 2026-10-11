@@ -1,16 +1,22 @@
 {
-  "name": "@ggt/site",
+  "name": "@gml/site",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.12.0" },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5180 --strictPort",
     "build": "tsc --noEmit && vite build",
     "build:offline": "tsc --noEmit && vite build --config vite.offline.config.ts && vite build --config vite.offline.config.ts --mode gacha && vite build --config vite.offline.config.ts --mode hsr-battle && vite build --config vite.offline.config.ts --mode battle",
     "preview": "vite preview --host 127.0.0.1 --port 5180 --strictPort"
   },
-  "dependencies": { "react": "19.3.0", "react-dom": "19.3.0" },
+  "dependencies": {
+    "@gml/core": "*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
   "devDependencies": {
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

@@ -5,7 +5,7 @@
 目前進度：**M5、M1 完成**（傷害機制、回合戰鬥模擬、內容編輯器、A/B 比較、可試玩 2D DEMO、抽卡實驗室），戰鬥規則 0.8、抽卡規則 1.0。完整路線見 [docs/PLAN.md](docs/PLAN.md)。
 
 ## 立即使用
-- 免安裝：直接用瀏覽器開啟 `packages/console/dist/index.html`（建置後產生，可離線）。
+- 免安裝：直接用瀏覽器開啟 `apps/console/dist/index.html`（建置後產生，可離線）。
 - 開發模式：
   ```bash
   npm install
@@ -67,7 +67,7 @@ DEMO 中的角色、敵人、關卡與數值都是本工具的原創範例，可
 npm run site:dev
 ```
 
-開啟 http://127.0.0.1:5180/gacha/。`npm run site:build:offline` 產生可直接開啟的單檔 `apps/site/offline/gacha/index.html`。計算核心是 `@ggt/core` 的 `Gacha` 命名空間（[抽卡規格 2.0](docs/spec/gacha2.md)）。
+開啟 http://127.0.0.1:5180/gacha/。`npm run site:build:offline` 產生可直接開啟的單檔 `apps/site/offline/gacha/index.html`。計算核心是 `@gml/core` 的 `Gacha` 命名空間（[抽卡規格 2.0](docs/spec/gacha2.md)）。
 
 ## 範例專案
 - [`examples/m6-extension.json`](examples/m6-extension.json)：只用專案資料加入的傷害變體（增幅反應）與卡池規則（天井），用「開啟檔案」開啟。說明見 [docs/m6-extension-check.md](docs/m6-extension-check.md)。

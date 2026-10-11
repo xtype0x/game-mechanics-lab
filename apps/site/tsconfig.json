@@ -12,12 +12,7 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "verbatimModuleSyntax": true,
-    "paths": {
-      "@ggt/core": [
-        "../../packages/core/src/index.ts"
-      ]
-    }
+    "verbatimModuleSyntax": true
   },
   "include": [
     "src"

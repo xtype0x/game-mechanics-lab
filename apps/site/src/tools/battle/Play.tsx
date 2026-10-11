@@ -1,4 +1,4 @@
-import type { Project } from "@ggt/core";
+import type { Project } from "@gml/core";
 import { useMemo, useState } from "react";
 import type { Theme } from "./art/Backdrop";
 import { BattleScene, type BattleOutcome } from "./scene/BattleScene";

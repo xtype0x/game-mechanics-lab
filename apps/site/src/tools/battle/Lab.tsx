@@ -1,4 +1,4 @@
-import type { Project, UnitDef } from "@ggt/core";
+import type { Project, UnitDef } from "@gml/core";
 import { useState } from "react";
 import { ActionOrder } from "./ActionOrder";
 import { BatchSim } from "./BatchSim";

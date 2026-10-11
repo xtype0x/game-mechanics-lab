@@ -1,8 +1,8 @@
 # 遊戲機制研究室（game-mechanics-lab）— 研究熱門遊戲機制的個人網站
 
-2026-10-11 由 `gacha-game-tool` 改名；舊的驗證紀錄與設計提示詞保留原名。程式內部的 `@ggt/*` 套件名與瀏覽器儲存鍵 `ggt.*` 刻意沿用，避免訪客的本機設定失效。
+2026-10-11 由 `gacha-game-tool` 改名；舊的驗證紀錄與設計提示詞保留原名。程式內部套件名 2026-10-11 由 `@ggt/*` 改為 `@gml/*`；瀏覽器儲存鍵 `ggt.*` 與檔案／分享格式名（如 `ggt-gacha-rules`）刻意沿用，避免訪客的本機設定與分享連結失效。
 
-研究 repo 的 npm workspace 成員 `@ggt/site`（`apps/site/`；2026-10-11 由 `public-site/` 搬入，決定與研究 repo 放在同一個 repo）。規則核心直接使用 `packages/core`（`@ggt/core` 別名指向 `../../packages/core/src/index.ts`），不再複製一份。不引用 `data/` 的本機研究資料；HSR 資料只透過 `scripts/build-hsr-*.mjs` 產生的 `*.generated.json` 進入網站。
+研究 repo 的 npm workspace 成員 `@gml/site`（`apps/site/`；2026-10-11 由 `public-site/` 搬入，決定與研究 repo 放在同一個 repo）。規則核心以 workspace 依賴 `@gml/core` 直接使用 `packages/core` 原始碼，不再複製一份。不引用 `data/` 的本機研究資料；HSR 資料只透過 `scripts/build-hsr-*.mjs` 產生的 `*.generated.json` 進入網站。
 
 目前以二遊官網致敬版作為主要視覺方向，完整計畫動機已放入「關於計畫」。尚未正式上線；中文名稱、作者身份、聯絡方式與遠端 repo 連結待補。
 
@@ -15,7 +15,7 @@ npm ci
 npm run site:dev
 ```
 
-預覽：<http://127.0.0.1:5180/>。`npm run site:build` 會先檢查型別，再產生 `apps/site/dist/`；`npm run preview -w @ggt/site` 預覽建置結果。根目錄的 `npm run typecheck` 也會檢查本網站。
+預覽：<http://127.0.0.1:5180/>。`npm run site:build` 會先檢查型別，再產生 `apps/site/dist/`；`npm run preview -w @gml/site` 預覽建置結果。根目錄的 `npm run typecheck` 也會檢查本網站。
 
 `npm run site:build:offline` 另外產生 `offline/index.html`、`offline/gacha/index.html`、`offline/hsr/battle/index.html` 與舊連結用的 `offline/battle/index.html`（轉址頁）。離線建置以 `--mode hsr-battle` 對應巢狀的 `hsr/battle/`，可直接用瀏覽器開啟，不必啟動預覽服務，方便先查看這次原型。
 

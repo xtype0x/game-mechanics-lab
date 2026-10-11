@@ -1,4 +1,4 @@
-import type { Project } from "@ggt/core";
+import type { Project } from "@gml/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { clearStore, compileProject, loadStore, saveStore, type LoadoutSel, type LoadoutStore } from "./equip";
 

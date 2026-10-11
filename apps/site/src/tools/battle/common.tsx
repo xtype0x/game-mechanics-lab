@@ -1,4 +1,4 @@
-import { ELEMENT_LABELS, battleSetupOf, parseExpr, printExpr, validateBattle, type BattleIssue, type Expr, type Project } from "@ggt/core";
+import { ELEMENT_LABELS, battleSetupOf, parseExpr, printExpr, validateBattle, type BattleIssue, type Expr, type Project } from "@gml/core";
 import { useEffect, useMemo, useState } from "react";
 
 export const elementLabel = (e: string) => ELEMENT_LABELS[e] ?? e;

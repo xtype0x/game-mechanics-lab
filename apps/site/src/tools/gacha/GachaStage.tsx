@@ -1,4 +1,4 @@
-import { Gacha, Rng, type RngState } from "@ggt/core";
+import { Gacha, Rng, type RngState } from "@gml/core";
 import { useEffect, useMemo, useState } from "react";
 import { bannerStatus } from "./GameMenu";
 import { Reveal, type RevealCard } from "./Reveal";

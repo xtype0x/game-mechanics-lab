@@ -1,4 +1,4 @@
-import { aggregate, batchSeed, simulateOne, type AllyPolicy, type BatchStats, type BattleSummary, type Project } from "@ggt/core";
+import { aggregate, batchSeed, simulateOne, type AllyPolicy, type BatchStats, type BattleSummary, type Project } from "@gml/core";
 import { useEffect, useRef, useState } from "react";
 import { BarChart, ErrorBox, Field, NumberField, Section, fmt, pct } from "./ui";
 import { useBattleSetup, type Updater } from "./common";

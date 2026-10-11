@@ -1,4 +1,4 @@
-import { ELEMENT_LABELS, type UnitDef } from "@ggt/core";
+import { ELEMENT_LABELS, type UnitDef } from "@gml/core";
 import { useMemo } from "react";
 
 export const ELEMENT_OPTIONS = Object.keys(ELEMENT_LABELS);

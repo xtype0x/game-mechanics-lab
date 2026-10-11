@@ -1,4 +1,4 @@
-import type { DamageEffectScale, DamageScale, Effect, PassiveDef, SkillDef, SkillType, TargetMode } from "@ggt/core";
+import type { DamageEffectScale, DamageScale, Effect, PassiveDef, SkillDef, SkillType, TargetMode } from "@gml/core";
 
 export interface StatMeta {
   key: string;

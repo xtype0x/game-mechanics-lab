@@ -1,7 +1,7 @@
 /**
- * Simulator state and the derived analysis. All rules and math come from @ggt/core's Gacha namespace.
+ * Simulator state and the derived analysis. All rules and math come from @gml/core's Gacha namespace.
  */
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { buildModel, gameOf } from "./catalog/games";
 import type { LiveData } from "./catalog/live";
 import type { CatalogPick } from "./GameMenu";

@@ -1,4 +1,4 @@
-import { Gacha, Rng } from "@ggt/core";
+import { Gacha, Rng } from "@gml/core";
 import { useMemo, useState } from "react";
 import { Card, fmt } from "./ui";
 import type { SimState } from "./state";

@@ -1,4 +1,4 @@
-import type { UnitDef } from "@ggt/core";
+import type { UnitDef } from "@gml/core";
 import { Hero, type Extra, type HairStyle, type HeroLook, type Weapon } from "./Hero";
 import { Bat, Colossus, Golem, Sentinel, Slime } from "./Monsters";
 

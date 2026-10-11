@@ -1,4 +1,4 @@
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { Card, Field, NumberInput } from "./ui";
 import { MODULE_LABELS, defaultModule, nextId, type Model } from "./state";
 

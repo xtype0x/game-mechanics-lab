@@ -1,4 +1,4 @@
-import { PROJECT_TEMPLATES, loadProject, type Project, type StatusDef, type UnitDef } from "@ggt/core";
+import { PROJECT_TEMPLATES, loadProject, type Project, type StatusDef, type UnitDef } from "@gml/core";
 import type { Preset } from "./presets";
 
 /** Engine limit for the ally line-up (validateBattle: 1 to 4). */

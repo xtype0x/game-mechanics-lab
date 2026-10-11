@@ -1,6 +1,6 @@
 # 抽卡規格 2.0（模組化規則）
 
-規則版本 2.2.0（2.1：新增 `epitomized` 定軌模組；2.2：`softPity` 可選的上限 `max`。不使用新欄位的模型行為與 2.0 完全相同）。實作：`packages/core/src/gacha2/`（`@ggt/core` 匯出為命名空間 `Gacha`）。向量：`packages/core/vectors/gacha2.json`。
+規則版本 2.2.0（2.1：新增 `epitomized` 定軌模組；2.2：`softPity` 可選的上限 `max`。不使用新欄位的模型行為與 2.0 完全相同）。實作：`packages/core/src/gacha2/`（`@gml/core` 匯出為命名空間 `Gacha`）。向量：`packages/core/vectors/gacha2.json`。
 
 1.0（[gacha.md](gacha.md)）的卡池可用 §6 轉換成 2.0 模型，**逐抽結果完全相同**。1.0 仍保留給主控台與 DEMO 使用。
 

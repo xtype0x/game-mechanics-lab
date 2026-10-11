@@ -1,5 +1,5 @@
 /**
- * Gacha rules 2.0 (docs/spec/gacha2.md). Exported from @ggt/core as the `Gacha` namespace.
+ * Gacha rules 2.0 (docs/spec/gacha2.md). Exported from @gml/core as the `Gacha` namespace.
  */
 export * from "./model";
 export { GachaModelError, exchange, newState, nextVars, pull, pullContext, pullMany, stateVars, tierRate, type PullContext } from "./engine";

@@ -1,4 +1,4 @@
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { describe, expect, it } from "vitest";
 import { GAMES, buildModel } from "../../src/tools/gacha/catalog/games";
 import { decodeRules, encodeRules, parseRules, rulesInHash, serializeRules } from "../../src/tools/gacha/share";

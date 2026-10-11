@@ -1,4 +1,4 @@
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { GAMES } from "./catalog/games";
 import { useLiveBanners } from "./catalog/useLive";

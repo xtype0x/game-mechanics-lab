@@ -1,4 +1,4 @@
-import { analyzeDamage, type PhaseDef, type Project, type Scenario, type UnitDef } from "@ggt/core";
+import { analyzeDamage, type PhaseDef, type Project, type Scenario, type UnitDef } from "@gml/core";
 import { useEffect, useMemo, useState } from "react";
 import { Field, NumberField, Section, Segmented, fmt } from "./ui";
 import { IssueList, elementLabel, useBattleSetup, type Updater } from "./common";

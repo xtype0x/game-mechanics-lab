@@ -1,4 +1,4 @@
-import { applyLoadout, validateLoadout, type EquipmentPiece, type Loadout, type Project, type SetDef, type StatBonus, type UnitDef } from "@ggt/core";
+import { applyLoadout, validateLoadout, type EquipmentPiece, type Loadout, type Project, type SetDef, type StatBonus, type UnitDef } from "@gml/core";
 import raw from "./presets/hsr-equipment.generated.json";
 import { hsrGroup } from "./presets/hsr";
 

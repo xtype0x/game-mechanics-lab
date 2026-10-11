@@ -1,4 +1,4 @@
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { LineChart, PmfBars } from "./charts";
 import { Card, Field, NumberInput, Segmented, Stat, fmt, pct, twd } from "./ui";
 import { nextId, type Analysis, type SimState } from "./state";

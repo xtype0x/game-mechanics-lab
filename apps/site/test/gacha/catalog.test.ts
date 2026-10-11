@@ -1,4 +1,4 @@
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { describe, expect, it } from "vitest";
 import { GAMES, buildModel, typeFor } from "../../src/tools/gacha/catalog/games";
 import { adaptHoyo, adaptSchale, adaptZzz, type LiveData } from "../../src/tools/gacha/catalog/live";

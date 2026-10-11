@@ -1,4 +1,4 @@
-import { printExpr, type BattleIssue, type Effect, type Num, type PassiveDef, type SkillDef, type SkillType, type StatusDef, type UnitDef } from "@ggt/core";
+import { printExpr, type BattleIssue, type Effect, type Num, type PassiveDef, type SkillDef, type SkillType, type StatusDef, type UnitDef } from "@gml/core";
 import { useState } from "react";
 import { Badge, Field, NumberField, Section } from "./ui";
 import { ExprField, elementLabel } from "./common";

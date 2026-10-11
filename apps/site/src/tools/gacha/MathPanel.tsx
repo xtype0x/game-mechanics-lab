@@ -1,4 +1,4 @@
-import { Gacha } from "@ggt/core";
+import { Gacha } from "@gml/core";
 import { useState } from "react";
 import { LineChart } from "./charts";
 import { Card, Fold, fmt, pct } from "./ui";
