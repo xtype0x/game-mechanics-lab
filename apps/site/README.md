@@ -25,7 +25,7 @@ npm run site:dev
 - 網站以「遊戲」為主軸（2026-10-11 由工具分類改版）。導覽（hash 路由）：`#/` 首頁、`#/games` 遊戲一覽、`#/games/<id>` 各遊戲的研究基地（工具卡片、資料來源與免責聲明）、`#/games/hsr/coverage` 星穹鐵道角色機制拆解進度、`#/tools` 跨遊戲工具、`#/about`、`#/privacy`；舊的 `#/lab` 會自動轉到 `#/tools`，舊的 `battle/index.html` 是轉址頁，會跳到 `hsr/battle/index.html`。
 - 新增遊戲：在 `src/content/games.ts` 的 `games` 陣列加一筆（順序＝研究深度，其次熱門程度；`id` 要與抽卡模擬器目錄 `src/tools/gacha/catalog/games.ts` 一致，抽卡深連結才會生效）。`src/content/experiments.ts` 已移除，併入 `games.ts`。
 - 頁面檔：`src/pages/Games.tsx`（一覽與研究基地）、`src/pages/Coverage.tsx`（進度頁，以動態 import 載入 `hsr.generated.json`，首頁 JS 不增加）、`src/pages/shared.tsx`。
-- 抽卡模擬器：入口 `gacha/`，從 `packages/gacha-sim` 搬入，核心規則取自 `packages/core`。**與 `packages/gacha-sim` 已有差異**：支援網址參數 `?game=<id>`（例如 `gacha/index.html?game=genshin`），載入時預選該遊戲的第一種卡池，只影響該次載入（會蓋過已存的選擇，但帶有 `#rules=` 分享連結時以分享為準）；返回連結改指向 `#/tools`。同步更新時要保留這些改動（`src/tools/gacha/App.tsx`）。
+- 抽卡模擬器：入口 `gacha/`，原為 `packages/gacha-sim`（已併入並移除，說明見 [src/tools/gacha/README.md](./src/tools/gacha/README.md)），核心規則取自 `packages/core`。支援網址參數 `?game=<id>`（例如 `gacha/index.html?game=genshin`），載入時預選該遊戲的第一種卡池，只影響該次載入（會蓋過已存的選擇，但帶有 `#rules=` 分享連結時以分享為準）；返回連結改指向 `#/tools`。
 - 星穹鐵道戰鬥研究室（原「戰鬥實驗室」）：獨立頁面 `hsr/battle/`（規則核心同樣直接使用 `packages/core`；動畫戰鬥畫面取自研究 repo 的試玩 DEMO，不含標題畫面、關卡、抽卡與升級）。
 - 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。
@@ -38,7 +38,7 @@ npm run site:dev
 
 網站本身沒有帳號或分析追蹤功能。抽卡模擬器的設定存在瀏覽器本機，開啟時會讀取公開卡池資料，說明見資料與使用說明頁。
 
-搬入時沒有帶入模擬器的測試與 `scripts/update-snapshot.ts`；之後若要同步更新，仍以 `packages/gacha-sim` 為來源。
+抽卡模擬器的測試在 `test/gacha/`（根目錄 `npm test` 執行），卡池快照用根目錄 `npm run site:snapshot` 更新。
 
 詳細規劃與搬移步驟：[ARCHITECTURE.md](./ARCHITECTURE.md)。
 

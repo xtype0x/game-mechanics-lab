@@ -55,8 +55,8 @@
 
 DEMO 中的角色、敵人、關卡與數值都是本工具的原創範例，可在主控台自由修改。
 
-## 抽卡模擬器（獨立）
-`packages/gacha-sim`：給一般玩家使用的抽卡模擬器。打開就是抽卡畫面，一鍵切換**崩壞：星穹鐵道、原神、絕區零、蔚藍檔案的目前卡池**（限定角色／光錐或武器／常駐；卡池內容即時取自公開來源，失敗時用快照），以及鳴潮、明日方舟：終末地、異環（沒有公開資料來源，卡池為手動整理的清單），也能到「設定與分析」自由調整規則、精確計算要抽幾抽與花多少錢。詳見 [packages/gacha-sim/README.md](packages/gacha-sim/README.md)。
+## 抽卡模擬器
+個人網站 `apps/site` 的 `gacha/` 頁面（原 `packages/gacha-sim`，2026-10-11 併入網站後移除）：給一般玩家使用的抽卡模擬器。打開就是抽卡畫面，一鍵切換**崩壞：星穹鐵道、原神、絕區零、蔚藍檔案的目前卡池**（限定角色／光錐或武器／常駐；卡池內容即時取自公開來源，失敗時用快照），以及鳴潮、明日方舟：終末地、異環（沒有公開資料來源，卡池為手動整理的清單），也能到「設定與分析」自由調整規則、精確計算要抽幾抽與花多少錢。詳見 [apps/site/src/tools/gacha/README.md](apps/site/src/tools/gacha/README.md)。
 
 - **規則可自由組合**：軟保底、硬保底、限定（UP）、大保底、定軌、十連保底、累計保底、點數兌換（天井）。另有三種不對應特定遊戲的通用模型。
 - **結果**：平均抽數、中位數／P90／P99、保證上限、預算內達成機率；依可自訂的儲值方案（含首儲加贈）換算最便宜的台幣花費。
@@ -64,10 +64,10 @@ DEMO 中的角色、敵人、關卡與數值都是本工具的原創範例，可
 - **試抽與比較**：用同一套規則實際抽卡；多個模型用相同預算並排比較。
 
 ```bash
-npm run sim:dev
+npm run site:dev
 ```
 
-`npm run sim:build` 產生單檔 `packages/gacha-sim/dist/index.html`。計算核心是 `@ggt/core` 的 `Gacha` 命名空間（[抽卡規格 2.0](docs/spec/gacha2.md)）。
+開啟 http://127.0.0.1:5180/gacha/。`npm run site:build:offline` 產生可直接開啟的單檔 `apps/site/offline/gacha/index.html`。計算核心是 `@ggt/core` 的 `Gacha` 命名空間（[抽卡規格 2.0](docs/spec/gacha2.md)）。
 
 ## 範例專案
 - [`examples/m6-extension.json`](examples/m6-extension.json)：只用專案資料加入的傷害變體（增幅反應）與卡池規則（天井），用「開啟檔案」開啟。說明見 [docs/m6-extension-check.md](docs/m6-extension-check.md)。

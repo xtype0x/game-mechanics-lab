@@ -1,9 +1,9 @@
 import { Gacha } from "@ggt/core";
 import { describe, expect, it } from "vitest";
-import { GAMES, buildModel, typeFor } from "../src/catalog/games";
-import { adaptHoyo, adaptSchale, adaptZzz, type LiveData } from "../src/catalog/live";
-import { MANUAL, manualBanners, withManual } from "../src/catalog/manual";
-import snapshot from "../src/catalog/snapshot.json";
+import { GAMES, buildModel, typeFor } from "../../src/tools/gacha/catalog/games";
+import { adaptHoyo, adaptSchale, adaptZzz, type LiveData } from "../../src/tools/gacha/catalog/live";
+import { MANUAL, manualBanners, withManual } from "../../src/tools/gacha/catalog/manual";
+import snapshot from "../../src/tools/gacha/catalog/snapshot.json";
 
 describe("live adapters", () => {
   it("hoyo calendar: characters vs light cones/weapons, mixed banners skipped", () => {
