@@ -1,0 +1,187 @@
+{
+  "id": "1013",
+  "skills": [
+    {
+      "id": "hsr_1013_basic",
+      "name": "看什麼看",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於黑塔100%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1013_skill",
+      "name": "一錘子買賣",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1013_skill-bonus",
+          "chance": 1
+        },
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 1,
+          "toughness": 10
+        },
+        {
+          "kind": "statusAdjust",
+          "target": "self",
+          "statusId": "hsr_1013_skill-bonus",
+          "op": "set",
+          "value": 0
+        }
+      ],
+      "description": "Lv10：對敵方全體造成等同於黑塔100%攻擊力的冰屬性傷害。若敵方目標現有生命值百分比大於等於50%，則對該目標造成的傷害提高20%。"
+    },
+    {
+      "id": "hsr_1013_ult",
+      "name": "是魔法，我加了魔法",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "energyCost": 110,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 2,
+          "toughness": 20
+        }
+      ],
+      "description": "Lv10：對敵方全體造成等同於黑塔200%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1013_talent",
+      "name": "還是我來吧",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 0.4,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv10：當任意我方目標的攻擊使敵方目標的現有生命值百分比小於等於50%時，黑塔發動追加攻擊，對敵方全體造成等同於黑塔40%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1013_technique",
+      "name": "可以改良一下",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1013_tech-atk",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：下一次戰鬥開始時黑塔攻擊力提高40%，持續3回合。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1013_talent",
+      "name": "還是我來吧",
+      "on": "allyHit",
+      "skillId": "hsr_1013_talent",
+      "when": {
+        "op": "lte",
+        "args": [
+          {
+            "ref": "target.hpPct"
+          },
+          {
+            "const": 0.5
+          }
+        ]
+      },
+      "limitPerTurn": 1,
+      "description": "我方攻擊命中後，若該敵方目標現有生命值百分比 ≤50%，黑塔追加全體攻擊。"
+    },
+    {
+      "id": "hsr_1013_technique",
+      "name": "可以改良一下",
+      "on": "battleStart",
+      "skillId": "hsr_1013_technique",
+      "limitPerTurn": 1,
+      "description": "秘技：戰鬥開始時黑塔攻擊力提高40%，持續3回合。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1013_skill-bonus",
+      "name": "一錘子買賣：高血量增傷",
+      "kind": "buff",
+      "duration": 1,
+      "maxStacks": 1,
+      "dispellable": false,
+      "modifiers": [
+        {
+          "target": "stat:dmgBonus",
+          "op": "add",
+          "value": 0.2,
+          "when": {
+            "op": "gte",
+            "args": [
+              {
+                "ref": "target.hpPct"
+              },
+              {
+                "const": 0.5
+              }
+            ]
+          }
+        }
+      ],
+      "description": "戰技專用：只在戰技結算期間存在；對現有生命值百分比 ≥50% 的目標，造成的傷害提高20%。"
+    },
+    {
+      "id": "hsr_1013_tech-atk",
+      "name": "可以改良一下：攻擊力提高",
+      "kind": "buff",
+      "duration": 3,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:atk",
+          "op": "pct",
+          "value": 0.4
+        }
+      ],
+      "description": "攻擊力提高40%，持續3回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 110
+  },
+  "approximations": [
+    "戰技的「生命值 ≥50% 增傷20%」以戰技期間短暫掛上的自身增傷狀態（依目標生命條件修正）實作，結算後立即移除；效果與原作的傷害提高區一致，每段命中依命中前的目標生命判定。",
+    "天賦以「我方每段命中後、目標現有生命值 ≤50%」觸發，且兩次黑塔自身回合之間最多追加1次；原作為「攻擊使目標降到50%以下」，且每次我方攻擊都可各自觸發，引擎沒有「每次行動只一次」的命中觸發，故用次數上限避免全體攻擊對多目標重複觸發。",
+    "追加攻擊的能量回復資料包未提供，設為0。",
+    "各招式削韌量不在資料包內，依慣例估計：普攻10、戰技全體各10、終結技全體各20、追加攻擊全體各10。",
+    "秘技（攻擊力提高）固定於戰鬥開始時生效，無法像原作選擇是否使用；若要關閉請移除 hsr_1013_technique 被動。"
+  ]
+}

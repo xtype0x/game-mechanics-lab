@@ -1,0 +1,182 @@
+{
+  "id": "1104",
+  "skills": [
+    {
+      "id": "hsr_1104_basic",
+      "name": "一意之拳",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於傑帕德100%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1104_skill",
+      "name": "震懾之擊",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 2,
+          "toughness": 20
+        },
+        {
+          "kind": "status",
+          "target": "enemy",
+          "statusId": "hsr_1104_freeze",
+          "chance": 0.65
+        }
+      ],
+      "description": "Lv10：對指定敵方單體造成等同於傑帕德200%攻擊力的冰屬性傷害，同時有65%的基礎機率使受到攻擊的敵方目標陷入凍結狀態，持續1回合。凍結狀態下，敵方目標不能行動同時每回合開始時受到等同於傑帕德60%攻擊力的冰屬性附加傷害。"
+    },
+    {
+      "id": "hsr_1104_ult",
+      "name": "永屹之壁",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "energyCost": 100,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "allAllies",
+          "statusId": "hsr_1104_shield",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：為我方全體提供強度等同於傑帕德45%防禦力+600的護盾，持續3回合。"
+    },
+    {
+      "id": "hsr_1104_talent",
+      "name": "不屈之身",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1104_undying",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：受到致命攻擊時傑帕德不會陷入無法戰鬥狀態，並立即回復等同於自身生命上限50%的生命值。該效果單場戰鬥中只能觸發1次。"
+    },
+    {
+      "id": "hsr_1104_technique",
+      "name": "有情之證",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "allAllies",
+          "statusId": "hsr_1104_tech-shield",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：下一次戰鬥開始時為我方全體提供強度等同於傑帕德24%防禦力+150的護盾，持續2回合。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1104_talent",
+      "name": "不屈之身",
+      "on": "battleStart",
+      "skillId": "hsr_1104_talent",
+      "limitPerTurn": 1,
+      "description": "戰鬥開始時獲得一次性的免死狀態。"
+    },
+    {
+      "id": "hsr_1104_technique",
+      "name": "有情之證",
+      "on": "battleStart",
+      "skillId": "hsr_1104_technique",
+      "limitPerTurn": 1,
+      "description": "秘技：戰鬥開始時為我方全體提供護盾。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1104_freeze",
+      "name": "凍結",
+      "kind": "debuff",
+      "category": "freeze",
+      "duration": 1,
+      "maxStacks": 1,
+      "skipTurn": true,
+      "modifiers": [],
+      "dot": {
+        "multiplier": 0.6,
+        "element": "ice"
+      },
+      "description": "無法行動，每回合開始時受到等同於傑帕德60%攻擊力的冰屬性附加傷害，持續1回合。"
+    },
+    {
+      "id": "hsr_1104_shield",
+      "name": "永屹之壁：護盾",
+      "kind": "buff",
+      "duration": 3,
+      "maxStacks": 1,
+      "modifiers": [],
+      "shield": {
+        "scale": "def",
+        "multiplier": 0.45,
+        "flat": 600
+      },
+      "description": "護盾強度等同於傑帕德45%防禦力+600，持續3回合。"
+    },
+    {
+      "id": "hsr_1104_undying",
+      "name": "不屈之身：免死",
+      "kind": "buff",
+      "duration": 0,
+      "maxStacks": 1,
+      "dispellable": false,
+      "modifiers": [],
+      "revive": {
+        "hpPct": 0.5
+      },
+      "description": "受到致命傷害時不倒下，並回復至生命上限50%；觸發後狀態消耗，單場一次。"
+    },
+    {
+      "id": "hsr_1104_tech-shield",
+      "name": "有情之證：護盾",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 1,
+      "modifiers": [],
+      "shield": {
+        "scale": "def",
+        "multiplier": 0.24,
+        "flat": 150
+      },
+      "description": "護盾強度等同於傑帕德24%防禦力+150，持續2回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 100
+  },
+  "approximations": [
+    "不屈之身以戰鬥開始時掛上的永久免死狀態實作；觸發時生命直接設為上限50%（原作為「回復50%生命上限」，致命傷害時生命已為0，兩者等價）。",
+    "凍結使用引擎的通用跳過回合＋持續傷害狀態，原作凍結的額外規則（例如解凍後的行動值調整）未納入。",
+    "各招式削韌量不在資料包內，依慣例估計：普攻10、戰技20。",
+    "秘技（開場護盾）固定於戰鬥開始時生效，無法像原作選擇是否使用；若要關閉請移除 hsr_1104_technique 被動。"
+  ]
+}

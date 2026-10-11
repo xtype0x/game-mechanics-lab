@@ -225,7 +225,7 @@ function Preview({ project, unit }: { project: Project; unit: UnitDef }) {
     if (!setup || !target) return [];
     return unit.skills.flatMap((sk) =>
       sk.effects.flatMap((e, i) => {
-        if (e.kind !== "damage") return [];
+        if (e.kind !== "damage" || typeof e.multiplier !== "number" || typeof e.toughness !== "number") return []; // formula values are not previewed
         const element = sk.element ?? unit.element;
         const scaleStat = e.scale === "def" ? unit.stats.def ?? 0 : e.scale === "hp" ? unit.stats.hp ?? 0 : undefined;
         const res = target.elementRes?.[element];

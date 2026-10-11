@@ -1,0 +1,157 @@
+{
+  "id": "1008",
+  "skills": [
+    {
+      "id": "hsr_1008_basic",
+      "name": "如雷疾行",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於阿蘭100%攻擊力的雷屬性傷害。"
+    },
+    {
+      "id": "hsr_1008_skill",
+      "name": "禁錮解除",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "hpCost",
+          "target": "self",
+          "op": "lose",
+          "basis": "maxHp",
+          "ratio": 0.15,
+          "floor": 1
+        },
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 2.4,
+          "toughness": 20
+        }
+      ],
+      "description": "Lv10：消耗等同於阿蘭生命上限15%的生命值對指定敵方單體造成等同於阿蘭240%攻擊力的雷屬性傷害。若現有生命值不足，則施放戰技時阿蘭的現有生命值降至1點。"
+    },
+    {
+      "id": "hsr_1008_ult",
+      "name": "狂者制裁",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "energyCost": 110,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "blast",
+          "multiplier": 3.2,
+          "toughness": 30,
+          "adjMultiplier": 1.6,
+          "adjToughness": 20
+        }
+      ],
+      "description": "Lv10：對指定敵方單體造成等同於阿蘭320%攻擊力的雷屬性傷害，同時對其相鄰目標造成等同於阿蘭160%攻擊力的雷屬性傷害。"
+    },
+    {
+      "id": "hsr_1008_talent",
+      "name": "至痛至怒",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1008_talent-rage",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：根據阿蘭目前損失的生命值百分比獲得傷害加成，最多使阿蘭造成的傷害提高72%。"
+    },
+    {
+      "id": "hsr_1008_technique",
+      "name": "極速收割",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 0.8,
+          "toughness": 0
+        }
+      ],
+      "description": "秘技：進入戰鬥後對敵方全體造成等同於阿蘭80%攻擊力的雷屬性傷害。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1008_talent",
+      "name": "至痛至怒",
+      "on": "battleStart",
+      "skillId": "hsr_1008_talent",
+      "limitPerTurn": 1,
+      "description": "戰鬥開始時掛上永久的損失生命增傷狀態。"
+    },
+    {
+      "id": "hsr_1008_technique",
+      "name": "極速收割",
+      "on": "battleStart",
+      "skillId": "hsr_1008_technique",
+      "limitPerTurn": 1,
+      "description": "秘技：戰鬥開始時對敵方全體造成80%攻擊力的雷屬性傷害。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1008_talent-rage",
+      "name": "至痛至怒：損失生命增傷",
+      "kind": "buff",
+      "duration": 0,
+      "maxStacks": 1,
+      "dispellable": false,
+      "modifiers": [
+        {
+          "target": "stat:dmgBonus",
+          "op": "add",
+          "value": 0.72,
+          "scaleBy": {
+            "op": "sub",
+            "args": [
+              {
+                "const": 1
+              },
+              {
+                "ref": "self.hpPct"
+              }
+            ]
+          }
+        }
+      ],
+      "description": "造成的傷害提高 72% × 已損失生命值百分比（最多72%）。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 110
+  },
+  "approximations": [
+    "天賦以戰鬥開始時掛上的永久狀態實作，傷害提高 = 72% × (1 − 現有生命百分比)，每段命中依命中前的生命值計算。",
+    "戰技先扣血再造成傷害（扣血後增傷較高），消耗不會讓阿蘭倒下，最低降到1點。",
+    "各招式削韌量不在資料包內，依慣例估計：普攻10、戰技20、終結技主目標30／相鄰20。",
+    "秘技的傷害以戰鬥開始時對敵方全體造成80%攻擊力、不削韌表示（原作為進入戰鬥前的地圖攻擊）；固定生效，若要關閉請移除 hsr_1008_technique 被動。"
+  ]
+}

@@ -24,7 +24,7 @@ npm run dev
 - 關於計畫：從台灣出發的計畫動機；另有資料與使用說明頁。
 - 響應式排版、鍵盤操作與跳至內容連結。
 
-戰鬥實驗室可選隊伍與敵人、改角色數值與技能（存在瀏覽器 localStorage，「重設」回範本）、預覽行動順序、批量模擬勝率並用動畫畫面開打；角色預設選單由 `src/tools/battle/presets/index.ts` 的 `presetGroups` 提供（型別見同資料夾 `types.ts`），目前有「範本角色」，「星穹鐵道」群組為空、整理中。
+戰鬥實驗室可選隊伍與敵人、改角色數值與技能（存在瀏覽器 localStorage，「重設」回範本）、預覽行動順序、批量模擬勝率並用動畫畫面開打；角色預設選單由 `src/tools/battle/presets/index.ts` 的 `presetGroups` 提供（型別見同資料夾 `types.ts`），有「範本角色」與「星穹鐵道」（98 位，由 `node scripts/build-hsr-presets.mjs` 從研究資料產生 `presets/hsr.generated.json`；目前 2 位可用，其餘標示尚缺的規則模組；資料為未核實的社群整理，著作權屬 HoYoverse）。
 
 網站本身沒有帳號或分析追蹤功能。抽卡模擬器的設定存在瀏覽器本機，開啟時會讀取公開卡池資料，說明見資料與使用說明頁。
 

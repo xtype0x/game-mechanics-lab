@@ -1,0 +1,16 @@
+{
+  "rulesVersion": "0.9.0",
+  "note": "Catalog module ids implemented in core (docs/spec/battle.md). Update when a rules round lands.",
+  "modules": [
+    "effect-values-expr",
+    "trigger-lifecycle",
+    "hp-change-effect",
+    "effect-condition",
+    "expr-status-queries",
+    "hit-riders",
+    "trigger-action",
+    "status-adjust",
+    "proc-chance",
+    "trigger-damage-taken"
+  ]
+}

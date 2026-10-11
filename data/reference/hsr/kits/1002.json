@@ -1,0 +1,345 @@
+{
+  "id": "1002",
+  "skills": [
+    {
+      "id": "hsr_1002_basic",
+      "name": "雲騎槍術•朔風",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於丹恆100%攻擊力的風屬性傷害。"
+    },
+    {
+      "id": "hsr_1002_skill",
+      "name": "雲騎槍術•疾雨",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 2.6,
+          "toughness": 20,
+          "onHit": [
+            {
+              "kind": "status",
+              "target": "victim",
+              "statusId": "hsr_1002_slow",
+              "chance": 1,
+              "when": {
+                "ref": "hit.crit"
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Lv10：對指定敵方單體造成等同於丹恆260%攻擊力的風屬性傷害。戰技造成的傷害觸發暴擊時，有100%的基礎機率使受到攻擊的敵方目標速度降低12%，持續2回合。"
+    },
+    {
+      "id": "hsr_1002_ult",
+      "name": "洞天幻化，長夢一覺",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": {
+            "op": "add",
+            "args": [
+              {
+                "const": 4
+              },
+              {
+                "op": "if",
+                "args": [
+                  {
+                    "op": "gt",
+                    "args": [
+                      {
+                        "ref": "target.tag.slow"
+                      },
+                      {
+                        "const": 0
+                      }
+                    ]
+                  },
+                  {
+                    "const": 1.2
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "toughness": 30
+        }
+      ],
+      "energyCost": 100,
+      "description": "Lv10：對指定敵方單體造成等同於丹恆400%攻擊力的風屬性傷害。當受到攻擊的敵方目標處於減速狀態時，終結技造成的傷害倍率提高120%。"
+    },
+    {
+      "id": "hsr_1002_talent",
+      "name": "寸長寸強",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1002_pen",
+          "chance": 1
+        },
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1002_cd",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：成為我方技能施放目標時，下一次攻擊的風屬性抗性穿透提高36%；觸發後2回合內不會再次觸發。"
+    },
+    {
+      "id": "hsr_1002_talent-spend",
+      "name": "寸長寸強：用掉加成",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "statusAdjust",
+          "target": "self",
+          "statusId": "hsr_1002_pen",
+          "op": "set",
+          "value": 0
+        }
+      ],
+      "description": "丹恆發動攻擊後，抗性穿透加成消失。"
+    },
+    {
+      "id": "hsr_1002_tech",
+      "name": "破敵鋒芒",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1002_tech-atk",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：戰鬥開始時丹恆攻擊力提高40%，持續3回合（假設每場戰鬥都使用秘技）。"
+    },
+    {
+      "id": "hsr_1002_marker",
+      "name": "自身標記",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1002_marker",
+          "chance": 1
+        }
+      ],
+      "description": "戰鬥開始時掛上永久標記，讓天賦能判斷「被我方技能指定為目標的是丹恆自己」。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1002_talent",
+      "name": "寸長寸強",
+      "on": "action",
+      "actor": "otherAlly",
+      "skillTypes": [
+        "basic",
+        "skill",
+        "ultimate"
+      ],
+      "when": {
+        "op": "and",
+        "args": [
+          {
+            "op": "gt",
+            "args": [
+              {
+                "ref": "target.tag.hsr1002_self"
+              },
+              {
+                "const": 0
+              }
+            ]
+          },
+          {
+            "op": "eq",
+            "args": [
+              {
+                "ref": "self.tag.hsr1002_cd"
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        ]
+      },
+      "skillId": "hsr_1002_talent",
+      "limitPerTurn": 0,
+      "description": "我方其他角色對丹恆施放技能時，丹恆的下一次攻擊風屬性抗性穿透提高36%（冷卻2回合）。"
+    },
+    {
+      "id": "hsr_1002_talent-spend",
+      "name": "寸長寸強：用掉加成",
+      "on": "action",
+      "actor": "self",
+      "skillTypes": [
+        "basic",
+        "skill",
+        "ultimate"
+      ],
+      "when": {
+        "op": "gt",
+        "args": [
+          {
+            "ref": "self.tag.hsr1002_pen"
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "skillId": "hsr_1002_talent-spend",
+      "limitPerTurn": 0,
+      "description": "丹恆攻擊後清除抗性穿透加成。"
+    },
+    {
+      "id": "hsr_1002_tech",
+      "name": "破敵鋒芒",
+      "on": "battleStart",
+      "skillId": "hsr_1002_tech",
+      "limitPerTurn": 0,
+      "description": "戰鬥開始時攻擊力提高。"
+    },
+    {
+      "id": "hsr_1002_marker",
+      "name": "自身標記",
+      "on": "battleStart",
+      "skillId": "hsr_1002_marker",
+      "limitPerTurn": 0,
+      "description": "戰鬥開始時掛上辨識用標記。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1002_slow",
+      "name": "減速",
+      "kind": "debuff",
+      "duration": 2,
+      "maxStacks": 1,
+      "tags": [
+        "slow"
+      ],
+      "modifiers": [
+        {
+          "target": "stat:spd",
+          "op": "pct",
+          "value": -0.12
+        }
+      ],
+      "description": "速度降低12%，持續2回合。"
+    },
+    {
+      "id": "hsr_1002_pen",
+      "name": "寸長寸強：風屬性抗性穿透",
+      "kind": "buff",
+      "duration": 0,
+      "maxStacks": 1,
+      "tags": [
+        "hsr1002_pen"
+      ],
+      "modifiers": [
+        {
+          "target": "stat:resPen",
+          "op": "add",
+          "value": 0.36
+        }
+      ],
+      "description": "下一次攻擊的風屬性抗性穿透提高36%，攻擊後消失。"
+    },
+    {
+      "id": "hsr_1002_cd",
+      "name": "寸長寸強：冷卻",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 1,
+      "dispellable": false,
+      "tags": [
+        "hsr1002_cd"
+      ],
+      "modifiers": [],
+      "description": "天賦冷卻中，持續2回合。"
+    },
+    {
+      "id": "hsr_1002_marker",
+      "name": "自身標記",
+      "kind": "buff",
+      "duration": 0,
+      "maxStacks": 1,
+      "dispellable": false,
+      "tags": [
+        "hsr1002_self"
+      ],
+      "modifiers": [],
+      "description": "辨識用標記，無任何數值效果。"
+    },
+    {
+      "id": "hsr_1002_tech-atk",
+      "name": "破敵鋒芒：攻擊力提高",
+      "kind": "buff",
+      "duration": 3,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:atk",
+          "op": "pct",
+          "value": 0.4
+        }
+      ],
+      "description": "攻擊力提高40%，持續3回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 100
+  },
+  "approximations": [
+    "天賦「成為我方技能目標」以「其他我方角色的攻擊／戰技／終結技指定丹恆」近似，我方全體或無指定目標的技能不會觸發，因為引擎的 action 觸發只看單一目標；判斷丹恆本人靠戰鬥開始時的永久標記狀態。",
+    "天賦冷卻「2回合後可再次觸發」以持有者回合數倒數的2回合冷卻狀態近似，並假設抗性穿透加成直到丹恆下一次攻擊才消失。",
+    "終結技「倍率提高120%」解讀為與基礎倍率相加（400%→520%）；「處於減速狀態」以帶有 slow 標籤的任何狀態判斷（本套件所有減速狀態共用此標籤）。",
+    "戰技的減速只在每段命中暴擊時判定，基礎機率100%，仍會受目標效果抵抗影響。",
+    "秘技假設每場戰鬥都已使用，攻擊力提高以戰鬥開始被動施加；秘技本身的攻擊與削韌未計入。"
+  ]
+}

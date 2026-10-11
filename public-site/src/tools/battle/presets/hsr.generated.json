@@ -1,0 +1,3819 @@
+{
+  "source": {
+    "text": "角色資料來自 StarRailRes 快照（starrailres-dbe8cdfc，上游標示版本 4.6.0，狀態：未核實的社群整理資料，不保證與正式服相符）。遊戲內容著作權屬於 HoYoverse，本站與其無關；數值僅供模擬與研究，未含光錐、遺器、行跡與星魂，量子對應「光」、虛數對應「暗」。",
+    "version": "4.6.0"
+  },
+  "presets": [
+    {
+      "id": "hsr-1003",
+      "name": "姬子",
+      "subtitle": "5★ 火・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "智識"
+      },
+      "available": true,
+      "note": "天賦的追加攻擊在充能達到3點的那一刻（該次行動結束後）發動，而不是「我方攻擊後檢查」；兩者在實戰時機上幾乎相同，但充能已滿時的額外攻擊不會再次檢查。 充能不分擊破來源，我方每擊破一個敵方弱點就加1點（含姬子自己）。 秘技（特殊領域使敵方受到火屬性傷害提高10%）需要地圖領域與火屬性專屬易傷，引擎沒有對應機制，未納入。 追加攻擊的能量回復資料包未提供，設為0。 各招式削韌量不在資料包內，依慣例估計：普攻10、戰技主目標20／相鄰10、終結技全體各20、追加攻擊全體各10。",
+      "apply": {
+        "id": "hsr_1003",
+        "name": "姬子",
+        "team": "ally",
+        "element": "fire",
+        "role": "智識",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 1047.816,
+          "atk": 756.756,
+          "def": 436.59000000000003,
+          "spd": 96,
+          "taunt": 75,
+          "maxEnergy": 120,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1003_basic",
+            "name": "武裝調律",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於姬子100%攻擊力的火屬性傷害。"
+          },
+          {
+            "id": "hsr_1003_skill",
+            "name": "熔核爆裂",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 2,
+                "toughness": 20,
+                "adjMultiplier": 0.8,
+                "adjToughness": 10
+              }
+            ],
+            "description": "Lv10：對指定敵方單體造成等同於姬子200%攻擊力的火屬性傷害，同時對其相鄰目標造成等同於姬子80%攻擊力的火屬性傷害。"
+          },
+          {
+            "id": "hsr_1003_ult",
+            "name": "天墜之火",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 2.3,
+                "toughness": 20,
+                "onHit": [
+                  {
+                    "kind": "energy",
+                    "target": "self",
+                    "amount": 5,
+                    "when": {
+                      "ref": "hit.killed"
+                    }
+                  }
+                ]
+              }
+            ],
+            "description": "Lv10：對敵方全體造成等同於姬子230%攻擊力的火屬性傷害，每消滅1個敵方目標額外恢復姬子5點能量。"
+          },
+          {
+            "id": "hsr_1003_charge",
+            "name": "乘勝追擊：充能",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "counter",
+                "target": "self",
+                "key": "charge",
+                "op": "add",
+                "value": 1,
+                "when": {
+                  "op": "lt",
+                  "args": [
+                    {
+                      "ref": "self.counter.charge"
+                    },
+                    {
+                      "const": 3
+                    }
+                  ]
+                }
+              }
+            ],
+            "description": "Lv10：當有敵方目標的弱點被擊破時，姬子獲得1點充能，上限3點。戰鬥開始時獲得1點充能。"
+          },
+          {
+            "id": "hsr_1003_talent",
+            "name": "乘勝追擊",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "counter",
+                "target": "self",
+                "key": "charge",
+                "op": "set",
+                "value": 0
+              },
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1.4,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv10：充能達到上限（3點）時立即發動1次追加攻擊，對敵方全體目標造成等同於姬子140%攻擊力的火屬性傷害，並消耗全部充能。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1003_charge-break",
+            "name": "乘勝追擊：擊破充能",
+            "on": "allyBreak",
+            "skillId": "hsr_1003_charge",
+            "limitPerTurn": 0,
+            "description": "我方擊破敵方弱點時，姬子獲得1點充能（上限3）。"
+          },
+          {
+            "id": "hsr_1003_charge-start",
+            "name": "乘勝追擊：開場充能",
+            "on": "battleStart",
+            "skillId": "hsr_1003_charge",
+            "limitPerTurn": 1,
+            "description": "戰鬥開始時姬子獲得1點充能。"
+          },
+          {
+            "id": "hsr_1003_talent",
+            "name": "乘勝追擊",
+            "on": "counterChange",
+            "skillId": "hsr_1003_talent",
+            "when": {
+              "op": "gte",
+              "args": [
+                {
+                  "ref": "self.counter.charge"
+                },
+                {
+                  "const": 3
+                }
+              ]
+            },
+            "limitPerTurn": 0,
+            "description": "充能達到3點時發動追加全體攻擊並消耗全部充能。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1003",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": []
+    },
+    {
+      "id": "hsr-1004",
+      "name": "瓦爾特",
+      "subtitle": "5★ 虛數・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、狀態自帶的觸發器",
+      "apply": null
+    },
+    {
+      "id": "hsr-1005",
+      "name": "卡芙卡",
+      "subtitle": "5★ 雷・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：回合開始／結束／擊破恢復",
+      "apply": null
+    },
+    {
+      "id": "hsr-1006",
+      "name": "銀狼",
+      "subtitle": "5★ 量子・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機擇一效果、狀態賦予屬性弱點、狀態層數轉移與重排",
+      "apply": null
+    },
+    {
+      "id": "hsr-1014",
+      "name": "Saber",
+      "subtitle": "5★ 風・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽",
+      "apply": null
+    },
+    {
+      "id": "hsr-1015",
+      "name": "Archer",
+      "subtitle": "5★ 量子・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、技能不結束回合",
+      "apply": null
+    },
+    {
+      "id": "hsr-1101",
+      "name": "布洛妮婭",
+      "subtitle": "5★ 風・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：關聯單位範圍（召喚者／施加者）、自身推進在回合結束後生效、表達式：單位數值變數、狀態數值取自施加者／持有者統計（快照）",
+      "apply": null
+    },
+    {
+      "id": "hsr-1102",
+      "name": "希兒",
+      "subtitle": "5★ 量子・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：額外回合（立即行動）、觸發來源過濾",
+      "apply": null
+    },
+    {
+      "id": "hsr-1104",
+      "name": "傑帕德",
+      "subtitle": "5★ 冰・存護",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "存護"
+      },
+      "available": true,
+      "note": "不屈之身以戰鬥開始時掛上的永久免死狀態實作；觸發時生命直接設為上限50%（原作為「回復50%生命上限」，致命傷害時生命已為0，兩者等價）。 凍結使用引擎的通用跳過回合＋持續傷害狀態，原作凍結的額外規則（例如解凍後的行動值調整）未納入。 各招式削韌量不在資料包內，依慣例估計：普攻10、戰技20。 秘技（開場護盾）固定於戰鬥開始時生效，無法像原作選擇是否使用；若要關閉請移除 hsr_1104_technique 被動。",
+      "apply": {
+        "id": "hsr_1104",
+        "name": "傑帕德",
+        "team": "ally",
+        "element": "ice",
+        "role": "存護",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 1397.088,
+          "atk": 543.312,
+          "def": 654.885,
+          "spd": 92,
+          "taunt": 150,
+          "maxEnergy": 100,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1104_basic",
+            "name": "一意之拳",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於傑帕德100%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1104_skill",
+            "name": "震懾之擊",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 2,
+                "toughness": 20
+              },
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "hsr_1104_freeze",
+                "chance": 0.65
+              }
+            ],
+            "description": "Lv10：對指定敵方單體造成等同於傑帕德200%攻擊力的冰屬性傷害，同時有65%的基礎機率使受到攻擊的敵方目標陷入凍結狀態，持續1回合。凍結狀態下，敵方目標不能行動同時每回合開始時受到等同於傑帕德60%攻擊力的冰屬性附加傷害。"
+          },
+          {
+            "id": "hsr_1104_ult",
+            "name": "永屹之壁",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 100,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "allAllies",
+                "statusId": "hsr_1104_shield",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：為我方全體提供強度等同於傑帕德45%防禦力+600的護盾，持續3回合。"
+          },
+          {
+            "id": "hsr_1104_talent",
+            "name": "不屈之身",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1104_undying",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：受到致命攻擊時傑帕德不會陷入無法戰鬥狀態，並立即回復等同於自身生命上限50%的生命值。該效果單場戰鬥中只能觸發1次。"
+          },
+          {
+            "id": "hsr_1104_technique",
+            "name": "有情之證",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "allAllies",
+                "statusId": "hsr_1104_tech-shield",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：下一次戰鬥開始時為我方全體提供強度等同於傑帕德24%防禦力+150的護盾，持續2回合。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1104_talent",
+            "name": "不屈之身",
+            "on": "battleStart",
+            "skillId": "hsr_1104_talent",
+            "limitPerTurn": 1,
+            "description": "戰鬥開始時獲得一次性的免死狀態。"
+          },
+          {
+            "id": "hsr_1104_technique",
+            "name": "有情之證",
+            "on": "battleStart",
+            "skillId": "hsr_1104_technique",
+            "limitPerTurn": 1,
+            "description": "秘技：戰鬥開始時為我方全體提供護盾。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1104",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1104_freeze",
+          "name": "凍結",
+          "kind": "debuff",
+          "category": "freeze",
+          "duration": 1,
+          "maxStacks": 1,
+          "skipTurn": true,
+          "modifiers": [],
+          "dot": {
+            "multiplier": 0.6,
+            "element": "ice"
+          },
+          "description": "無法行動，每回合開始時受到等同於傑帕德60%攻擊力的冰屬性附加傷害，持續1回合。"
+        },
+        {
+          "id": "hsr_1104_shield",
+          "name": "永屹之壁：護盾",
+          "kind": "buff",
+          "duration": 3,
+          "maxStacks": 1,
+          "modifiers": [],
+          "shield": {
+            "scale": "def",
+            "multiplier": 0.45,
+            "flat": 600
+          },
+          "description": "護盾強度等同於傑帕德45%防禦力+600，持續3回合。"
+        },
+        {
+          "id": "hsr_1104_undying",
+          "name": "不屈之身：免死",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 1,
+          "dispellable": false,
+          "modifiers": [],
+          "revive": {
+            "hpPct": 0.5
+          },
+          "description": "受到致命傷害時不倒下，並回復至生命上限50%；觸發後狀態消耗，單場一次。"
+        },
+        {
+          "id": "hsr_1104_tech-shield",
+          "name": "有情之證：護盾",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 1,
+          "modifiers": [],
+          "shield": {
+            "scale": "def",
+            "multiplier": 0.24,
+            "flat": 150
+          },
+          "description": "護盾強度等同於傑帕德24%防禦力+150，持續2回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1107",
+      "name": "克拉拉",
+      "subtitle": "5★ 物理・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "毀滅"
+      },
+      "available": true,
+      "note": "天賦永久減傷10%直接寫進基礎減傷（stats.dmgReduction）；終結技的額外25%與它在此以加算合併(35%)，原作可能為各自相乘(32.5%)。 「被敵方攻擊的機率大幅提高」資料中沒有直接數值，依終結技／秘技的未顯示參數5解讀為嘲諷×5，這是假設。 終結技「倍率提高160%」解讀為與基礎反擊160%相加（320%）；相鄰目標取主目標的50%，削韌取主目標10／相鄰5，皆為慣例值。 反擊以「受到的每一個命中傷害」各觸發一次（引擎逐筆傷害事件比對），多段攻擊會連續反擊；原作每次攻擊只反擊一次。強化反擊同一次掃描中對同一受害者只算一次，但多個受害者可能在次數用盡前一起排入，用盡後多出的反擊不會造成傷害。 強化期間克拉拉自己被打時走強化反擊，不再另外觸發一般反擊；反擊標記仍會標在攻擊克拉拉的敵人上，攻擊其他我方的敵人不會被標記（強化反擊本身也不標記）。 反擊標記標成增益類狀態以避開效果抵抗與減益驅散，且不可驅散；施放戰技後以調整狀態移除。 反擊獲得的能量、秘技的攻擊與削韌在資料中沒有數值，皆未計入；秘技假設每場戰鬥都使用。",
+      "apply": {
+        "id": "hsr_1107",
+        "name": "克拉拉",
+        "team": "ally",
+        "element": "physical",
+        "role": "毀滅",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 1241.8560000000002,
+          "atk": 737.3520000000001,
+          "def": 485.1,
+          "spd": 90,
+          "taunt": 125,
+          "maxEnergy": 110,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0.1,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1107_basic",
+            "name": "我也想幫上忙",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於克拉拉100%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_1107_skill",
+            "name": "史瓦羅在看著你",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1.2,
+                "toughness": 10
+              },
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1.2,
+                "toughness": 0,
+                "when": {
+                  "op": "gt",
+                  "args": [
+                    {
+                      "ref": "target.tag.hsr1107_mark"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "statusAdjust",
+                "target": "allEnemies",
+                "statusId": "hsr_1107_mark",
+                "op": "set",
+                "value": 0
+              }
+            ],
+            "description": "Lv10：對敵方全體造成等同於克拉拉120%攻擊力的物理屬性傷害，並對所有被史瓦羅標上【反擊標記】的敵方目標額外造成等同於克拉拉120%攻擊力的物理屬性傷害。戰技施放後所有【反擊標記】失效。"
+          },
+          {
+            "id": "hsr_1107_ult",
+            "name": "是約定不是命令",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1107_ult-guard",
+                "chance": 1
+              },
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1107_charge",
+                "chance": 1
+              },
+              {
+                "kind": "statusAdjust",
+                "target": "self",
+                "statusId": "hsr_1107_charge",
+                "op": "set",
+                "value": 2
+              }
+            ],
+            "energyCost": 110,
+            "description": "Lv10：施放終結技後克拉拉受到的傷害額外降低25%且被敵方攻擊的機率大幅提高，持續2回合。同時史瓦羅的反擊得到強化，當任意我方目標受到攻擊後，史瓦羅會立即發動反擊，對敵方目標造成的傷害倍率提高160%，並對其相鄰目標造成相當於主目標50%的傷害。強化效果可生效2次。"
+          },
+          {
+            "id": "hsr_1107_mark",
+            "name": "因為我們是家人：反擊標記",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "hsr_1107_mark",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：攻擊克拉拉的敵方目標會被史瓦羅標上【反擊標記】。"
+          },
+          {
+            "id": "hsr_1107_counter",
+            "name": "因為我們是家人：反擊",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1.6,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv10：遭到史瓦羅的反擊，對攻擊者造成等同於克拉拉160%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_1107_counter-ex",
+            "name": "是約定不是命令：強化反擊",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 3.2,
+                "adjMultiplier": 1.6,
+                "toughness": 10,
+                "adjToughness": 5,
+                "when": {
+                  "op": "gt",
+                  "args": [
+                    {
+                      "ref": "self.tag.hsr1107_charge"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "statusAdjust",
+                "target": "self",
+                "statusId": "hsr_1107_charge",
+                "op": "add",
+                "value": -1
+              }
+            ],
+            "description": "強化反擊：對攻擊者造成等同於克拉拉320%攻擊力（基礎160%再提高160%）的物理屬性傷害，並對其相鄰目標造成主目標50%的傷害；每次消耗1次強化。"
+          },
+          {
+            "id": "hsr_1107_tech",
+            "name": "勝利的小小代價",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1107_tech-taunt",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：戰鬥開始時克拉拉被敵方攻擊的機率提高，持續2回合（假設每場戰鬥都使用秘技）。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1107_mark",
+            "name": "因為我們是家人：反擊標記",
+            "on": "selfHit",
+            "skillId": "hsr_1107_mark",
+            "limitPerTurn": 0,
+            "description": "攻擊克拉拉的敵人被標上反擊標記。"
+          },
+          {
+            "id": "hsr_1107_counter",
+            "name": "因為我們是家人：反擊",
+            "on": "selfHit",
+            "when": {
+              "op": "eq",
+              "args": [
+                {
+                  "ref": "self.tag.hsr1107_charge"
+                },
+                {
+                  "const": 0
+                }
+              ]
+            },
+            "skillId": "hsr_1107_counter",
+            "limitPerTurn": 0,
+            "description": "克拉拉受到攻擊後，史瓦羅反擊攻擊者。"
+          },
+          {
+            "id": "hsr_1107_counter-ex",
+            "name": "是約定不是命令：強化反擊",
+            "on": "allyDamaged",
+            "when": {
+              "op": "gt",
+              "args": [
+                {
+                  "ref": "self.tag.hsr1107_charge"
+                },
+                {
+                  "const": 0
+                }
+              ]
+            },
+            "skillId": "hsr_1107_counter-ex",
+            "limitPerTurn": 0,
+            "description": "終結技後，任一我方目標受到攻擊時史瓦羅強化反擊（可生效2次）。"
+          },
+          {
+            "id": "hsr_1107_tech",
+            "name": "勝利的小小代價",
+            "on": "battleStart",
+            "skillId": "hsr_1107_tech",
+            "limitPerTurn": 0,
+            "description": "戰鬥開始時被攻擊機率提高。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1107",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1107_mark",
+          "name": "反擊標記",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 1,
+          "dispellable": false,
+          "tags": [
+            "hsr1107_mark"
+          ],
+          "modifiers": [],
+          "description": "史瓦羅的反擊標記（掛在敵人身上，戰技施放後失效）。標為增益是為了不受效果抵抗與減益驅散影響。"
+        },
+        {
+          "id": "hsr_1107_ult-guard",
+          "name": "是約定不是命令：護衛",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:dmgReduction",
+              "op": "add",
+              "value": 0.25
+            },
+            {
+              "target": "stat:taunt",
+              "op": "mul",
+              "value": 5
+            }
+          ],
+          "description": "受到的傷害額外降低25%，被攻擊的機率提高為5倍，持續2回合。"
+        },
+        {
+          "id": "hsr_1107_charge",
+          "name": "是約定不是命令：強化反擊次數",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 2,
+          "tags": [
+            "hsr1107_charge"
+          ],
+          "modifiers": [],
+          "description": "層數為剩餘的強化反擊次數，持續2回合。"
+        },
+        {
+          "id": "hsr_1107_tech-taunt",
+          "name": "勝利的小小代價：被攻擊機率提高",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:taunt",
+              "op": "mul",
+              "value": 5
+            }
+          ],
+          "description": "被攻擊的機率提高為5倍，持續2回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1112",
+      "name": "托帕&帳帳",
+      "subtitle": "5★ 火・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：狀態自帶的觸發器、觸發：回合開始／結束／擊破恢復、修正條件：傷害情境變數、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1203",
+      "name": "羅剎",
+      "subtitle": "5★ 虛數・豐饒",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：狀態自帶的觸發器",
+      "apply": null
+    },
+    {
+      "id": "hsr-1204",
+      "name": "景元",
+      "subtitle": "5★ 雷・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、表達式：關聯單位範圍（召喚者／施加者）、效果群組重複、效果：令指定單位施放技能等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1205",
+      "name": "刃",
+      "subtitle": "5★ 風・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權、技能不結束回合、觸發：資源變化（技能點、能量、生命、治療）",
+      "apply": null
+    },
+    {
+      "id": "hsr-1208",
+      "name": "符玄",
+      "subtitle": "5★ 量子・存護",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "存護"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：單位數值變數、生命上限隨統計即時變動、傷害轉嫁與抵擋",
+      "apply": null
+    },
+    {
+      "id": "hsr-1209",
+      "name": "彥卿",
+      "subtitle": "5★ 冰・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "巡獵"
+      },
+      "available": true,
+      "note": "智劍連心「持續1回合」設為2（引擎在持有者回合結束時就扣1，自己回合施加的1回合增益會立刻到期），這樣才能撐到下個自己的回合；若在敵人回合之間吃到傷害則依天賦消失。 天賦的「受到攻擊的機率降低」資料中沒有數值，未模擬（嘲諷不變）。 追加攻擊的觸發以「彥卿的普攻／戰技／終結技結束後」判斷，60%機率用獨立的機率亂數流；追加攻擊削韌量10為慣例值，資料中未標明。 智劍連心消散以「受到敵方的命中傷害」判斷，持續傷害不會讓它消失。 終結技是否獲得暴擊傷害加成以施放當下是否有智劍連心判斷；增益持續1回合以引擎回合規則計算。 凍結狀態的持續傷害與跳過回合的先後依引擎規則（回合開始跳傷，再跳過行動）；原作凍結解除後行動會提前，這裡沒有。 秘技假設每場戰鬥都使用，增傷以傷害情境條件（目標生命百分比≥50%）判斷；秘技本身的攻擊與削韌未計入。",
+      "apply": {
+        "id": "hsr_1209",
+        "name": "彥卿",
+        "team": "ally",
+        "element": "ice",
+        "role": "巡獵",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 892.5840000000001,
+          "atk": 679.1400000000001,
+          "def": 412.33500000000004,
+          "spd": 109,
+          "taunt": 75,
+          "maxEnergy": 140,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1209_basic",
+            "name": "霜鋒點寒芒",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於彥卿100%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1209_skill",
+            "name": "遙擊三尺水",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 2.2,
+                "toughness": 20
+              },
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1209_link",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：對指定敵方單體造成等同於彥卿220%攻擊力的冰屬性傷害，並為彥卿附加【智劍連心】，持續1回合。"
+          },
+          {
+            "id": "hsr_1209_ult",
+            "name": "快雨燕相逐",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1209_ult-crit",
+                "chance": 1
+              },
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1209_ult-link-crit",
+                "chance": 1,
+                "when": {
+                  "op": "gt",
+                  "args": [
+                    {
+                      "ref": "target.tag.hsr1209_link"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 3.5,
+                "toughness": 30
+              }
+            ],
+            "energyCost": 140,
+            "description": "Lv10：提高自身60%暴擊率，若彥卿擁有【智劍連心】效果，則使其暴擊傷害額外提高50%，增益效果持續1回合。隨後對指定敵方單體造成等同於彥卿350%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1209_followup",
+            "name": "呼劍如影",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 0.5,
+                "toughness": 10
+              },
+              {
+                "kind": "status",
+                "target": "enemy",
+                "statusId": "hsr_1209_freeze",
+                "chance": 0.65
+              }
+            ],
+            "description": "Lv10：對敵方目標發動攻擊後，有60%的固定機率發動追加攻擊，對目標造成等同於彥卿50%攻擊力的冰屬性傷害，並有65%的基礎機率使其陷入凍結狀態，持續1回合。凍結狀態下，敵方目標不能行動，且每回合開始時受到等同於彥卿50%攻擊力的冰屬性附加傷害。"
+          },
+          {
+            "id": "hsr_1209_unlink",
+            "name": "呼劍如影：連心消散",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "statusAdjust",
+                "target": "self",
+                "statusId": "hsr_1209_link",
+                "op": "set",
+                "value": 0
+              }
+            ],
+            "description": "當彥卿受到傷害後，【智劍連心】將會消失。"
+          },
+          {
+            "id": "hsr_1209_tech",
+            "name": "御劍真訣",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1209_tech-dmg",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：戰鬥開始時，彥卿對目前生命值百分比大於等於50%的敵方目標造成的傷害提高30%，持續2回合（假設每場戰鬥都使用秘技）。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1209_followup",
+            "name": "呼劍如影",
+            "on": "action",
+            "actor": "self",
+            "skillTypes": [
+              "basic",
+              "skill",
+              "ultimate"
+            ],
+            "chance": 0.6,
+            "skillId": "hsr_1209_followup",
+            "limitPerTurn": 0,
+            "description": "彥卿攻擊後有60%機率追加攻擊並可能凍結目標。"
+          },
+          {
+            "id": "hsr_1209_unlink",
+            "name": "呼劍如影：連心消散",
+            "on": "selfHit",
+            "when": {
+              "op": "gt",
+              "args": [
+                {
+                  "ref": "self.tag.hsr1209_link"
+                },
+                {
+                  "const": 0
+                }
+              ]
+            },
+            "skillId": "hsr_1209_unlink",
+            "limitPerTurn": 0,
+            "description": "彥卿受到傷害後智劍連心消失。"
+          },
+          {
+            "id": "hsr_1209_tech",
+            "name": "御劍真訣",
+            "on": "battleStart",
+            "skillId": "hsr_1209_tech",
+            "limitPerTurn": 0,
+            "description": "戰鬥開始時獲得對高生命敵人增傷。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1209",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1209_link",
+          "name": "智劍連心",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 1,
+          "tags": [
+            "hsr1209_link"
+          ],
+          "modifiers": [
+            {
+              "target": "stat:critRate",
+              "op": "add",
+              "value": 0.2
+            },
+            {
+              "target": "stat:critDmg",
+              "op": "add",
+              "value": 0.3
+            }
+          ],
+          "description": "暴擊率提高20%、暴擊傷害提高30%；受到傷害後消失。"
+        },
+        {
+          "id": "hsr_1209_ult-crit",
+          "name": "快雨燕相逐：暴擊率提高",
+          "kind": "buff",
+          "duration": 1,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:critRate",
+              "op": "add",
+              "value": 0.6
+            }
+          ],
+          "description": "暴擊率提高60%，持續1回合。"
+        },
+        {
+          "id": "hsr_1209_ult-link-crit",
+          "name": "快雨燕相逐：暴擊傷害提高",
+          "kind": "buff",
+          "duration": 1,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:critDmg",
+              "op": "add",
+              "value": 0.5
+            }
+          ],
+          "description": "暴擊傷害額外提高50%，持續1回合。"
+        },
+        {
+          "id": "hsr_1209_freeze",
+          "name": "凍結",
+          "kind": "debuff",
+          "category": "freeze",
+          "duration": 1,
+          "maxStacks": 1,
+          "tags": [
+            "freeze"
+          ],
+          "skipTurn": true,
+          "modifiers": [],
+          "dot": {
+            "multiplier": 0.5,
+            "element": "ice"
+          },
+          "description": "不能行動，每回合開始時受到彥卿50%攻擊力的冰屬性附加傷害，持續1回合。"
+        },
+        {
+          "id": "hsr_1209_tech-dmg",
+          "name": "御劍真訣：增傷",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:dmgBonus",
+              "op": "add",
+              "value": 0.3,
+              "when": {
+                "op": "gte",
+                "args": [
+                  {
+                    "ref": "target.hpPct"
+                  },
+                  {
+                    "const": 0.5
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "對生命值百分比不低於50%的敵方目標造成的傷害提高30%，持續2回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1211",
+      "name": "白露",
+      "subtitle": "5★ 雷・豐饒",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、隨機目標與逐段重抽",
+      "apply": null
+    },
+    {
+      "id": "hsr-1212",
+      "name": "鏡流",
+      "subtitle": "5★ 冰・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、觸發：資源變化（技能點、能量、生命、治療）、自身推進在回合結束後生效、計數器上下限",
+      "apply": null
+    },
+    {
+      "id": "hsr-1213",
+      "name": "丹恆•飲月",
+      "subtitle": "5★ 虛數・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、技能不結束回合、計數器上下限、技能點以其他資源抵扣",
+      "apply": null
+    },
+    {
+      "id": "hsr-1217",
+      "name": "藿藿",
+      "subtitle": "5★ 風・豐饒",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、觸發：回合開始／結束／擊破恢復、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合、計數器上下限等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1218",
+      "name": "椒丘",
+      "subtitle": "5★ 火・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：修正條件：傷害情境變數、狀態回合依施加者計數、持續傷害層數規則",
+      "apply": null
+    },
+    {
+      "id": "hsr-1220",
+      "name": "飛霄",
+      "subtitle": "5★ 風・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：大招不歸零能量、效果：令指定單位施放技能、弱點擊破效率、削韌無視弱點",
+      "apply": null
+    },
+    {
+      "id": "hsr-1221",
+      "name": "雲璃",
+      "subtitle": "5★ 物理・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、效果群組重複、大招不歸零能量、傷害效果覆寫（類型／元素／暴擊）等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1222",
+      "name": "靈砂",
+      "subtitle": "5★ 火・豐饒",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合、召喚物數值衍生自召喚者",
+      "apply": null
+    },
+    {
+      "id": "hsr-1225",
+      "name": "忘歸人",
+      "subtitle": "5★ 火・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、同施加者獨佔狀態、削韌無視弱點、超擊破（削韌轉擊破傷害）等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1302",
+      "name": "銀枝",
+      "subtitle": "5★ 物理・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、效果群組重複、大招不歸零能量",
+      "apply": null
+    },
+    {
+      "id": "hsr-1303",
+      "name": "阮•梅",
+      "subtitle": "5★ 冰・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：回合開始／結束／擊破恢復、弱點擊破效率、狀態回合依施加者計數、擊破傷害效果等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1304",
+      "name": "砂金",
+      "subtitle": "5★ 虛數・存護",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "存護"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、隨機擇一效果、效果群組重複、計數器上下限等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1305",
+      "name": "真理醫生",
+      "subtitle": "5★ 虛數・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、效果：令指定單位施放技能、同施加者獨佔狀態",
+      "apply": null
+    },
+    {
+      "id": "hsr-1306",
+      "name": "花火",
+      "subtitle": "5★ 量子・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：關聯單位範圍（召喚者／施加者）、觸發：資源變化（技能點、能量、生命、治療）、表達式：單位數值變數、狀態數值取自施加者／持有者統計（快照）等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1307",
+      "name": "黑天鵝",
+      "subtitle": "5★ 風・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：回合開始／結束／擊破恢復、觸發：持續傷害跳動、持續傷害層數規則、持續傷害擴散至相鄰",
+      "apply": null
+    },
+    {
+      "id": "hsr-1308",
+      "name": "黃泉",
+      "subtitle": "5★ 雷・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：大招不歸零能量、依統計極值選目標、削韌無視弱點、狀態層數轉移與重排等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1309",
+      "name": "知更鳥",
+      "subtitle": "5★ 物理・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：關聯單位範圍（召喚者／施加者）、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合、狀態免疫與依分類驅散、表達式：單位數值變數等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1310",
+      "name": "流螢",
+      "subtitle": "5★ 火・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權、觸發：資源變化（技能點、能量、生命、治療）、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1313",
+      "name": "星期日",
+      "subtitle": "5★ 虛數・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：關聯單位範圍（召喚者／施加者）、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合、同施加者獨佔狀態、表達式：單位數值變數等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1314",
+      "name": "翡翠",
+      "subtitle": "5★ 量子・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、觸發事件資料變數與目標、計數器上下限、同施加者獨佔狀態等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1315",
+      "name": "波提歐",
+      "subtitle": "5★ 物理・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、技能不結束回合、計數器上下限、狀態賦予屬性弱點等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1317",
+      "name": "亂破",
+      "subtitle": "5★ 虛數・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、計數器上下限、弱點擊破效率、削韌無視弱點等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1321",
+      "name": "大理花",
+      "subtitle": "5★ 火・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、效果群組重複、依統計極值選目標、狀態賦予屬性弱點等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1401",
+      "name": "大黑塔",
+      "subtitle": "5★ 冰・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、效果群組重複、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合、計數器上下限等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1402",
+      "name": "阿格萊雅",
+      "subtitle": "5★ 雷・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、表達式：關聯單位範圍（召喚者／施加者）、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合、自身推進在回合結束後生效等 12 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1403",
+      "name": "緹寶",
+      "subtitle": "5★ 量子・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發事件資料變數與目標、依統計極值選目標、狀態回合依施加者計數、觸發來源過濾",
+      "apply": null
+    },
+    {
+      "id": "hsr-1404",
+      "name": "萬敵",
+      "subtitle": "5★ 虛數・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：資源變化（技能點、能量、生命、治療）、計數器上下限、我方單位自動行動（可被選為目標）、額外回合（立即行動）等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1405",
+      "name": "那刻夏",
+      "subtitle": "5★ 風・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、隨機擇一效果、效果：令指定單位施放技能、表達式：單位數值變數等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1406",
+      "name": "賽飛兒",
+      "subtitle": "5★ 量子・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發事件資料變數與目標、同施加者獨佔狀態、依統計極值選目標、真實傷害",
+      "apply": null
+    },
+    {
+      "id": "hsr-1407",
+      "name": "遐蝶",
+      "subtitle": "5★ 量子・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權、隨機目標與逐段重抽、技能不結束回合等 11 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1408",
+      "name": "白厄",
+      "subtitle": "5★ 物理・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、效果群組重複、狀態賦予屬性弱點等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1409",
+      "name": "風堇",
+      "subtitle": "5★ 風・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、觸發：資源變化（技能點、能量、生命、治療）、效果：令指定單位施放技能、召喚物數值衍生自召喚者等 9 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1410",
+      "name": "海瑟音",
+      "subtitle": "5★ 物理・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：回合開始／結束／擊破恢復、觸發：持續傷害跳動、持續傷害依目標生命並設上限、隨機擇一效果等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1412",
+      "name": "刻律德菈",
+      "subtitle": "5★ 風・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：關聯單位範圍（召喚者／施加者）、修正條件：傷害情境變數、觸發事件資料變數與目標、計數器上下限等 7 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1413",
+      "name": "長夜月",
+      "subtitle": "5★ 冰・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、表達式：關聯單位範圍（召喚者／施加者）、觸發：資源變化（技能點、能量、生命、治療）、召喚物數值衍生自召喚者等 11 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1414",
+      "name": "丹恆•騰荒",
+      "subtitle": "5★ 物理・存護",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "存護"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、召喚物數值衍生自召喚者、同施加者獨佔狀態、護盾可疊加並設上限等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1415",
+      "name": "昔漣",
+      "subtitle": "5★ 冰・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、狀態自帶的觸發器、觸發事件資料變數與目標、效果：令指定單位施放技能等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1501",
+      "name": "火花",
+      "subtitle": "5★ 火・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權、隨機目標與逐段重抽、技能不結束回合等 9 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1502",
+      "name": "爻光",
+      "subtitle": "5★ 物理・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、隨機目標與逐段重抽、表達式：關聯單位範圍（召喚者／施加者）、觸發：資源變化（技能點、能量、生命、治療）等 9 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1503",
+      "name": "真珠",
+      "subtitle": "5★ 冰・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權、計數器上下限、效果：令指定單位施放技能等 7 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1504",
+      "name": "不死途",
+      "subtitle": "5★ 雷・巡獵",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：效果群組重複、同施加者獨佔狀態、依統計極值選目標",
+      "apply": null
+    },
+    {
+      "id": "hsr-1505",
+      "name": "緋英",
+      "subtitle": "5★ 物理・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、隨機目標與逐段重抽、表達式：關聯單位範圍（召喚者／施加者）、觸發事件資料變數與目標等 10 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1506",
+      "name": "銀狼LV.999",
+      "subtitle": "5★ 虛數・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、隨機擇一效果、觸發：資源變化（技能點、能量、生命、治療）等 9 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1507",
+      "name": "千冶•刃",
+      "subtitle": "5★ 火・虛無",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、效果：令指定單位施放技能、強制指定攻擊目標",
+      "apply": null
+    },
+    {
+      "id": "hsr-1508",
+      "name": "遠坂凜",
+      "subtitle": "5★ 量子・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、觸發：資源變化（技能點、能量、生命、治療）、效果群組重複等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1509",
+      "name": "吉爾伽美什",
+      "subtitle": "5★ 雷・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、觸發：回合開始／結束／擊破恢復、關聯目標：其他隊友、召喚者、召喚物、搭檔、命中集合等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1510",
+      "name": "姬子•啟行",
+      "subtitle": "5★ 火・智識",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、效果群組重複、效果：令指定單位施放技能、削韌無視弱點等 7 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1512",
+      "name": "知更鳥•晴歌",
+      "subtitle": "5★ 風・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "風",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、觸發：資源變化（技能點、能量、生命、治療）、計數器上下限、召喚物數值衍生自召喚者等 7 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1513",
+      "name": "砂金•戲浪",
+      "subtitle": "5★ 量子・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "量子",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權、隨機目標與逐段重抽、效果群組重複等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-8001",
+      "name": "開拓者（毀滅・物理） #8001",
+      "subtitle": "5★ 物理・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "毀滅"
+      },
+      "available": true,
+      "note": "隊友擊破也會觸發天賦（近似）；兩種終結技模式拆成兩個技能。 技術（開場回血）未納入。",
+      "apply": {
+        "id": "hsr_8001",
+        "name": "開拓者（毀滅・物理） #8001",
+        "team": "ally",
+        "element": "physical",
+        "role": "毀滅",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 1203.0479999999998,
+          "atk": 620.9280000000001,
+          "def": 460.845,
+          "spd": 100,
+          "taunt": 125,
+          "maxEnergy": 120,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_8001_basic",
+            "name": "再見安打",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於開拓者100%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8001_skill",
+            "name": "安息全壘打",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 1.25,
+                "adjMultiplier": 1.25,
+                "toughness": 20,
+                "adjToughness": 10
+              }
+            ],
+            "description": "Lv10：對指定敵方單體及其相鄰目標造成等同於開拓者125%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8001_ult-single",
+            "name": "星塵王牌（全勝•再見安打）",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 4.5,
+                "toughness": 20
+              }
+            ],
+            "description": "全勝・單體。Lv10：對指定敵方單體造成等同於開拓者450%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8001_ult-blast",
+            "name": "星塵王牌（全勝•安息全壘打）",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 2.7,
+                "adjMultiplier": 1.62,
+                "toughness": 20,
+                "adjToughness": 10
+              }
+            ],
+            "description": "全勝・擴散。Lv10：對指定敵方單體造成等同於開拓者270%攻擊力的物理屬性傷害，同時對其相鄰目標造成等同於開拓者162%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8001_talent",
+            "name": "牽制盜壘",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_8001_talent-atk",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：每次擊破敵方目標的弱點後，攻擊力提高20%，最多疊加2層。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_8001_talent",
+            "name": "牽制盜壘",
+            "on": "allyBreak",
+            "skillId": "hsr_8001_talent",
+            "limitPerTurn": 0,
+            "description": "擊破敵人弱點後，自身攻擊力疊層提高（上限見狀態）。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "8001",
+          "note": "Lv80"
+        },
+        "description": "兩種終結技模式以兩個終結技技能表示。未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_8001_talent-atk",
+          "name": "牽制盜壘：攻擊力提高",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 2,
+          "modifiers": [
+            {
+              "target": "stat:atk",
+              "op": "pct",
+              "value": 0.2
+            }
+          ],
+          "description": "每層攻擊力 +20%，最多 2 層，持續整場戰鬥。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-8002",
+      "name": "開拓者（毀滅・物理） #8002",
+      "subtitle": "5★ 物理・毀滅",
+      "facets": {
+        "星級": "5★",
+        "屬性": "物理",
+        "命途": "毀滅"
+      },
+      "available": true,
+      "note": "隊友擊破也會觸發天賦（近似）；兩種終結技模式拆成兩個技能。 與 8001 相同；技術（開場回血）未納入。",
+      "apply": {
+        "id": "hsr_8002",
+        "name": "開拓者（毀滅・物理） #8002",
+        "team": "ally",
+        "element": "physical",
+        "role": "毀滅",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 1203.0479999999998,
+          "atk": 620.9280000000001,
+          "def": 460.845,
+          "spd": 100,
+          "taunt": 125,
+          "maxEnergy": 120,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_8002_basic",
+            "name": "再見安打",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於開拓者100%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8002_skill",
+            "name": "安息全壘打",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 1.25,
+                "adjMultiplier": 1.25,
+                "toughness": 20,
+                "adjToughness": 10
+              }
+            ],
+            "description": "Lv10：對指定敵方單體及其相鄰目標造成等同於開拓者125%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8002_ult-single",
+            "name": "星塵王牌（全勝•再見安打）",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 4.5,
+                "toughness": 20
+              }
+            ],
+            "description": "全勝・單體。Lv10：對指定敵方單體造成等同於開拓者450%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8002_ult-blast",
+            "name": "星塵王牌（全勝•安息全壘打）",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 120,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 2.7,
+                "adjMultiplier": 1.62,
+                "toughness": 20,
+                "adjToughness": 10
+              }
+            ],
+            "description": "全勝・擴散。Lv10：對指定敵方單體造成等同於開拓者270%攻擊力的物理屬性傷害，同時對其相鄰目標造成等同於開拓者162%攻擊力的物理屬性傷害。"
+          },
+          {
+            "id": "hsr_8002_talent",
+            "name": "牽制盜壘",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_8002_talent-atk",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：每次擊破敵方目標的弱點後，攻擊力提高20%，最多疊加2層。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_8002_talent",
+            "name": "牽制盜壘",
+            "on": "allyBreak",
+            "skillId": "hsr_8002_talent",
+            "limitPerTurn": 0,
+            "description": "擊破敵人弱點後，自身攻擊力疊層提高（上限見狀態）。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "8002",
+          "note": "Lv80"
+        },
+        "description": "兩種終結技模式以兩個終結技技能表示。未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_8002_talent-atk",
+          "name": "牽制盜壘：攻擊力提高",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 2,
+          "modifiers": [
+            {
+              "target": "stat:atk",
+              "op": "pct",
+              "value": 0.2
+            }
+          ],
+          "description": "每層攻擊力 +20%，最多 2 層，持續整場戰鬥。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-8003",
+      "name": "開拓者（存護・火） #8003",
+      "subtitle": "5★ 火・存護",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "存護"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權",
+      "apply": null
+    },
+    {
+      "id": "hsr-8004",
+      "name": "開拓者（存護・火） #8004",
+      "subtitle": "5★ 火・存護",
+      "facets": {
+        "星級": "5★",
+        "屬性": "火",
+        "命途": "存護"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、數值依據：多來源加權",
+      "apply": null
+    },
+    {
+      "id": "hsr-8005",
+      "name": "開拓者（同諧・虛數） #8005",
+      "subtitle": "5★ 虛數・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、狀態回合依施加者計數、超擊破（削韌轉擊破傷害）",
+      "apply": null
+    },
+    {
+      "id": "hsr-8006",
+      "name": "開拓者（同諧・虛數） #8006",
+      "subtitle": "5★ 虛數・同諧",
+      "facets": {
+        "星級": "5★",
+        "屬性": "虛數",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、狀態回合依施加者計數、超擊破（削韌轉擊破傷害）",
+      "apply": null
+    },
+    {
+      "id": "hsr-8007",
+      "name": "開拓者（記憶・冰） #8007",
+      "subtitle": "5★ 冰・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、狀態自帶的觸發器、表達式：關聯單位範圍（召喚者／施加者）等 13 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-8008",
+      "name": "開拓者（記憶・冰） #8008",
+      "subtitle": "5★ 冰・記憶",
+      "facets": {
+        "星級": "5★",
+        "屬性": "冰",
+        "命途": "記憶"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、狀態自帶的觸發器、表達式：關聯單位範圍（召喚者／施加者）等 13 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-8009",
+      "name": "開拓者（歡愉・雷） #8009",
+      "subtitle": "5★ 雷・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、隨機目標與逐段重抽、效果群組重複、效果：令指定單位施放技能等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-8010",
+      "name": "開拓者（歡愉・雷） #8010",
+      "subtitle": "5★ 雷・歡愉",
+      "facets": {
+        "星級": "5★",
+        "屬性": "雷",
+        "命途": "歡愉"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、隨機目標與逐段重抽、效果群組重複、效果：令指定單位施放技能等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1001",
+      "name": "三月七",
+      "subtitle": "4★ 冰・存護",
+      "facets": {
+        "星級": "4★",
+        "屬性": "冰",
+        "命途": "存護"
+      },
+      "available": false,
+      "reason": "尚未支援：狀態數值修正的條件式（非傷害情境）",
+      "apply": null
+    },
+    {
+      "id": "hsr-1002",
+      "name": "丹恆",
+      "subtitle": "4★ 風・巡獵",
+      "facets": {
+        "星級": "4★",
+        "屬性": "風",
+        "命途": "巡獵"
+      },
+      "available": true,
+      "note": "天賦「成為我方技能目標」以「其他我方角色的攻擊／戰技／終結技指定丹恆」近似，我方全體或無指定目標的技能不會觸發，因為引擎的 action 觸發只看單一目標；判斷丹恆本人靠戰鬥開始時的永久標記狀態。 天賦冷卻「2回合後可再次觸發」以持有者回合數倒數的2回合冷卻狀態近似，並假設抗性穿透加成直到丹恆下一次攻擊才消失。 終結技「倍率提高120%」解讀為與基礎倍率相加（400%→520%）；「處於減速狀態」以帶有 slow 標籤的任何狀態判斷（本套件所有減速狀態共用此標籤）。 戰技的減速只在每段命中暴擊時判定，基礎機率100%，仍會受目標效果抵抗影響。 秘技假設每場戰鬥都已使用，攻擊力提高以戰鬥開始被動施加；秘技本身的攻擊與削韌未計入。 抗性穿透需傷害規則宣告 resPen 類統計；冷卻 2 回合近似為 limitPerTurn。『倍率提高 120%』的加算／乘算語義待確認。",
+      "apply": {
+        "id": "hsr_1002",
+        "name": "丹恆",
+        "team": "ally",
+        "element": "wind",
+        "role": "巡獵",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 882,
+          "atk": 546.84,
+          "def": 396.9,
+          "spd": 110,
+          "taunt": 75,
+          "maxEnergy": 100,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1002_basic",
+            "name": "雲騎槍術•朔風",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於丹恆100%攻擊力的風屬性傷害。"
+          },
+          {
+            "id": "hsr_1002_skill",
+            "name": "雲騎槍術•疾雨",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 2.6,
+                "toughness": 20,
+                "onHit": [
+                  {
+                    "kind": "status",
+                    "target": "victim",
+                    "statusId": "hsr_1002_slow",
+                    "chance": 1,
+                    "when": {
+                      "ref": "hit.crit"
+                    }
+                  }
+                ]
+              }
+            ],
+            "description": "Lv10：對指定敵方單體造成等同於丹恆260%攻擊力的風屬性傷害。戰技造成的傷害觸發暴擊時，有100%的基礎機率使受到攻擊的敵方目標速度降低12%，持續2回合。"
+          },
+          {
+            "id": "hsr_1002_ult",
+            "name": "洞天幻化，長夢一覺",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": {
+                  "op": "add",
+                  "args": [
+                    {
+                      "const": 4
+                    },
+                    {
+                      "op": "if",
+                      "args": [
+                        {
+                          "op": "gt",
+                          "args": [
+                            {
+                              "ref": "target.tag.slow"
+                            },
+                            {
+                              "const": 0
+                            }
+                          ]
+                        },
+                        {
+                          "const": 1.2
+                        },
+                        {
+                          "const": 0
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "toughness": 30
+              }
+            ],
+            "energyCost": 100,
+            "description": "Lv10：對指定敵方單體造成等同於丹恆400%攻擊力的風屬性傷害。當受到攻擊的敵方目標處於減速狀態時，終結技造成的傷害倍率提高120%。"
+          },
+          {
+            "id": "hsr_1002_talent",
+            "name": "寸長寸強",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1002_pen",
+                "chance": 1
+              },
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1002_cd",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：成為我方技能施放目標時，下一次攻擊的風屬性抗性穿透提高36%；觸發後2回合內不會再次觸發。"
+          },
+          {
+            "id": "hsr_1002_talent-spend",
+            "name": "寸長寸強：用掉加成",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "statusAdjust",
+                "target": "self",
+                "statusId": "hsr_1002_pen",
+                "op": "set",
+                "value": 0
+              }
+            ],
+            "description": "丹恆發動攻擊後，抗性穿透加成消失。"
+          },
+          {
+            "id": "hsr_1002_tech",
+            "name": "破敵鋒芒",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1002_tech-atk",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：戰鬥開始時丹恆攻擊力提高40%，持續3回合（假設每場戰鬥都使用秘技）。"
+          },
+          {
+            "id": "hsr_1002_marker",
+            "name": "自身標記",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1002_marker",
+                "chance": 1
+              }
+            ],
+            "description": "戰鬥開始時掛上永久標記，讓天賦能判斷「被我方技能指定為目標的是丹恆自己」。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1002_talent",
+            "name": "寸長寸強",
+            "on": "action",
+            "actor": "otherAlly",
+            "skillTypes": [
+              "basic",
+              "skill",
+              "ultimate"
+            ],
+            "when": {
+              "op": "and",
+              "args": [
+                {
+                  "op": "gt",
+                  "args": [
+                    {
+                      "ref": "target.tag.hsr1002_self"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                },
+                {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "self.tag.hsr1002_cd"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            "skillId": "hsr_1002_talent",
+            "limitPerTurn": 0,
+            "description": "我方其他角色對丹恆施放技能時，丹恆的下一次攻擊風屬性抗性穿透提高36%（冷卻2回合）。"
+          },
+          {
+            "id": "hsr_1002_talent-spend",
+            "name": "寸長寸強：用掉加成",
+            "on": "action",
+            "actor": "self",
+            "skillTypes": [
+              "basic",
+              "skill",
+              "ultimate"
+            ],
+            "when": {
+              "op": "gt",
+              "args": [
+                {
+                  "ref": "self.tag.hsr1002_pen"
+                },
+                {
+                  "const": 0
+                }
+              ]
+            },
+            "skillId": "hsr_1002_talent-spend",
+            "limitPerTurn": 0,
+            "description": "丹恆攻擊後清除抗性穿透加成。"
+          },
+          {
+            "id": "hsr_1002_tech",
+            "name": "破敵鋒芒",
+            "on": "battleStart",
+            "skillId": "hsr_1002_tech",
+            "limitPerTurn": 0,
+            "description": "戰鬥開始時攻擊力提高。"
+          },
+          {
+            "id": "hsr_1002_marker",
+            "name": "自身標記",
+            "on": "battleStart",
+            "skillId": "hsr_1002_marker",
+            "limitPerTurn": 0,
+            "description": "戰鬥開始時掛上辨識用標記。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1002",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1002_slow",
+          "name": "減速",
+          "kind": "debuff",
+          "duration": 2,
+          "maxStacks": 1,
+          "tags": [
+            "slow"
+          ],
+          "modifiers": [
+            {
+              "target": "stat:spd",
+              "op": "pct",
+              "value": -0.12
+            }
+          ],
+          "description": "速度降低12%，持續2回合。"
+        },
+        {
+          "id": "hsr_1002_pen",
+          "name": "寸長寸強：風屬性抗性穿透",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 1,
+          "tags": [
+            "hsr1002_pen"
+          ],
+          "modifiers": [
+            {
+              "target": "stat:resPen",
+              "op": "add",
+              "value": 0.36
+            }
+          ],
+          "description": "下一次攻擊的風屬性抗性穿透提高36%，攻擊後消失。"
+        },
+        {
+          "id": "hsr_1002_cd",
+          "name": "寸長寸強：冷卻",
+          "kind": "buff",
+          "duration": 2,
+          "maxStacks": 1,
+          "dispellable": false,
+          "tags": [
+            "hsr1002_cd"
+          ],
+          "modifiers": [],
+          "description": "天賦冷卻中，持續2回合。"
+        },
+        {
+          "id": "hsr_1002_marker",
+          "name": "自身標記",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 1,
+          "dispellable": false,
+          "tags": [
+            "hsr1002_self"
+          ],
+          "modifiers": [],
+          "description": "辨識用標記，無任何數值效果。"
+        },
+        {
+          "id": "hsr_1002_tech-atk",
+          "name": "破敵鋒芒：攻擊力提高",
+          "kind": "buff",
+          "duration": 3,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:atk",
+              "op": "pct",
+              "value": 0.4
+            }
+          ],
+          "description": "攻擊力提高40%，持續3回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1008",
+      "name": "阿蘭",
+      "subtitle": "4★ 雷・毀滅",
+      "facets": {
+        "星級": "4★",
+        "屬性": "雷",
+        "命途": "毀滅"
+      },
+      "available": true,
+      "note": "天賦以戰鬥開始時掛上的永久狀態實作，傷害提高 = 72% × (1 − 現有生命百分比)，每段命中依命中前的生命值計算。 戰技先扣血再造成傷害（扣血後增傷較高），消耗不會讓阿蘭倒下，最低降到1點。 各招式削韌量不在資料包內，依慣例估計：普攻10、戰技20、終結技主目標30／相鄰20。 秘技的傷害以戰鬥開始時對敵方全體造成80%攻擊力、不削韌表示（原作為進入戰鬥前的地圖攻擊）；固定生效，若要關閉請移除 hsr_1008_technique 被動。",
+      "apply": {
+        "id": "hsr_1008",
+        "name": "阿蘭",
+        "team": "ally",
+        "element": "thunder",
+        "role": "毀滅",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 1199.52,
+          "atk": 599.76,
+          "def": 330.75,
+          "spd": 102,
+          "taunt": 125,
+          "maxEnergy": 110,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1008_basic",
+            "name": "如雷疾行",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於阿蘭100%攻擊力的雷屬性傷害。"
+          },
+          {
+            "id": "hsr_1008_skill",
+            "name": "禁錮解除",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "hpCost",
+                "target": "self",
+                "op": "lose",
+                "basis": "maxHp",
+                "ratio": 0.15,
+                "floor": 1
+              },
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 2.4,
+                "toughness": 20
+              }
+            ],
+            "description": "Lv10：消耗等同於阿蘭生命上限15%的生命值對指定敵方單體造成等同於阿蘭240%攻擊力的雷屬性傷害。若現有生命值不足，則施放戰技時阿蘭的現有生命值降至1點。"
+          },
+          {
+            "id": "hsr_1008_ult",
+            "name": "狂者制裁",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 110,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 3.2,
+                "toughness": 30,
+                "adjMultiplier": 1.6,
+                "adjToughness": 20
+              }
+            ],
+            "description": "Lv10：對指定敵方單體造成等同於阿蘭320%攻擊力的雷屬性傷害，同時對其相鄰目標造成等同於阿蘭160%攻擊力的雷屬性傷害。"
+          },
+          {
+            "id": "hsr_1008_talent",
+            "name": "至痛至怒",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1008_talent-rage",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：根據阿蘭目前損失的生命值百分比獲得傷害加成，最多使阿蘭造成的傷害提高72%。"
+          },
+          {
+            "id": "hsr_1008_technique",
+            "name": "極速收割",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 0.8,
+                "toughness": 0
+              }
+            ],
+            "description": "秘技：進入戰鬥後對敵方全體造成等同於阿蘭80%攻擊力的雷屬性傷害。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1008_talent",
+            "name": "至痛至怒",
+            "on": "battleStart",
+            "skillId": "hsr_1008_talent",
+            "limitPerTurn": 1,
+            "description": "戰鬥開始時掛上永久的損失生命增傷狀態。"
+          },
+          {
+            "id": "hsr_1008_technique",
+            "name": "極速收割",
+            "on": "battleStart",
+            "skillId": "hsr_1008_technique",
+            "limitPerTurn": 1,
+            "description": "秘技：戰鬥開始時對敵方全體造成80%攻擊力的雷屬性傷害。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1008",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1008_talent-rage",
+          "name": "至痛至怒：損失生命增傷",
+          "kind": "buff",
+          "duration": 0,
+          "maxStacks": 1,
+          "dispellable": false,
+          "modifiers": [
+            {
+              "target": "stat:dmgBonus",
+              "op": "add",
+              "value": 0.72,
+              "scaleBy": {
+                "op": "sub",
+                "args": [
+                  {
+                    "const": 1
+                  },
+                  {
+                    "ref": "self.hpPct"
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "造成的傷害提高 72% × 已損失生命值百分比（最多72%）。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1009",
+      "name": "艾絲妲",
+      "subtitle": "4★ 火・同諧",
+      "facets": {
+        "星級": "4★",
+        "屬性": "火",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、觸發：回合開始／結束／擊破恢復、表達式：關聯單位範圍（召喚者／施加者）",
+      "apply": null
+    },
+    {
+      "id": "hsr-1013",
+      "name": "黑塔",
+      "subtitle": "4★ 冰・智識",
+      "facets": {
+        "星級": "4★",
+        "屬性": "冰",
+        "命途": "智識"
+      },
+      "available": true,
+      "note": "戰技的「生命值 ≥50% 增傷20%」以戰技期間短暫掛上的自身增傷狀態（依目標生命條件修正）實作，結算後立即移除；效果與原作的傷害提高區一致，每段命中依命中前的目標生命判定。 天賦以「我方每段命中後、目標現有生命值 ≤50%」觸發，且兩次黑塔自身回合之間最多追加1次；原作為「攻擊使目標降到50%以下」，且每次我方攻擊都可各自觸發，引擎沒有「每次行動只一次」的命中觸發，故用次數上限避免全體攻擊對多目標重複觸發。 追加攻擊的能量回復資料包未提供，設為0。 各招式削韌量不在資料包內，依慣例估計：普攻10、戰技全體各10、終結技全體各20、追加攻擊全體各10。 秘技（攻擊力提高）固定於戰鬥開始時生效，無法像原作選擇是否使用；若要關閉請移除 hsr_1013_technique 被動。",
+      "apply": {
+        "id": "hsr_1013",
+        "name": "黑塔",
+        "team": "ally",
+        "element": "ice",
+        "role": "智識",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 952.56,
+          "atk": 582.1199999999999,
+          "def": 396.9,
+          "spd": 100,
+          "taunt": 75,
+          "maxEnergy": 110,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1013_basic",
+            "name": "看什麼看",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於黑塔100%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1013_skill",
+            "name": "一錘子買賣",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1013_skill-bonus",
+                "chance": 1
+              },
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1,
+                "toughness": 10
+              },
+              {
+                "kind": "statusAdjust",
+                "target": "self",
+                "statusId": "hsr_1013_skill-bonus",
+                "op": "set",
+                "value": 0
+              }
+            ],
+            "description": "Lv10：對敵方全體造成等同於黑塔100%攻擊力的冰屬性傷害。若敵方目標現有生命值百分比大於等於50%，則對該目標造成的傷害提高20%。"
+          },
+          {
+            "id": "hsr_1013_ult",
+            "name": "是魔法，我加了魔法",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 110,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 2,
+                "toughness": 20
+              }
+            ],
+            "description": "Lv10：對敵方全體造成等同於黑塔200%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1013_talent",
+            "name": "還是我來吧",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 0.4,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv10：當任意我方目標的攻擊使敵方目標的現有生命值百分比小於等於50%時，黑塔發動追加攻擊，對敵方全體造成等同於黑塔40%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1013_technique",
+            "name": "可以改良一下",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "self",
+                "statusId": "hsr_1013_tech-atk",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：下一次戰鬥開始時黑塔攻擊力提高40%，持續3回合。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1013_talent",
+            "name": "還是我來吧",
+            "on": "allyHit",
+            "skillId": "hsr_1013_talent",
+            "when": {
+              "op": "lte",
+              "args": [
+                {
+                  "ref": "target.hpPct"
+                },
+                {
+                  "const": 0.5
+                }
+              ]
+            },
+            "limitPerTurn": 1,
+            "description": "我方攻擊命中後，若該敵方目標現有生命值百分比 ≤50%，黑塔追加全體攻擊。"
+          },
+          {
+            "id": "hsr_1013_technique",
+            "name": "可以改良一下",
+            "on": "battleStart",
+            "skillId": "hsr_1013_technique",
+            "limitPerTurn": 1,
+            "description": "秘技：戰鬥開始時黑塔攻擊力提高40%，持續3回合。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1013",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1013_skill-bonus",
+          "name": "一錘子買賣：高血量增傷",
+          "kind": "buff",
+          "duration": 1,
+          "maxStacks": 1,
+          "dispellable": false,
+          "modifiers": [
+            {
+              "target": "stat:dmgBonus",
+              "op": "add",
+              "value": 0.2,
+              "when": {
+                "op": "gte",
+                "args": [
+                  {
+                    "ref": "target.hpPct"
+                  },
+                  {
+                    "const": 0.5
+                  }
+                ]
+              }
+            }
+          ],
+          "description": "戰技專用：只在戰技結算期間存在；對現有生命值百分比 ≥50% 的目標，造成的傷害提高20%。"
+        },
+        {
+          "id": "hsr_1013_tech-atk",
+          "name": "可以改良一下：攻擊力提高",
+          "kind": "buff",
+          "duration": 3,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:atk",
+              "op": "pct",
+              "value": 0.4
+            }
+          ],
+          "description": "攻擊力提高40%，持續3回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1103",
+      "name": "希露瓦",
+      "subtitle": "4★ 雷・智識",
+      "facets": {
+        "星級": "4★",
+        "屬性": "雷",
+        "命途": "智識"
+      },
+      "available": true,
+      "note": "秘技的單體傷害原為敵方隨機單體，這裡固定打第一個敵人（引擎沒有隨機目標），並假設每場戰鬥都使用秘技、不計削韌。 秘技的觸電(50%攻擊力、3回合)與戰技的觸電(104%、2回合)是兩個不同狀態，同一目標可同時帶兩者並各自跳傷；原作中後者會覆蓋前者，所以雙重跳傷是偏強的近似。 天賦的附加傷害以一般命中計算（可暴擊、吃抗性），且每次攻擊結束後觸發一次；原作的附加傷害是否能暴擊未在資料中標明。 終結技延長回合只對帶有觸電狀態者生效，已被擊殺者不處理。",
+      "apply": {
+        "id": "hsr_1103",
+        "name": "希露瓦",
+        "team": "ally",
+        "element": "thunder",
+        "role": "智識",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 917.28,
+          "atk": 652.6800000000001,
+          "def": 374.85,
+          "spd": 104,
+          "taunt": 75,
+          "maxEnergy": 100,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1103_basic",
+            "name": "雷鳴音階",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於希露瓦100%攻擊力的雷屬性傷害。"
+          },
+          {
+            "id": "hsr_1103_skill",
+            "name": "電光石火間",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "blast",
+                "multiplier": 1.4,
+                "adjMultiplier": 0.6,
+                "toughness": 20,
+                "adjToughness": 10
+              },
+              {
+                "kind": "status",
+                "target": "blast",
+                "statusId": "hsr_1103_shock",
+                "chance": 0.8
+              }
+            ],
+            "description": "Lv10：對指定敵方單體造成等同於希露瓦140%攻擊力的雷屬性傷害，同時對其相鄰目標造成等同於希露瓦60%攻擊力的雷屬性傷害，此外有80%的基礎機率使受到攻擊的敵方目標陷入觸電狀態，持續2回合。觸電狀態下，敵方目標每回合開始時受到等同於希露瓦104%攻擊力的雷屬性持續傷害。"
+          },
+          {
+            "id": "hsr_1103_ult",
+            "name": "機械熱潮登場！",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1.8,
+                "toughness": 20
+              },
+              {
+                "kind": "statusAdjust",
+                "target": "allEnemies",
+                "statusId": "hsr_1103_shock",
+                "op": "turns",
+                "value": 2
+              },
+              {
+                "kind": "statusAdjust",
+                "target": "allEnemies",
+                "statusId": "hsr_1103_tech-shock",
+                "op": "turns",
+                "value": 2
+              }
+            ],
+            "energyCost": 100,
+            "description": "Lv10：對全體造成等同於希露瓦180%攻擊力的雷屬性傷害，並使觸電狀態下的敵方目標延長2回合的觸電狀態。"
+          },
+          {
+            "id": "hsr_1103_talent",
+            "name": "燃情和弦",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 0.72,
+                "toughness": 0,
+                "when": {
+                  "op": "gt",
+                  "args": [
+                    {
+                      "ref": "target.tag.shock"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              }
+            ],
+            "description": "Lv10：發動攻擊後，對所有觸電狀態下的敵方目標造成等同於希露瓦72%攻擊力的雷屬性附加傷害。"
+          },
+          {
+            "id": "hsr_1103_tech",
+            "name": "晚安，貝洛伯格",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 0.5,
+                "toughness": 0
+              },
+              {
+                "kind": "status",
+                "target": "allEnemies",
+                "statusId": "hsr_1103_tech-shock",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：戰鬥開始時對敵方單體造成等同於希露瓦50%攻擊力的雷屬性傷害，並有100%的基礎機率使敵方每個單體目標陷入觸電狀態，持續3回合；每回合開始時受到50%攻擊力的雷屬性持續傷害（假設每場戰鬥都使用秘技）。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1103_talent",
+            "name": "燃情和弦",
+            "on": "action",
+            "actor": "self",
+            "skillTypes": [
+              "basic",
+              "skill",
+              "ultimate"
+            ],
+            "skillId": "hsr_1103_talent",
+            "limitPerTurn": 0,
+            "description": "希露瓦攻擊後，對所有觸電中的敵人造成附加傷害。"
+          },
+          {
+            "id": "hsr_1103_tech",
+            "name": "晚安，貝洛伯格",
+            "on": "battleStart",
+            "skillId": "hsr_1103_tech",
+            "limitPerTurn": 0,
+            "description": "戰鬥開始時攻擊並使敵方全體觸電。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1103",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1103_shock",
+          "name": "觸電",
+          "kind": "debuff",
+          "category": "shock",
+          "duration": 2,
+          "maxStacks": 1,
+          "tags": [
+            "shock"
+          ],
+          "modifiers": [],
+          "dot": {
+            "multiplier": 1.04,
+            "element": "thunder"
+          },
+          "description": "每回合開始時受到希露瓦104%攻擊力的雷屬性持續傷害，持續2回合。"
+        },
+        {
+          "id": "hsr_1103_tech-shock",
+          "name": "觸電（秘技）",
+          "kind": "debuff",
+          "category": "shock",
+          "duration": 3,
+          "maxStacks": 1,
+          "tags": [
+            "shock"
+          ],
+          "modifiers": [],
+          "dot": {
+            "multiplier": 0.5,
+            "element": "thunder"
+          },
+          "description": "每回合開始時受到希露瓦50%攻擊力的雷屬性持續傷害，持續3回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1105",
+      "name": "娜塔莎",
+      "subtitle": "4★ 物理・豐饒",
+      "facets": {
+        "星級": "4★",
+        "屬性": "物理",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、狀態自帶的觸發器、觸發：回合開始／結束／擊破恢復",
+      "apply": null
+    },
+    {
+      "id": "hsr-1106",
+      "name": "佩拉",
+      "subtitle": "4★ 冰・虛無",
+      "facets": {
+        "星級": "4★",
+        "屬性": "冰",
+        "命途": "虛無"
+      },
+      "available": true,
+      "note": "天賦對普攻與戰技以「行動後被指定的目標帶有負面效果」判定，每次行動只觸發一次；擊殺目標時目標狀態已清除，不會觸發。 終結技的天賦能量改為無條件回復10點：原作在終結技結束後檢查敵方是否帶有負面效果，而終結技本身會對全體施加通解，只有全體都抵抗時才會不同。 終結技先造成傷害、再施加通解，所以終結技自身的傷害不吃防禦降低。 各招式削韌量不在資料包內，依慣例估計：普攻10、戰技20、終結技全體各20。 秘技只納入「全體防禦力降低20%」，隨機單體80%傷害未納入；固定於戰鬥開始時生效，若要關閉請移除 hsr_1106_technique 被動。",
+      "apply": {
+        "id": "hsr_1106",
+        "name": "佩拉",
+        "team": "ally",
+        "element": "ice",
+        "role": "虛無",
+        "stats": {
+          "level": 80,
+          "critRate": 0.05,
+          "critDmg": 0.5,
+          "hp": 987.8399999999999,
+          "atk": 546.84,
+          "def": 463.04999999999995,
+          "spd": 105,
+          "taunt": 100,
+          "maxEnergy": 110,
+          "startEnergy": 0,
+          "dmgBonus": 0,
+          "defIgnore": 0,
+          "res": 0,
+          "resPen": 0,
+          "vulnerability": 0,
+          "dmgReduction": 0,
+          "effectHit": 0,
+          "effectRes": 0,
+          "breakEffect": 0
+        },
+        "weaknesses": [],
+        "skills": [
+          {
+            "id": "hsr_1106_basic",
+            "name": "冰點射擊",
+            "type": "basic",
+            "spDelta": 1,
+            "energyGain": 20,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 1,
+                "toughness": 10
+              }
+            ],
+            "description": "Lv6：對指定敵方單體造成等同於佩拉100%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1106_skill",
+            "name": "低溫妨害",
+            "type": "skill",
+            "spDelta": -1,
+            "energyGain": 30,
+            "targeting": "enemy",
+            "effects": [
+              {
+                "kind": "dispel",
+                "target": "enemy",
+                "statusKind": "buff",
+                "count": 1
+              },
+              {
+                "kind": "damage",
+                "target": "enemy",
+                "multiplier": 2.1,
+                "toughness": 20
+              }
+            ],
+            "description": "Lv10：解除指定敵方單體的1個增益效果，同時造成等同於佩拉210%攻擊力的冰屬性傷害。"
+          },
+          {
+            "id": "hsr_1106_ult",
+            "name": "領域壓制",
+            "type": "ultimate",
+            "spDelta": 0,
+            "energyGain": 5,
+            "energyCost": 110,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "multiplier": 1,
+                "toughness": 20
+              },
+              {
+                "kind": "status",
+                "target": "allEnemies",
+                "statusId": "hsr_1106_exposed",
+                "chance": 1
+              }
+            ],
+            "description": "Lv10：有100%的基礎機率使敵方每個單體目標陷入【通解】狀態，同時對敵方全體造成等同於佩拉100%攻擊力的冰屬性傷害。【通解】狀態下，敵方目標防禦力降低40%，持續2回合。"
+          },
+          {
+            "id": "hsr_1106_talent",
+            "name": "資料收集",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "energy",
+                "target": "self",
+                "amount": 10
+              }
+            ],
+            "description": "Lv10：發動攻擊後若敵方目標處於負面效果狀態，則佩拉額外恢復10點能量。該效果每次攻擊只能觸發1次。"
+          },
+          {
+            "id": "hsr_1106_technique",
+            "name": "先發制人",
+            "type": "followup",
+            "spDelta": 0,
+            "energyGain": 0,
+            "targeting": "none",
+            "effects": [
+              {
+                "kind": "status",
+                "target": "allEnemies",
+                "statusId": "hsr_1106_tech-def",
+                "chance": 1
+              }
+            ],
+            "description": "秘技：進入戰鬥後，有100%的基礎機率使敵方每個單體目標防禦力降低20%，持續2回合。"
+          }
+        ],
+        "passives": [
+          {
+            "id": "hsr_1106_talent",
+            "name": "資料收集",
+            "on": "action",
+            "actor": "self",
+            "skillTypes": [
+              "basic",
+              "skill"
+            ],
+            "skillId": "hsr_1106_talent",
+            "when": {
+              "op": "gt",
+              "args": [
+                {
+                  "ref": "target.debuffs"
+                },
+                {
+                  "const": 0
+                }
+              ]
+            },
+            "limitPerTurn": 1,
+            "description": "普攻或戰技結束後，若被攻擊的敵方目標帶有負面效果，恢復10點能量。"
+          },
+          {
+            "id": "hsr_1106_talent-ult",
+            "name": "資料收集（終結技）",
+            "on": "action",
+            "actor": "self",
+            "skillTypes": [
+              "ultimate"
+            ],
+            "skillId": "hsr_1106_talent",
+            "limitPerTurn": 1,
+            "description": "終結技結束後恢復10點能量（終結技會對敵方全體施加通解）。"
+          },
+          {
+            "id": "hsr_1106_technique",
+            "name": "先發制人",
+            "on": "battleStart",
+            "skillId": "hsr_1106_technique",
+            "limitPerTurn": 1,
+            "description": "秘技：戰鬥開始時敵方全體防禦力降低20%，持續2回合。"
+          }
+        ],
+        "source": {
+          "kind": "reference-character",
+          "key": "1106",
+          "note": "Lv80"
+        },
+        "description": "未含光錐、遺器、行跡與星魂。"
+      },
+      "statuses": [
+        {
+          "id": "hsr_1106_exposed",
+          "name": "通解",
+          "kind": "debuff",
+          "duration": 2,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:def",
+              "op": "pct",
+              "value": -0.4
+            }
+          ],
+          "description": "防禦力降低40%，持續2回合。"
+        },
+        {
+          "id": "hsr_1106_tech-def",
+          "name": "先發制人：防禦力降低",
+          "kind": "debuff",
+          "duration": 2,
+          "maxStacks": 1,
+          "modifiers": [
+            {
+              "target": "stat:def",
+              "op": "pct",
+              "value": -0.2
+            }
+          ],
+          "description": "防禦力降低20%，持續2回合。"
+        }
+      ]
+    },
+    {
+      "id": "hsr-1108",
+      "name": "桑博",
+      "subtitle": "4★ 風・虛無",
+      "facets": {
+        "星級": "4★",
+        "屬性": "風",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、修正條件：傷害情境變數",
+      "apply": null
+    },
+    {
+      "id": "hsr-1109",
+      "name": "虎克",
+      "subtitle": "4★ 火・毀滅",
+      "facets": {
+        "星級": "4★",
+        "屬性": "火",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換",
+      "apply": null
+    },
+    {
+      "id": "hsr-1110",
+      "name": "玲可",
+      "subtitle": "4★ 量子・豐饒",
+      "facets": {
+        "星級": "4★",
+        "屬性": "量子",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：數值依據：多來源加權、狀態自帶的觸發器、觸發：回合開始／結束／擊破恢復、表達式：關聯單位範圍（召喚者／施加者）等 8 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1111",
+      "name": "盧卡",
+      "subtitle": "4★ 物理・虛無",
+      "facets": {
+        "星級": "4★",
+        "屬性": "物理",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、持續傷害依目標生命並設上限",
+      "apply": null
+    },
+    {
+      "id": "hsr-1201",
+      "name": "青雀",
+      "subtitle": "4★ 量子・智識",
+      "facets": {
+        "星級": "4★",
+        "屬性": "量子",
+        "命途": "智識"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、觸發：回合開始／結束／擊破恢復、技能不結束回合、隨機擇一效果",
+      "apply": null
+    },
+    {
+      "id": "hsr-1202",
+      "name": "停雲",
+      "subtitle": "4★ 雷・同諧",
+      "facets": {
+        "星級": "4★",
+        "屬性": "雷",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：狀態自帶的觸發器、表達式：關聯單位範圍（召喚者／施加者）、同施加者獨佔狀態、表達式：單位數值變數等 5 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1206",
+      "name": "素裳",
+      "subtitle": "4★ 物理・巡獵",
+      "facets": {
+        "星級": "4★",
+        "屬性": "物理",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：效果群組重複、自身推進在回合結束後生效",
+      "apply": null
+    },
+    {
+      "id": "hsr-1207",
+      "name": "馭空",
+      "subtitle": "4★ 虛數・同諧",
+      "facets": {
+        "星級": "4★",
+        "屬性": "虛數",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：回合開始／結束／擊破恢復、表達式：關聯單位範圍（召喚者／施加者）",
+      "apply": null
+    },
+    {
+      "id": "hsr-1210",
+      "name": "桂乃芬",
+      "subtitle": "4★ 火・虛無",
+      "facets": {
+        "星級": "4★",
+        "屬性": "火",
+        "命途": "虛無"
+      },
+      "available": false,
+      "reason": "尚未支援：觸發：回合開始／結束／擊破恢復、觸發：持續傷害跳動",
+      "apply": null
+    },
+    {
+      "id": "hsr-1214",
+      "name": "雪衣",
+      "subtitle": "4★ 量子・毀滅",
+      "facets": {
+        "星級": "4★",
+        "屬性": "量子",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、觸發事件資料變數與目標、效果群組重複、計數器上下限等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1215",
+      "name": "寒鴉",
+      "subtitle": "4★ 物理・同諧",
+      "facets": {
+        "星級": "4★",
+        "屬性": "物理",
+        "命途": "同諧"
+      },
+      "available": false,
+      "reason": "尚未支援：表達式：關聯單位範圍（召喚者／施加者）、同施加者獨佔狀態、表達式：單位數值變數、狀態數值取自施加者／持有者統計（快照）",
+      "apply": null
+    },
+    {
+      "id": "hsr-1223",
+      "name": "貊澤",
+      "subtitle": "4★ 雷・巡獵",
+      "facets": {
+        "星級": "4★",
+        "屬性": "雷",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、隨機目標與逐段重抽、計數器上下限、效果：令指定單位施放技能等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1224",
+      "name": "三月七",
+      "subtitle": "4★ 虛數・巡獵",
+      "facets": {
+        "星級": "4★",
+        "屬性": "虛數",
+        "命途": "巡獵"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、效果群組重複、計數器上下限、同施加者獨佔狀態等 6 項",
+      "apply": null
+    },
+    {
+      "id": "hsr-1301",
+      "name": "加拉赫",
+      "subtitle": "4★ 火・豐饒",
+      "facets": {
+        "星級": "4★",
+        "屬性": "火",
+        "命途": "豐饒"
+      },
+      "available": false,
+      "reason": "尚未支援：技能可用條件與替換、觸發事件資料變數與目標",
+      "apply": null
+    },
+    {
+      "id": "hsr-1312",
+      "name": "米沙",
+      "subtitle": "4★ 冰・毀滅",
+      "facets": {
+        "星級": "4★",
+        "屬性": "冰",
+        "命途": "毀滅"
+      },
+      "available": false,
+      "reason": "尚未支援：隨機目標與逐段重抽、觸發：資源變化（技能點、能量、生命、治療）、效果群組重複",
+      "apply": null
+    }
+  ]
+}

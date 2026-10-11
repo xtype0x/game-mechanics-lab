@@ -32,7 +32,7 @@ export function App() {
       <header className="top">
         <a className="back-link" href="../index.html#/lab">← gacha-game-tool 工具遊樂場</a>
         <h1>戰鬥實驗室</h1>
-        <p className="tagline">挑隊伍和敵人、改數值與技能，看看誰先出手、勝率多少，最後親手打一場。角色與數字都是原創範例。</p>
+        <p className="tagline">挑隊伍和敵人、改數值與技能，看看誰先出手、勝率多少，最後親手打一場。範本角色與數字是原創範例；「星穹鐵道」角色為未核實的社群資料，僅供模擬。</p>
       </header>
       <main>
         <Lab project={project} update={update} saved={saved} onPlay={() => setView("play")} onReset={() => { clearSaved(); setProject(freshProject()); }} />

@@ -1,0 +1,170 @@
+{
+  "id": "1003",
+  "skills": [
+    {
+      "id": "hsr_1003_basic",
+      "name": "武裝調律",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於姬子100%攻擊力的火屬性傷害。"
+    },
+    {
+      "id": "hsr_1003_skill",
+      "name": "熔核爆裂",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "blast",
+          "multiplier": 2,
+          "toughness": 20,
+          "adjMultiplier": 0.8,
+          "adjToughness": 10
+        }
+      ],
+      "description": "Lv10：對指定敵方單體造成等同於姬子200%攻擊力的火屬性傷害，同時對其相鄰目標造成等同於姬子80%攻擊力的火屬性傷害。"
+    },
+    {
+      "id": "hsr_1003_ult",
+      "name": "天墜之火",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "energyCost": 120,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 2.3,
+          "toughness": 20,
+          "onHit": [
+            {
+              "kind": "energy",
+              "target": "self",
+              "amount": 5,
+              "when": {
+                "ref": "hit.killed"
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Lv10：對敵方全體造成等同於姬子230%攻擊力的火屬性傷害，每消滅1個敵方目標額外恢復姬子5點能量。"
+    },
+    {
+      "id": "hsr_1003_charge",
+      "name": "乘勝追擊：充能",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "counter",
+          "target": "self",
+          "key": "charge",
+          "op": "add",
+          "value": 1,
+          "when": {
+            "op": "lt",
+            "args": [
+              {
+                "ref": "self.counter.charge"
+              },
+              {
+                "const": 3
+              }
+            ]
+          }
+        }
+      ],
+      "description": "Lv10：當有敵方目標的弱點被擊破時，姬子獲得1點充能，上限3點。戰鬥開始時獲得1點充能。"
+    },
+    {
+      "id": "hsr_1003_talent",
+      "name": "乘勝追擊",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "counter",
+          "target": "self",
+          "key": "charge",
+          "op": "set",
+          "value": 0
+        },
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 1.4,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv10：充能達到上限（3點）時立即發動1次追加攻擊，對敵方全體目標造成等同於姬子140%攻擊力的火屬性傷害，並消耗全部充能。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1003_charge-break",
+      "name": "乘勝追擊：擊破充能",
+      "on": "allyBreak",
+      "skillId": "hsr_1003_charge",
+      "limitPerTurn": 0,
+      "description": "我方擊破敵方弱點時，姬子獲得1點充能（上限3）。"
+    },
+    {
+      "id": "hsr_1003_charge-start",
+      "name": "乘勝追擊：開場充能",
+      "on": "battleStart",
+      "skillId": "hsr_1003_charge",
+      "limitPerTurn": 1,
+      "description": "戰鬥開始時姬子獲得1點充能。"
+    },
+    {
+      "id": "hsr_1003_talent",
+      "name": "乘勝追擊",
+      "on": "counterChange",
+      "skillId": "hsr_1003_talent",
+      "when": {
+        "op": "gte",
+        "args": [
+          {
+            "ref": "self.counter.charge"
+          },
+          {
+            "const": 3
+          }
+        ]
+      },
+      "limitPerTurn": 0,
+      "description": "充能達到3點時發動追加全體攻擊並消耗全部充能。"
+    }
+  ],
+  "statuses": [],
+  "stats": {
+    "maxEnergy": 120
+  },
+  "approximations": [
+    "天賦的追加攻擊在充能達到3點的那一刻（該次行動結束後）發動，而不是「我方攻擊後檢查」；兩者在實戰時機上幾乎相同，但充能已滿時的額外攻擊不會再次檢查。",
+    "充能不分擊破來源，我方每擊破一個敵方弱點就加1點（含姬子自己）。",
+    "秘技（特殊領域使敵方受到火屬性傷害提高10%）需要地圖領域與火屬性專屬易傷，引擎沒有對應機制，未納入。",
+    "追加攻擊的能量回復資料包未提供，設為0。",
+    "各招式削韌量不在資料包內，依慣例估計：普攻10、戰技主目標20／相鄰10、終結技全體各20、追加攻擊全體各10。"
+  ]
+}

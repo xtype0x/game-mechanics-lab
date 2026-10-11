@@ -1,0 +1,313 @@
+{
+  "id": "1107",
+  "skills": [
+    {
+      "id": "hsr_1107_basic",
+      "name": "我也想幫上忙",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於克拉拉100%攻擊力的物理屬性傷害。"
+    },
+    {
+      "id": "hsr_1107_skill",
+      "name": "史瓦羅在看著你",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 1.2,
+          "toughness": 10
+        },
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 1.2,
+          "toughness": 0,
+          "when": {
+            "op": "gt",
+            "args": [
+              {
+                "ref": "target.tag.hsr1107_mark"
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "statusAdjust",
+          "target": "allEnemies",
+          "statusId": "hsr_1107_mark",
+          "op": "set",
+          "value": 0
+        }
+      ],
+      "description": "Lv10：對敵方全體造成等同於克拉拉120%攻擊力的物理屬性傷害，並對所有被史瓦羅標上【反擊標記】的敵方目標額外造成等同於克拉拉120%攻擊力的物理屬性傷害。戰技施放後所有【反擊標記】失效。"
+    },
+    {
+      "id": "hsr_1107_ult",
+      "name": "是約定不是命令",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1107_ult-guard",
+          "chance": 1
+        },
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1107_charge",
+          "chance": 1
+        },
+        {
+          "kind": "statusAdjust",
+          "target": "self",
+          "statusId": "hsr_1107_charge",
+          "op": "set",
+          "value": 2
+        }
+      ],
+      "energyCost": 110,
+      "description": "Lv10：施放終結技後克拉拉受到的傷害額外降低25%且被敵方攻擊的機率大幅提高，持續2回合。同時史瓦羅的反擊得到強化，當任意我方目標受到攻擊後，史瓦羅會立即發動反擊，對敵方目標造成的傷害倍率提高160%，並對其相鄰目標造成相當於主目標50%的傷害。強化效果可生效2次。"
+    },
+    {
+      "id": "hsr_1107_mark",
+      "name": "因為我們是家人：反擊標記",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "enemy",
+          "statusId": "hsr_1107_mark",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：攻擊克拉拉的敵方目標會被史瓦羅標上【反擊標記】。"
+    },
+    {
+      "id": "hsr_1107_counter",
+      "name": "因為我們是家人：反擊",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1.6,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv10：遭到史瓦羅的反擊，對攻擊者造成等同於克拉拉160%攻擊力的物理屬性傷害。"
+    },
+    {
+      "id": "hsr_1107_counter-ex",
+      "name": "是約定不是命令：強化反擊",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "blast",
+          "multiplier": 3.2,
+          "adjMultiplier": 1.6,
+          "toughness": 10,
+          "adjToughness": 5,
+          "when": {
+            "op": "gt",
+            "args": [
+              {
+                "ref": "self.tag.hsr1107_charge"
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "statusAdjust",
+          "target": "self",
+          "statusId": "hsr_1107_charge",
+          "op": "add",
+          "value": -1
+        }
+      ],
+      "description": "強化反擊：對攻擊者造成等同於克拉拉320%攻擊力（基礎160%再提高160%）的物理屬性傷害，並對其相鄰目標造成主目標50%的傷害；每次消耗1次強化。"
+    },
+    {
+      "id": "hsr_1107_tech",
+      "name": "勝利的小小代價",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1107_tech-taunt",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：戰鬥開始時克拉拉被敵方攻擊的機率提高，持續2回合（假設每場戰鬥都使用秘技）。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1107_mark",
+      "name": "因為我們是家人：反擊標記",
+      "on": "selfHit",
+      "skillId": "hsr_1107_mark",
+      "limitPerTurn": 0,
+      "description": "攻擊克拉拉的敵人被標上反擊標記。"
+    },
+    {
+      "id": "hsr_1107_counter",
+      "name": "因為我們是家人：反擊",
+      "on": "selfHit",
+      "when": {
+        "op": "eq",
+        "args": [
+          {
+            "ref": "self.tag.hsr1107_charge"
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "skillId": "hsr_1107_counter",
+      "limitPerTurn": 0,
+      "description": "克拉拉受到攻擊後，史瓦羅反擊攻擊者。"
+    },
+    {
+      "id": "hsr_1107_counter-ex",
+      "name": "是約定不是命令：強化反擊",
+      "on": "allyDamaged",
+      "when": {
+        "op": "gt",
+        "args": [
+          {
+            "ref": "self.tag.hsr1107_charge"
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "skillId": "hsr_1107_counter-ex",
+      "limitPerTurn": 0,
+      "description": "終結技後，任一我方目標受到攻擊時史瓦羅強化反擊（可生效2次）。"
+    },
+    {
+      "id": "hsr_1107_tech",
+      "name": "勝利的小小代價",
+      "on": "battleStart",
+      "skillId": "hsr_1107_tech",
+      "limitPerTurn": 0,
+      "description": "戰鬥開始時被攻擊機率提高。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1107_mark",
+      "name": "反擊標記",
+      "kind": "buff",
+      "duration": 0,
+      "maxStacks": 1,
+      "dispellable": false,
+      "tags": [
+        "hsr1107_mark"
+      ],
+      "modifiers": [],
+      "description": "史瓦羅的反擊標記（掛在敵人身上，戰技施放後失效）。標為增益是為了不受效果抵抗與減益驅散影響。"
+    },
+    {
+      "id": "hsr_1107_ult-guard",
+      "name": "是約定不是命令：護衛",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:dmgReduction",
+          "op": "add",
+          "value": 0.25
+        },
+        {
+          "target": "stat:taunt",
+          "op": "mul",
+          "value": 5
+        }
+      ],
+      "description": "受到的傷害額外降低25%，被攻擊的機率提高為5倍，持續2回合。"
+    },
+    {
+      "id": "hsr_1107_charge",
+      "name": "是約定不是命令：強化反擊次數",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 2,
+      "tags": [
+        "hsr1107_charge"
+      ],
+      "modifiers": [],
+      "description": "層數為剩餘的強化反擊次數，持續2回合。"
+    },
+    {
+      "id": "hsr_1107_tech-taunt",
+      "name": "勝利的小小代價：被攻擊機率提高",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:taunt",
+          "op": "mul",
+          "value": 5
+        }
+      ],
+      "description": "被攻擊的機率提高為5倍，持續2回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 110,
+    "dmgReduction": 0.1
+  },
+  "approximations": [
+    "天賦永久減傷10%直接寫進基礎減傷（stats.dmgReduction）；終結技的額外25%與它在此以加算合併(35%)，原作可能為各自相乘(32.5%)。",
+    "「被敵方攻擊的機率大幅提高」資料中沒有直接數值，依終結技／秘技的未顯示參數5解讀為嘲諷×5，這是假設。",
+    "終結技「倍率提高160%」解讀為與基礎反擊160%相加（320%）；相鄰目標取主目標的50%，削韌取主目標10／相鄰5，皆為慣例值。",
+    "反擊以「受到的每一個命中傷害」各觸發一次（引擎逐筆傷害事件比對），多段攻擊會連續反擊；原作每次攻擊只反擊一次。強化反擊同一次掃描中對同一受害者只算一次，但多個受害者可能在次數用盡前一起排入，用盡後多出的反擊不會造成傷害。",
+    "強化期間克拉拉自己被打時走強化反擊，不再另外觸發一般反擊；反擊標記仍會標在攻擊克拉拉的敵人上，攻擊其他我方的敵人不會被標記（強化反擊本身也不標記）。",
+    "反擊標記標成增益類狀態以避開效果抵抗與減益驅散，且不可驅散；施放戰技後以調整狀態移除。",
+    "反擊獲得的能量、秘技的攻擊與削韌在資料中沒有數值，皆未計入；秘技假設每場戰鬥都使用。"
+  ]
+}

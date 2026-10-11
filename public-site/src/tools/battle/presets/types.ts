@@ -14,6 +14,10 @@ export interface Preset {
   apply: UnitDef | null;
   /** Extra StatusDefs the unit needs; merged into the project's statuses by id (same id is replaced). */
   statuses?: StatusDef[];
+  /** Approximations or caveats of the modelled kit (tooltip). */
+  note?: string;
+  /** Filter facets for large groups, e.g. { 屬性: "冰", 命途: "智識" }; the menu offers one dropdown per key. */
+  facets?: Record<string, string>;
 }
 
 export interface PresetGroup {

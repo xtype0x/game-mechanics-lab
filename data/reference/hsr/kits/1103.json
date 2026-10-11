@@ -1,0 +1,199 @@
+{
+  "id": "1103",
+  "skills": [
+    {
+      "id": "hsr_1103_basic",
+      "name": "雷鳴音階",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於希露瓦100%攻擊力的雷屬性傷害。"
+    },
+    {
+      "id": "hsr_1103_skill",
+      "name": "電光石火間",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "blast",
+          "multiplier": 1.4,
+          "adjMultiplier": 0.6,
+          "toughness": 20,
+          "adjToughness": 10
+        },
+        {
+          "kind": "status",
+          "target": "blast",
+          "statusId": "hsr_1103_shock",
+          "chance": 0.8
+        }
+      ],
+      "description": "Lv10：對指定敵方單體造成等同於希露瓦140%攻擊力的雷屬性傷害，同時對其相鄰目標造成等同於希露瓦60%攻擊力的雷屬性傷害，此外有80%的基礎機率使受到攻擊的敵方目標陷入觸電狀態，持續2回合。觸電狀態下，敵方目標每回合開始時受到等同於希露瓦104%攻擊力的雷屬性持續傷害。"
+    },
+    {
+      "id": "hsr_1103_ult",
+      "name": "機械熱潮登場！",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 1.8,
+          "toughness": 20
+        },
+        {
+          "kind": "statusAdjust",
+          "target": "allEnemies",
+          "statusId": "hsr_1103_shock",
+          "op": "turns",
+          "value": 2
+        },
+        {
+          "kind": "statusAdjust",
+          "target": "allEnemies",
+          "statusId": "hsr_1103_tech-shock",
+          "op": "turns",
+          "value": 2
+        }
+      ],
+      "energyCost": 100,
+      "description": "Lv10：對全體造成等同於希露瓦180%攻擊力的雷屬性傷害，並使觸電狀態下的敵方目標延長2回合的觸電狀態。"
+    },
+    {
+      "id": "hsr_1103_talent",
+      "name": "燃情和弦",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 0.72,
+          "toughness": 0,
+          "when": {
+            "op": "gt",
+            "args": [
+              {
+                "ref": "target.tag.shock"
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        }
+      ],
+      "description": "Lv10：發動攻擊後，對所有觸電狀態下的敵方目標造成等同於希露瓦72%攻擊力的雷屬性附加傷害。"
+    },
+    {
+      "id": "hsr_1103_tech",
+      "name": "晚安，貝洛伯格",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 0.5,
+          "toughness": 0
+        },
+        {
+          "kind": "status",
+          "target": "allEnemies",
+          "statusId": "hsr_1103_tech-shock",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：戰鬥開始時對敵方單體造成等同於希露瓦50%攻擊力的雷屬性傷害，並有100%的基礎機率使敵方每個單體目標陷入觸電狀態，持續3回合；每回合開始時受到50%攻擊力的雷屬性持續傷害（假設每場戰鬥都使用秘技）。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1103_talent",
+      "name": "燃情和弦",
+      "on": "action",
+      "actor": "self",
+      "skillTypes": [
+        "basic",
+        "skill",
+        "ultimate"
+      ],
+      "skillId": "hsr_1103_talent",
+      "limitPerTurn": 0,
+      "description": "希露瓦攻擊後，對所有觸電中的敵人造成附加傷害。"
+    },
+    {
+      "id": "hsr_1103_tech",
+      "name": "晚安，貝洛伯格",
+      "on": "battleStart",
+      "skillId": "hsr_1103_tech",
+      "limitPerTurn": 0,
+      "description": "戰鬥開始時攻擊並使敵方全體觸電。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1103_shock",
+      "name": "觸電",
+      "kind": "debuff",
+      "category": "shock",
+      "duration": 2,
+      "maxStacks": 1,
+      "tags": [
+        "shock"
+      ],
+      "modifiers": [],
+      "dot": {
+        "multiplier": 1.04,
+        "element": "thunder"
+      },
+      "description": "每回合開始時受到希露瓦104%攻擊力的雷屬性持續傷害，持續2回合。"
+    },
+    {
+      "id": "hsr_1103_tech-shock",
+      "name": "觸電（秘技）",
+      "kind": "debuff",
+      "category": "shock",
+      "duration": 3,
+      "maxStacks": 1,
+      "tags": [
+        "shock"
+      ],
+      "modifiers": [],
+      "dot": {
+        "multiplier": 0.5,
+        "element": "thunder"
+      },
+      "description": "每回合開始時受到希露瓦50%攻擊力的雷屬性持續傷害，持續3回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 100
+  },
+  "approximations": [
+    "秘技的單體傷害原為敵方隨機單體，這裡固定打第一個敵人（引擎沒有隨機目標），並假設每場戰鬥都使用秘技、不計削韌。",
+    "秘技的觸電(50%攻擊力、3回合)與戰技的觸電(104%、2回合)是兩個不同狀態，同一目標可同時帶兩者並各自跳傷；原作中後者會覆蓋前者，所以雙重跳傷是偏強的近似。",
+    "天賦的附加傷害以一般命中計算（可暴擊、吃抗性），且每次攻擊結束後觸發一次；原作的附加傷害是否能暴擊未在資料中標明。",
+    "終結技延長回合只對帶有觸電狀態者生效，已被擊殺者不處理。"
+  ]
+}

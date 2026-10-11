@@ -1,0 +1,299 @@
+{
+  "id": "1209",
+  "skills": [
+    {
+      "id": "hsr_1209_basic",
+      "name": "霜鋒點寒芒",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於彥卿100%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1209_skill",
+      "name": "遙擊三尺水",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 2.2,
+          "toughness": 20
+        },
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1209_link",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：對指定敵方單體造成等同於彥卿220%攻擊力的冰屬性傷害，並為彥卿附加【智劍連心】，持續1回合。"
+    },
+    {
+      "id": "hsr_1209_ult",
+      "name": "快雨燕相逐",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1209_ult-crit",
+          "chance": 1
+        },
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1209_ult-link-crit",
+          "chance": 1,
+          "when": {
+            "op": "gt",
+            "args": [
+              {
+                "ref": "target.tag.hsr1209_link"
+              },
+              {
+                "const": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 3.5,
+          "toughness": 30
+        }
+      ],
+      "energyCost": 140,
+      "description": "Lv10：提高自身60%暴擊率，若彥卿擁有【智劍連心】效果，則使其暴擊傷害額外提高50%，增益效果持續1回合。隨後對指定敵方單體造成等同於彥卿350%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1209_followup",
+      "name": "呼劍如影",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 0.5,
+          "toughness": 10
+        },
+        {
+          "kind": "status",
+          "target": "enemy",
+          "statusId": "hsr_1209_freeze",
+          "chance": 0.65
+        }
+      ],
+      "description": "Lv10：對敵方目標發動攻擊後，有60%的固定機率發動追加攻擊，對目標造成等同於彥卿50%攻擊力的冰屬性傷害，並有65%的基礎機率使其陷入凍結狀態，持續1回合。凍結狀態下，敵方目標不能行動，且每回合開始時受到等同於彥卿50%攻擊力的冰屬性附加傷害。"
+    },
+    {
+      "id": "hsr_1209_unlink",
+      "name": "呼劍如影：連心消散",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "statusAdjust",
+          "target": "self",
+          "statusId": "hsr_1209_link",
+          "op": "set",
+          "value": 0
+        }
+      ],
+      "description": "當彥卿受到傷害後，【智劍連心】將會消失。"
+    },
+    {
+      "id": "hsr_1209_tech",
+      "name": "御劍真訣",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "self",
+          "statusId": "hsr_1209_tech-dmg",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：戰鬥開始時，彥卿對目前生命值百分比大於等於50%的敵方目標造成的傷害提高30%，持續2回合（假設每場戰鬥都使用秘技）。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1209_followup",
+      "name": "呼劍如影",
+      "on": "action",
+      "actor": "self",
+      "skillTypes": [
+        "basic",
+        "skill",
+        "ultimate"
+      ],
+      "chance": 0.6,
+      "skillId": "hsr_1209_followup",
+      "limitPerTurn": 0,
+      "description": "彥卿攻擊後有60%機率追加攻擊並可能凍結目標。"
+    },
+    {
+      "id": "hsr_1209_unlink",
+      "name": "呼劍如影：連心消散",
+      "on": "selfHit",
+      "when": {
+        "op": "gt",
+        "args": [
+          {
+            "ref": "self.tag.hsr1209_link"
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "skillId": "hsr_1209_unlink",
+      "limitPerTurn": 0,
+      "description": "彥卿受到傷害後智劍連心消失。"
+    },
+    {
+      "id": "hsr_1209_tech",
+      "name": "御劍真訣",
+      "on": "battleStart",
+      "skillId": "hsr_1209_tech",
+      "limitPerTurn": 0,
+      "description": "戰鬥開始時獲得對高生命敵人增傷。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1209_link",
+      "name": "智劍連心",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 1,
+      "tags": [
+        "hsr1209_link"
+      ],
+      "modifiers": [
+        {
+          "target": "stat:critRate",
+          "op": "add",
+          "value": 0.2
+        },
+        {
+          "target": "stat:critDmg",
+          "op": "add",
+          "value": 0.3
+        }
+      ],
+      "description": "暴擊率提高20%、暴擊傷害提高30%；受到傷害後消失。"
+    },
+    {
+      "id": "hsr_1209_ult-crit",
+      "name": "快雨燕相逐：暴擊率提高",
+      "kind": "buff",
+      "duration": 1,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:critRate",
+          "op": "add",
+          "value": 0.6
+        }
+      ],
+      "description": "暴擊率提高60%，持續1回合。"
+    },
+    {
+      "id": "hsr_1209_ult-link-crit",
+      "name": "快雨燕相逐：暴擊傷害提高",
+      "kind": "buff",
+      "duration": 1,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:critDmg",
+          "op": "add",
+          "value": 0.5
+        }
+      ],
+      "description": "暴擊傷害額外提高50%，持續1回合。"
+    },
+    {
+      "id": "hsr_1209_freeze",
+      "name": "凍結",
+      "kind": "debuff",
+      "category": "freeze",
+      "duration": 1,
+      "maxStacks": 1,
+      "tags": [
+        "freeze"
+      ],
+      "skipTurn": true,
+      "modifiers": [],
+      "dot": {
+        "multiplier": 0.5,
+        "element": "ice"
+      },
+      "description": "不能行動，每回合開始時受到彥卿50%攻擊力的冰屬性附加傷害，持續1回合。"
+    },
+    {
+      "id": "hsr_1209_tech-dmg",
+      "name": "御劍真訣：增傷",
+      "kind": "buff",
+      "duration": 2,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:dmgBonus",
+          "op": "add",
+          "value": 0.3,
+          "when": {
+            "op": "gte",
+            "args": [
+              {
+                "ref": "target.hpPct"
+              },
+              {
+                "const": 0.5
+              }
+            ]
+          }
+        }
+      ],
+      "description": "對生命值百分比不低於50%的敵方目標造成的傷害提高30%，持續2回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 140
+  },
+  "approximations": [
+    "智劍連心「持續1回合」設為2（引擎在持有者回合結束時就扣1，自己回合施加的1回合增益會立刻到期），這樣才能撐到下個自己的回合；若在敵人回合之間吃到傷害則依天賦消失。",
+    "天賦的「受到攻擊的機率降低」資料中沒有數值，未模擬（嘲諷不變）。",
+    "追加攻擊的觸發以「彥卿的普攻／戰技／終結技結束後」判斷，60%機率用獨立的機率亂數流；追加攻擊削韌量10為慣例值，資料中未標明。",
+    "智劍連心消散以「受到敵方的命中傷害」判斷，持續傷害不會讓它消失。",
+    "終結技是否獲得暴擊傷害加成以施放當下是否有智劍連心判斷；增益持續1回合以引擎回合規則計算。",
+    "凍結狀態的持續傷害與跳過回合的先後依引擎規則（回合開始跳傷，再跳過行動）；原作凍結解除後行動會提前，這裡沒有。",
+    "秘技假設每場戰鬥都使用，增傷以傷害情境條件（目標生命百分比≥50%）判斷；秘技本身的攻擊與削韌未計入。"
+  ]
+}

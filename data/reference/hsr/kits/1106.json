@@ -1,0 +1,190 @@
+{
+  "id": "1106",
+  "skills": [
+    {
+      "id": "hsr_1106_basic",
+      "name": "冰點射擊",
+      "type": "basic",
+      "spDelta": 1,
+      "energyGain": 20,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 1,
+          "toughness": 10
+        }
+      ],
+      "description": "Lv6：對指定敵方單體造成等同於佩拉100%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1106_skill",
+      "name": "低溫妨害",
+      "type": "skill",
+      "spDelta": -1,
+      "energyGain": 30,
+      "targeting": "enemy",
+      "effects": [
+        {
+          "kind": "dispel",
+          "target": "enemy",
+          "statusKind": "buff",
+          "count": 1
+        },
+        {
+          "kind": "damage",
+          "target": "enemy",
+          "multiplier": 2.1,
+          "toughness": 20
+        }
+      ],
+      "description": "Lv10：解除指定敵方單體的1個增益效果，同時造成等同於佩拉210%攻擊力的冰屬性傷害。"
+    },
+    {
+      "id": "hsr_1106_ult",
+      "name": "領域壓制",
+      "type": "ultimate",
+      "spDelta": 0,
+      "energyGain": 5,
+      "energyCost": 110,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "allEnemies",
+          "multiplier": 1,
+          "toughness": 20
+        },
+        {
+          "kind": "status",
+          "target": "allEnemies",
+          "statusId": "hsr_1106_exposed",
+          "chance": 1
+        }
+      ],
+      "description": "Lv10：有100%的基礎機率使敵方每個單體目標陷入【通解】狀態，同時對敵方全體造成等同於佩拉100%攻擊力的冰屬性傷害。【通解】狀態下，敵方目標防禦力降低40%，持續2回合。"
+    },
+    {
+      "id": "hsr_1106_talent",
+      "name": "資料收集",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "energy",
+          "target": "self",
+          "amount": 10
+        }
+      ],
+      "description": "Lv10：發動攻擊後若敵方目標處於負面效果狀態，則佩拉額外恢復10點能量。該效果每次攻擊只能觸發1次。"
+    },
+    {
+      "id": "hsr_1106_technique",
+      "name": "先發制人",
+      "type": "followup",
+      "spDelta": 0,
+      "energyGain": 0,
+      "targeting": "none",
+      "effects": [
+        {
+          "kind": "status",
+          "target": "allEnemies",
+          "statusId": "hsr_1106_tech-def",
+          "chance": 1
+        }
+      ],
+      "description": "秘技：進入戰鬥後，有100%的基礎機率使敵方每個單體目標防禦力降低20%，持續2回合。"
+    }
+  ],
+  "passives": [
+    {
+      "id": "hsr_1106_talent",
+      "name": "資料收集",
+      "on": "action",
+      "actor": "self",
+      "skillTypes": [
+        "basic",
+        "skill"
+      ],
+      "skillId": "hsr_1106_talent",
+      "when": {
+        "op": "gt",
+        "args": [
+          {
+            "ref": "target.debuffs"
+          },
+          {
+            "const": 0
+          }
+        ]
+      },
+      "limitPerTurn": 1,
+      "description": "普攻或戰技結束後，若被攻擊的敵方目標帶有負面效果，恢復10點能量。"
+    },
+    {
+      "id": "hsr_1106_talent-ult",
+      "name": "資料收集（終結技）",
+      "on": "action",
+      "actor": "self",
+      "skillTypes": [
+        "ultimate"
+      ],
+      "skillId": "hsr_1106_talent",
+      "limitPerTurn": 1,
+      "description": "終結技結束後恢復10點能量（終結技會對敵方全體施加通解）。"
+    },
+    {
+      "id": "hsr_1106_technique",
+      "name": "先發制人",
+      "on": "battleStart",
+      "skillId": "hsr_1106_technique",
+      "limitPerTurn": 1,
+      "description": "秘技：戰鬥開始時敵方全體防禦力降低20%，持續2回合。"
+    }
+  ],
+  "statuses": [
+    {
+      "id": "hsr_1106_exposed",
+      "name": "通解",
+      "kind": "debuff",
+      "duration": 2,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:def",
+          "op": "pct",
+          "value": -0.4
+        }
+      ],
+      "description": "防禦力降低40%，持續2回合。"
+    },
+    {
+      "id": "hsr_1106_tech-def",
+      "name": "先發制人：防禦力降低",
+      "kind": "debuff",
+      "duration": 2,
+      "maxStacks": 1,
+      "modifiers": [
+        {
+          "target": "stat:def",
+          "op": "pct",
+          "value": -0.2
+        }
+      ],
+      "description": "防禦力降低20%，持續2回合。"
+    }
+  ],
+  "stats": {
+    "maxEnergy": 110
+  },
+  "approximations": [
+    "天賦對普攻與戰技以「行動後被指定的目標帶有負面效果」判定，每次行動只觸發一次；擊殺目標時目標狀態已清除，不會觸發。",
+    "終結技的天賦能量改為無條件回復10點：原作在終結技結束後檢查敵方是否帶有負面效果，而終結技本身會對全體施加通解，只有全體都抵抗時才會不同。",
+    "終結技先造成傷害、再施加通解，所以終結技自身的傷害不吃防禦降低。",
+    "各招式削韌量不在資料包內，依慣例估計：普攻10、戰技20、終結技全體各20。",
+    "秘技只納入「全體防禦力降低20%」，隨機單體80%傷害未納入；固定於戰鬥開始時生效，若要關閉請移除 hsr_1106_technique 被動。"
+  ]
+}
