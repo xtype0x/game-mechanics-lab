@@ -1,5 +1,6 @@
 import { Gacha } from "@ggt/core";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { GAMES } from "./catalog/games";
 import { useLiveBanners } from "./catalog/useLive";
 import { Compare } from "./Compare";
 import { GachaStage } from "./GachaStage";
@@ -17,6 +18,14 @@ type View = "gacha" | "lab";
 export function App() {
   const { data: live, status, refresh } = useLiveBanners();
   const [s, setS] = useState<SimState>(() => {
+    // Deep link from a game hub (?game=<id>): pre-selects that game on this load only. A shared-rules link (#rules=) wins.
+    const wanted = rulesInHash() ? null : GAMES.find((g) => g.id === new URLSearchParams(window.location.search).get("game"));
+    if (wanted) {
+      const now = Date.now() / 1000;
+      const kind = wanted.types[0]!.kind;
+      const b = kind === "standard" ? undefined : live.banners.find((x) => x.game === wanted.id && x.kind === kind && x.start <= now && (!x.end || x.end > now));
+      return normalize(fromCatalog({ game: wanted.id, kind, ...(b ? { bannerId: b.id } : {}) }, live, hasSavedState() ? loadState() : undefined));
+    }
     if (hasSavedState()) return normalize(loadState());
     // First visit: the earliest current character banner of the first game.
     const now = Date.now() / 1000;
@@ -55,7 +64,7 @@ export function App() {
     <div className="app">
       <header className="top">
         <div className="brand">
-          <a className="back-link" href="../index.html#/lab">← 遊戲機制研究室・工具遊樂場</a>
+          <a className="back-link" href="../index.html#/tools">← 遊戲機制研究室・跨遊戲工具</a>
           <h1>抽卡模擬器</h1>
           <p className="tagline">選一款遊戲直接抽，或到「設定與分析」調整規則、精確計算要抽幾抽與花費。</p>
         </div>

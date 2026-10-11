@@ -32,7 +32,7 @@ export function App() {
   return (
     <div className="lab">
       <header className="top">
-        <a className="back-link" href="../index.html#/lab">← 遊戲機制研究室・工具遊樂場</a>
+        <a className="back-link" href="../../index.html#/games/hsr">← 遊戲機制研究室・星穹鐵道</a>
         <h1>星穹鐵道戰鬥研究室</h1>
         <p className="tagline">把星穹鐵道的角色、光錐、遺器與敵人拆成可調整的機制：換隊伍、改配裝，看看誰先出手、勝率多少，最後親手打一場。星穹鐵道資料為未核實的社群整理，僅供模擬；另附原創範本角色。</p>
       </header>

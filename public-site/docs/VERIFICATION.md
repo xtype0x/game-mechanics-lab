@@ -129,3 +129,11 @@
 - 指令：`public-site` 的 `npm run build`、`npm run build:offline` 成功；根目錄 `npm test` 20 檔 271 項通過。
 - 瀏覽器（site-dist，`/battle/`）：「敵方」選單出現「範本敵人」與「星穹鐵道敵人」兩組；選豐饒玄鹿後批量模擬 200 場（勝率 0%、其中超時 42%）；動畫戰鬥自動打到第 20 輪結束（DEFEAT・回合數用盡），過程可見四種枝條召喚；重新整理後仍是該組合；等級改 Lv 70 並換成卡芙卡，敵人以新等級重新套用，等級偏好存在 localStorage；展開「資料來源與限制」；375 像素寬度沒有橫向溢出；瀏覽器記錄沒有錯誤。
 - 未驗證：單檔離線版的瀏覽器互動；每個首領都在畫面上打完（只打完玄鹿）；敵人技能實際強度（佔位值）。`packages/`、`docs/spec/`、`src/lib/core/` 未更動。
+
+## 2026-10-11 網站改以「遊戲」為主軸重整
+
+- 變更：新增 `src/content/games.ts`（遊戲清單與各遊戲工具；取代 `experiments.ts`）、`src/pages/Games.tsx`、`Coverage.tsx`、`shared.tsx`；路由 `/`、`/games`、`/games/<id>`、`/games/hsr/coverage`、`/tools`、`/about`、`/privacy`，`#/lab` 轉址到 `#/tools`；導覽改為 首頁／遊戲／跨遊戲工具／關於計畫。戰鬥研究室搬到 `hsr/battle/index.html`，`battle/index.html` 改為轉址頁（meta refresh + 連結）；`vite.config.ts`、`vite.offline.config.ts`（`--mode hsr-battle` 對應 `hsr/battle`）、`package.json` 的 `build:offline` 同步更新；返回連結分別指向 `#/games/hsr` 與 `#/tools`。抽卡模擬器新增 `?game=<id>` 預選（`src/tools/gacha/App.tsx`；有 `#rules=` 時以分享為準），因此與 `packages/gacha-sim` 有差異，已寫入 README。`packages/`、`src/lib/core/` 未更動。
+- 指令：`public-site` 的 `npm run build`、`npm run build:offline` 成功。dist 含 index、gacha、hsr/battle、battle（轉址）；離線版四個 HTML 皆產生。角色資料 `hsr.generated.json` 拆成獨立 chunk（75.7 kB，gzip 14.9 kB，戰鬥頁共用），首頁 `main` JS 21.8 kB，進度頁 `Coverage` 4.3 kB，皆為動態載入。
+- 瀏覽器（site-dist，5180）：首頁出現 7 張遊戲卡（星穹鐵道獨佔第一列、標「深入研究中」）與「跨遊戲工具」列；點星穹鐵道卡進研究基地（戰鬥研究室、抽卡模擬、機制拆解進度為可用卡片，光錐與遺器條件效果、星魂為灰階「研究中」）；研究基地的導覽「遊戲」亮起；`gacha/index.html?game=ba|hsr|endfield|nte` 皆預選對應遊戲（ba 的 localStorage 隨之更新）；進度頁統計 11／0／87／98，與 JSON 一致，篩選「已可開打」顯示 11 位、「還缺規則模組」87 位、搜尋「黑塔」得 2 位；`#/lab` 轉為 `#/tools` 且「跨遊戲工具」亮起；開 `battle/index.html` 自動跳到 `hsr/battle/index.html`，戰鬥頁返回連結回到 `#/games/hsr`；375 像素寬度下 `/`、`/games`、`/games/hsr`、`/games/genshin`、`/games/hsr/coverage`、`/tools`、`/about`、`/privacy`、404 皆無橫向溢出；瀏覽器記錄沒有錯誤。
+- 離線版（site-offline，5186，HTTP）：首頁 → 星穹鐵道卡 → 研究基地 → 進度頁（11／98）→ 戰鬥研究室，返回連結正確。
+- 未驗證：`#rules=` 分享連結搭配 `?game=`（程式上分享優先，未實測）；gacha 與戰鬥頁本身在 375 像素寬度沒有重測（只改了返回連結與預選邏輯）；螢幕閱讀器未測；隱私頁文字未改（本次沒有新增資料收集）。
