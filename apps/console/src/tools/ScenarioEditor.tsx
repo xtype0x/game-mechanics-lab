@@ -1,6 +1,5 @@
 import type { DamageRules, ModOp, Modifier, Scenario, SkillType } from "@gml/core";
-import { Field, NumberField, Section } from "../ui";
-import { ExprField } from "./common";
+import { ExprField, Field, NumberField, Section } from "@gml/ui";
 
 const SKILL_TYPES: { value: SkillType; label: string }[] = [
   { value: "basic", label: "普攻" },

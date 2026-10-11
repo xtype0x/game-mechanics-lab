@@ -1,7 +1,7 @@
 import { DEMO_MODULES, REQUIRED_CAPABILITIES, defaultModuleSelection, resolveModules, type Capability, type ModuleDef, type Project } from "@gml/core";
+import { Badge, Section } from "@gml/ui";
 import { openDemo } from "../demo/link";
 import type { Updater } from "../useProject";
-import { Badge, Section } from "../ui";
 
 export const CAPABILITY_LABELS: Record<Capability, string> = {
   battle: "戰鬥",

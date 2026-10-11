@@ -1,7 +1,7 @@
 import { analyzeDamage, sampleDamage, type Project, type SampleResult } from "@gml/core";
 import { useMemo, useState, type ReactElement } from "react";
+import { BarChart, ErrorBox, Field, fmt, NumberField, pct, Section, Segmented, tryCompute } from "@gml/ui";
 import type { Updater } from "../useProject";
-import { BarChart, ErrorBox, Field, NumberField, Section, Segmented, fmt, pct, tryCompute } from "../ui";
 import { CompatBadge, useDamageRules } from "./common";
 import type { ScenarioKey } from "./DamageBreakdown";
 

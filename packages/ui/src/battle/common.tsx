@@ -1,9 +1,36 @@
-import { ELEMENT_LABELS, battleSetupOf, parseExpr, printExpr, validateBattle, type BattleIssue, type Expr, type Project } from "@gml/core";
-import { useEffect, useMemo, useState } from "react";
+import { ELEMENT_LABELS, battleSetupOf, parseExpr, printExpr, validateBattle, type BattleIssue, type DepNode, type Expr, type Project } from "@gml/core";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export const elementLabel = (e: string) => ELEMENT_LABELS[e] ?? e;
 
 export type Updater = (fn: (draft: Project) => void) => void;
+
+/**
+ * How shared editors render a reference to another piece of content (a unit, skill, status…). Apps with
+ * navigation (the console) provide a renderer that jumps there; without a provider the label is plain text.
+ */
+export type RefLinkRenderer = (node: DepNode, children: ReactNode) => ReactNode;
+const RefLinkCtx = createContext<RefLinkRenderer | null>(null);
+export const RefLinkProvider = ({ render, children }: { render: RefLinkRenderer; children: ReactNode }) => <RefLinkCtx.Provider value={render}>{children}</RefLinkCtx.Provider>;
+export function RefLink({ node, children }: { node: DepNode; children: ReactNode }) {
+  const render = useContext(RefLinkCtx);
+  return <>{render ? render(node, children) : children}</>;
+}
+/** True when references can be followed, so editors can hide "go to" links that would do nothing. */
+export const useRefLinks = () => useContext(RefLinkCtx) !== null;
+
+/** Battle seed text: digit-only text becomes a number seed, anything else stays a string seed. */
+export const parseSeedInput = (text: string): number | string => (/^\d+$/.test(text) ? Number(text) : text);
+
+/** Battle seed input (see parseSeedInput). */
+export function SeedField({ project, update }: { project: Project; update: Updater }) {
+  return (
+    <label className="field seed-field">
+      <span className="field-label">種子</span>
+      <input className="mono" value={String(project.seed)} onChange={(e) => update((p) => { p.seed = parseSeedInput(e.target.value); })} />
+    </label>
+  );
+}
 
 /**
  * Setup + validation. When content has errors, setup is null and `error` explains why, so simulators never

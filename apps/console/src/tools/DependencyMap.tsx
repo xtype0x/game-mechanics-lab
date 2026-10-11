@@ -1,10 +1,8 @@
 import { contentReferences, referencesTo, type DepNode, type DepRef, type Project, type UnitDef } from "@gml/core";
 import { useMemo, useState } from "react";
+import { Badge, elementLabel, refLabel, Section, Segmented, useBattleSetup } from "@gml/ui";
 import { GoLink } from "../nav";
 import type { Updater } from "../useProject";
-import { Badge, Section, Segmented } from "../ui";
-import { elementLabel, useBattleSetup } from "./battle/common";
-import { refLabel } from "./battle/SkillEditor";
 
 type View = "units" | "statuses" | "links";
 

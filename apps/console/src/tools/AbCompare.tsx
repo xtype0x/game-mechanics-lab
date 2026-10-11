@@ -11,8 +11,8 @@ import {
   type Project,
 } from "@gml/core";
 import { useEffect, useRef, useState } from "react";
+import { ErrorBox, Field, fmt, NumberField, pct, Section } from "@gml/ui";
 import type { Updater } from "../useProject";
-import { ErrorBox, Field, NumberField, Section, fmt, pct } from "../ui";
 
 const CURRENT = "current";
 const CHUNK = 6;

@@ -6,8 +6,7 @@ import {
   applyTemplate, defaultSel, findLightCone, findSet, hsrInfo, mainDef, slotKind, statLabel, subDef, subRollTotal, subValue,
   type CompiledUnit, type LoadoutSel, type RelicSlot, type SubSel, type TemplateId,
 } from "./equip";
-import { elementLabel } from "./common";
-import { NumberField, fmt } from "./ui";
+import { NumberField, elementLabel, fmt } from "@gml/ui";
 
 const showValue = (key: string, op: "flat" | "pct", v: number) => (op === "pct" || PERCENT_KEYS.has(key) ? `${fmt(v * 100, 2)}%` : fmt(v, 1));
 const showStat = (key: string, v: number) => (PERCENT_KEYS.has(key) ? `${fmt(v * 100, 2)}%` : fmt(v, 1));

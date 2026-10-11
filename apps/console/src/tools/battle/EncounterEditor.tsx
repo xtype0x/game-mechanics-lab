@@ -1,10 +1,7 @@
 import { aggregate, batchSeed, battleSetupOf, simulateOne, validateBattle, type BatchStats, type BattleRules, type EncounterPreset, type Project, type RoundingMode } from "@gml/core";
 import { useState } from "react";
+import { elementLabel, ErrorBox, ExprField, Field, fmt, IssueList, nextId, NumberField, pct, Section, useBattleSetup } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { ErrorBox, Field, NumberField, Section, fmt, pct } from "../../ui";
-import { ExprField } from "../common";
-import { IssueList, elementLabel, useBattleSetup } from "./common";
-import { nextId } from "./meta";
 import { useFocus } from "../../nav";
 
 const QUICK_RUNS = 100;

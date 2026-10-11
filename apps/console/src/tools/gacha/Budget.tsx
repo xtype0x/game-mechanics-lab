@@ -3,8 +3,8 @@ import {
   type BannerDef, type GachaState, type Project, type PullDistribution, type TargetSpec,
 } from "@gml/core";
 import { useMemo, useState } from "react";
+import { ErrorBox, Field, fmt, NumberField, pct, Section, Segmented, tryCompute } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { ErrorBox, Field, NumberField, Section, Segmented, fmt, pct, tryCompute } from "../../ui";
 import { BannerPicker, GachaIssues, itemName, useBanner } from "./common";
 
 type Mode = TargetSpec["mode"];

@@ -1,11 +1,7 @@
 import type { Project, UnitDef } from "@gml/core";
+import { ActionOrder, BatchSim, CharacterEditor, ErrorBox, Section, elementLabel, useBattleSetup, type Updater } from "@gml/ui";
 import { useState } from "react";
-import { ActionOrder } from "./ActionOrder";
-import { BatchSim } from "./BatchSim";
-import { CharacterEditor } from "./CharacterEditor";
 import { EnemyPicker } from "./EnemyPicker";
-import { ErrorBox, Section } from "./ui";
-import { elementLabel, useBattleSetup, type Updater } from "./common";
 import { PresetMenu } from "./PresetMenu";
 import { MAX_ALLIES, applyPreset } from "./state";
 import { EquipPanel } from "./EquipPanel";

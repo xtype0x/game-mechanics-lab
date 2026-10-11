@@ -16,12 +16,9 @@ import {
   type ReferencePack,
 } from "@gml/core";
 import { useMemo, useRef, useState } from "react";
+import { Badge, elementLabel, ErrorBox, Field, fmt, nextId, NumberField, Section, Segmented, useElementOptions } from "@gml/ui";
 import { GoLink } from "../nav";
 import type { Updater } from "../useProject";
-import { Badge, ErrorBox, Field, NumberField, Section, Segmented, fmt } from "../ui";
-import { elementLabel } from "./battle/common";
-import { useElementOptions } from "./battle/elements";
-import { nextId } from "./battle/meta";
 
 // The pack stays in memory for this browser session only; it is never written into the project or the build.
 let loadedPack: { pack: ReferencePack; fileName: string } | null = null;

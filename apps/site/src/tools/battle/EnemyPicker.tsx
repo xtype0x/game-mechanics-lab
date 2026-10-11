@@ -1,8 +1,8 @@
 import type { Project } from "@gml/core";
 import { useState } from "react";
 import { applyHsrEncounter, currentHsrEncounter, hsrDefaultLevel, hsrEncounters, hsrEnemySource, hsrLevels, hsrToughnessScale } from "./presets/hsr-enemies";
-import type { Updater } from "./common";
-import { Field } from "./ui";
+import type { Updater } from "@gml/ui";
+import { Field } from "@gml/ui";
 
 const LEVEL_KEY = "ggt.site.battle.hsre-level.v1";
 const KINDS = ["普通", "精英", "首領"] as const;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Lab } from "./Lab";
 import { Play } from "./Play";
 import { clearSaved, freshProject, loadSaved, saveProject } from "./state";
-import type { Updater } from "./common";
+import type { Updater } from "@gml/ui";
 import { useEquip } from "./useEquip";
 
 export function App() {

@@ -1,8 +1,8 @@
 import { autoPlay, batchSeed, createBattle, type BattleSetup, type BattleState, type Project } from "@gml/core";
 import { useMemo, useState } from "react";
+import { ErrorBox, fmt, Section, SeedField, useBattleSetup } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { ErrorBox, Section, fmt } from "../../ui";
-import { EncounterBar, SeedField, StepChart, eventsWithTime, useBattleSetup, type Series } from "./common";
+import { EncounterBar, StepChart, eventsWithTime, type Series } from "./common";
 
 type Mode = "energy" | "toughness";
 

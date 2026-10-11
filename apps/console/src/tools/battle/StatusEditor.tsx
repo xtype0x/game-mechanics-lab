@@ -1,13 +1,8 @@
 import { computeHit, contentReferences, printExpr, referencesTo, resolveStats, type DamageScale, type DepRef, type ModOp, type Project, type Scenario, type StatusDef } from "@gml/core";
 import { GoLink, useFocus } from "../../nav";
-import { refLabel } from "./SkillEditor";
-import { DAMAGE_SCALES, AI_VARS, TARGET_VARS } from "./meta";
-import { ExprField } from "../common";
 import { useMemo, useState } from "react";
+import { AI_VARS, Badge, DAMAGE_SCALES, elementLabel, ErrorBox, ExprField, Field, fmt, NumberField, refLabel, Section, TARGET_VARS, useBattleSetup, useElementOptions } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { Badge, ErrorBox, Field, NumberField, Section, fmt } from "../../ui";
-import { useElementOptions } from "./elements";
-import { elementLabel, useBattleSetup } from "./common";
 
 const OPS: { value: ModOp; label: string }[] = [
   { value: "add", label: "加算" },

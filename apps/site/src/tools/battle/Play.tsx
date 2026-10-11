@@ -1,7 +1,6 @@
 import type { Project } from "@gml/core";
 import { useMemo, useState } from "react";
-import type { Theme } from "./art/Backdrop";
-import { BattleScene, type BattleOutcome } from "./scene/BattleScene";
+import { BattleScene, type BattleOutcome, type Theme } from "@gml/ui";
 
 const THEMES: Theme[] = ["ember", "frost", "storm"];
 

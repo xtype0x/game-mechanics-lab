@@ -1,10 +1,13 @@
 import { predictTimeline, type Project } from "@gml/core";
-import { useMemo, useState } from "react";
-import { Field, NumberField, Section, fmt } from "./ui";
+import { useMemo, useState, type ReactNode } from "react";
+import { Field, NumberField, Section, fmt } from "../base";
 import { elementLabel, type Updater } from "./common";
 
-/** `rawProject` (optional): the project before loadouts; speed is then read-only for units whose loadout changes it. */
-export function ActionOrder({ project, update, rawProject }: { project: Project; update: Updater; rawProject?: Project }) {
+/**
+ * `rawProject` (optional): the project before loadouts; speed is then read-only for units whose loadout changes it.
+ * `before` (optional): extra sections at the top of the left column, e.g. an encounter picker.
+ */
+export function ActionOrder({ project, update, rawProject, before }: { project: Project; update: Updater; rawProject?: Project; before?: ReactNode }) {
   const [cycles, setCycles] = useState(3);
   const { rules, units, encounter } = project.battle;
   const roster = useMemo(
@@ -25,6 +28,7 @@ export function ActionOrder({ project, update, rawProject }: { project: Project;
   return (
     <>
       <div className="workspace">
+        {before}
         <Section title="速度">
           <table className="table">
             <thead><tr><th>單位</th><th>屬性</th><th className="r">速度</th><th className="r">完整行動值</th></tr></thead>

@@ -3,8 +3,8 @@ import {
   type BannerDef, type GachaItem, type GachaTier, type Project, type PullResult,
 } from "@gml/core";
 import { useMemo, useState } from "react";
+import { ErrorBox, Field, fmt, NumberField, pct, Section, tryCompute } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { ErrorBox, Field, NumberField, Section, fmt, pct, tryCompute } from "../../ui";
 import { BannerPicker, EstimateNote, GachaIssues, itemName, safeDisclosure, useBanner } from "./common";
 
 const nextId = (prefix: string, taken: string[]) => { let n = 1; while (taken.includes(`${prefix}${n}`)) n++; return `${prefix}${n}`; };

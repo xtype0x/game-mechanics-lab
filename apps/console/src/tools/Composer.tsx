@@ -11,9 +11,9 @@ import {
   type StepDef,
 } from "@gml/core";
 import { useMemo, useState } from "react";
+import { Badge, ErrorBox, ExprField, Field, fmt, NumberField, Section, tryCompute } from "@gml/ui";
 import type { Updater } from "../useProject";
-import { Badge, ErrorBox, Field, NumberField, Section, fmt, tryCompute } from "../ui";
-import { CompatBadge, ExprField, useDamageRules } from "./common";
+import { CompatBadge, useDamageRules } from "./common";
 import { SummaryCards } from "./DamageBreakdown";
 
 const ROUNDING: { value: RoundingMode; label: string }[] = [

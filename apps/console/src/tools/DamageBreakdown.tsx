@@ -1,7 +1,7 @@
 import { analyzeDamage, printExpr, type DamageAnalysis, type DamageRules, type HitResult, type Project, type ValueBreakdown } from "@gml/core";
 import { Fragment, useMemo, useState } from "react";
+import { ErrorBox, fmt, pct, Section, Segmented, tryCompute } from "@gml/ui";
 import type { Updater } from "../useProject";
-import { ErrorBox, Section, Segmented, fmt, pct, tryCompute } from "../ui";
 import { CompatBadge, useDamageRules } from "./common";
 import { ScenarioEditor } from "./ScenarioEditor";
 

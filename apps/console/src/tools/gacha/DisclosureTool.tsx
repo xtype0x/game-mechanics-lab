@@ -1,7 +1,7 @@
 import { type BannerDef, type Disclosure, type Project } from "@gml/core";
 import { useMemo, useState } from "react";
+import { ErrorBox, Section, Segmented, tryCompute } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { ErrorBox, Section, Segmented, tryCompute } from "../../ui";
 import { BannerPicker, EstimateNote, GachaIssues, safeDisclosure, useBanner } from "./common";
 
 type Digits = "2" | "4";

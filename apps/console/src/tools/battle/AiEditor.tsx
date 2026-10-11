@@ -1,10 +1,7 @@
 import { evalBool, objectScope, type AiRule, type Project, type UnitDef } from "@gml/core";
 import { useMemo, useState } from "react";
+import { AI_VARS, ExprField, Field, IssueList, NumberField, pct, Section, useBattleSetup } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { Field, NumberField, Section, pct } from "../../ui";
-import { ExprField } from "../common";
-import { IssueList, useBattleSetup } from "./common";
-import { AI_VARS } from "./meta";
 
 export function AiEditor({ project, update }: { project: Project; update: Updater }) {
   // Allies use AI rules only while charmed or as timeline events (rules §14.3, §14.4); list them after enemies.

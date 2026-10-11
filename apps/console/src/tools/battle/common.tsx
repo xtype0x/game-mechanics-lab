@@ -1,40 +1,8 @@
-import { ELEMENT_LABELS, battleSetupOf, validateBattle, type BattleEvent, type BattleIssue, type BattleState, type Project, type StatusDef, type UnitDef } from "@gml/core";
-import { useMemo } from "react";
+import type { BattleEvent, BattleState, Project, StatusDef, UnitDef } from "@gml/core";
+import { elementLabel, fmt } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { fmt } from "../../ui";
 
-export const elementLabel = (e: string) => ELEMENT_LABELS[e] ?? e;
-
-/**
- * Setup + validation. When content has errors, setup is null and `error` explains why, so simulators never
- * run on half-edited data.
- */
-export function useBattleSetup(project: Project) {
-  return useMemo(() => {
-    try {
-      const setup = battleSetupOf(project);
-      const issues = validateBattle(project.battle, setup.damage);
-      const errors = issues.filter((i) => i.level === "error");
-      if (errors.length) {
-        const list = errors.slice(0, 4).map((e) => "・" + e.message).join("\n");
-        return { setup: null, issues, error: `戰鬥資料有 ${errors.length} 個錯誤，請先修正：\n${list}` };
-      }
-      return { setup, issues, error: null as string | null };
-    } catch (e) {
-      return { setup: null, issues: [] as BattleIssue[], error: (e as Error).message };
-    }
-  }, [project]);
-}
-
-export function IssueList({ issues, empty }: { issues: BattleIssue[]; empty?: string }) {
-  if (!issues.length) return empty ? <p className="muted small">{empty}</p> : null;
-  return (
-    <div className="issue-list">
-      {issues.map((i, k) => <div key={k} className={`issue ${i.level === "error" ? "err" : "warn"}`}>{i.level === "error" ? "✕" : "!"} {i.message}</div>)}
-    </div>
-  );
-}
-
+// Console-only battle helpers. Shared ones (elementLabel, useBattleSetup, IssueList, SeedField…) live in @gml/ui.
 export function EncounterBar({ project, update }: { project: Project; update: Updater }) {
   const enc = project.battle.encounter;
   const allies = project.battle.units.filter((u) => u.team === "ally");
@@ -80,15 +48,6 @@ export function EncounterBar({ project, update }: { project: Project; update: Up
         </div>
       </div>
     </div>
-  );
-}
-
-export function SeedField({ project, update }: { project: Project; update: Updater }) {
-  return (
-    <label className="field seed-field">
-      <span className="field-label">種子</span>
-      <input className="mono" value={String(project.seed)} onChange={(e) => update((p) => { p.seed = /^\d+$/.test(e.target.value) ? Number(e.target.value) : e.target.value; })} />
-    </label>
   );
 }
 

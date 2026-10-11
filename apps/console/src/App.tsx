@@ -6,19 +6,20 @@ import {
   TIME_MODEL_LABELS,
   TOOLS,
   TOOL_DETAILS,
+  type DepNode,
   type Project,
   type TimeModel,
   type ToolEntry,
   type ToolStatus,
 } from "@gml/core";
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { Badge, RefLinkProvider } from "@gml/ui";
 import { AbCompare } from "./tools/AbCompare";
 import { Composer } from "./tools/Composer";
 import { CritDistribution } from "./tools/CritDistribution";
 import { DamageBreakdown } from "./tools/DamageBreakdown";
-import { ActionOrder } from "./tools/battle/ActionOrder";
+import { ActionOrder, BatchSim } from "./tools/battle/Simulators";
 import { AiEditor } from "./tools/battle/AiEditor";
-import { BatchSim } from "./tools/battle/BatchSim";
 import { BattleStepper } from "./tools/battle/BattleStepper";
 import { BreakCurves, EnergyCurves } from "./tools/battle/BattleCurves";
 import { CharacterSkills, CharacterStats } from "./tools/battle/CharacterEditor";
@@ -31,12 +32,14 @@ import { DisclosureTool } from "./tools/gacha/DisclosureTool";
 import { PoolEditor } from "./tools/gacha/PoolEditor";
 import { QuickSim } from "./tools/QuickSim";
 import { ReferenceImport } from "./tools/ReferenceImport";
-import { NavProvider, type Focus } from "./nav";
+import { GoLink, NavProvider, type Focus } from "./nav";
 import { Demo } from "./demo/Demo";
 import { onOpenDemo, onReplay, type ReplayRequest } from "./demo/link";
 import { canExportDemo, downloadDemo } from "./demo/exportDemo";
-import { Badge } from "./ui";
 import { useProject, type Updater } from "./useProject";
+
+/** Shared @gml/ui editors render content references as jump links in the console. */
+const renderRefLink = (node: DepNode, children: ReactNode) => <GoLink node={node}>{children}</GoLink>;
 
 const IMPLEMENTED: Record<string, ComponentType<{ project: Project; update: Updater }>> = {
   "damage.breakdown": DamageBreakdown,
@@ -110,6 +113,7 @@ export function App() {
 
   return (
     <NavProvider value={nav}>
+    <RefLinkProvider render={renderRefLink}>
     <div className={`app ${navOpen ? "nav-open" : ""}`}>
       <header className="topbar">
         <button className="btn icon nav-toggle" aria-label="機制庫" onClick={() => setNavOpen((o) => !o)}>☰</button>
@@ -135,6 +139,7 @@ export function App() {
         {Impl && !NO_QUICKSIM.has(toolId) && tool.category !== "damage" && <QuickSim project={project} />}
       </main>
     </div>
+    </RefLinkProvider>
     </NavProvider>
   );
 }

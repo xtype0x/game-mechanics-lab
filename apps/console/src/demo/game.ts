@@ -7,7 +7,7 @@ import {
   Rng, itemOf, newGachaState, pullOnce, resolveModules, starterAllies,
   type BannerDef, type GachaState, type Project, type PullResult, type RngState, type UnitDef,
 } from "@gml/core";
-import type { Theme } from "./art/Backdrop";
+import type { Theme } from "@gml/ui";
 
 export const SAVE_KEY = "ggt.demo.save";
 export const MAX_LEVEL = 10;

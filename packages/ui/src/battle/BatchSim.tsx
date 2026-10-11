@@ -1,19 +1,23 @@
 import { aggregate, batchSeed, simulateOne, type AllyPolicy, type BatchStats, type BattleSummary, type Project } from "@gml/core";
-import { useEffect, useRef, useState } from "react";
-import type { Updater } from "../../useProject";
-import { BarChart, ErrorBox, Field, NumberField, Section, fmt, pct } from "../../ui";
-import { EncounterBar, SeedField, useBattleSetup } from "./common";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { BarChart, ErrorBox, Field, NumberField, Section, fmt, pct } from "../base";
+import { SeedField, useBattleSetup, type Updater } from "./common";
 
-const CHUNK = 8;
 
 interface Run {
   stats: BatchStats;
   label: string;
 }
 
-export function BatchSim({ project, update }: { project: Project; update: Updater }) {
+/**
+ * Runs many seeded auto-battles in small chunks so the page stays responsive. Limits are per app: the public site
+ * keeps runs low for phones, the console allows large batches. `before`: extra sections at the top of the left column.
+ */
+export function BatchSim({ project, update, maxRuns = 1000, defaultRuns = 200, chunk = 4, before }: {
+  project: Project; update: Updater; maxRuns?: number; defaultRuns?: number; chunk?: number; before?: ReactNode;
+}) {
   const { setup, error } = useBattleSetup(project);
-  const [n, setN] = useState(300);
+  const [n, setN] = useState(defaultRuns);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [result, setResult] = useState<Run | null>(null);
   const [baseline, setBaseline] = useState<Run | null>(null);
@@ -33,7 +37,7 @@ export function BatchSim({ project, update }: { project: Project; update: Update
     const step = () => {
       if (cancelRef.current) { setProgress(null); return; }
       try {
-        const end = Math.min(n, results.length + CHUNK);
+        const end = Math.min(n, results.length + chunk);
         for (let i = results.length; i < end; i++) results.push(simulateOne(setup, policy, batchSeed(seed, i)));
       } catch (e) {
         setRunError((e as Error).message);
@@ -52,11 +56,9 @@ export function BatchSim({ project, update }: { project: Project; update: Update
   const pol = project.battle.policy;
 
   return (
-    <div className="tool-layout">
+    <>
       <div className="workspace">
-        <Section title="戰鬥設定">
-          <EncounterBar project={project} update={update} />
-        </Section>
+        {before}
         <Section title="我方自動策略">
           <div className="grid-fields">
             <Field label="大招">
@@ -84,7 +86,7 @@ export function BatchSim({ project, update }: { project: Project; update: Update
         </Section>
         <Section title="執行">
           <div className="grid-fields">
-            <Field label="場數"><NumberField value={n} min={10} max={20000} onChange={(v) => setN(Math.max(10, Math.min(20000, Math.round(v))))} /></Field>
+            <Field label="場數"><NumberField value={n} min={10} max={maxRuns} onChange={(v) => setN(Math.max(10, Math.min(maxRuns, Math.round(v))))} /></Field>
             <SeedField project={project} update={update} />
           </div>
           <div className="row-gap">
@@ -102,18 +104,18 @@ export function BatchSim({ project, update }: { project: Project; update: Update
               <span>{progress.done} / {progress.total}</span>
             </div>
           )}
-          <p className="muted small">第 i 場使用種子「{String(project.seed)}#i」，相同設定與種子會得到完全相同的結果。改變傷害公式（乘區組合器）或角色數值後重跑，即可比較差異。</p>
+          <p className="muted small">第 i 場使用種子「{String(project.seed)}#i」，相同設定與種子會得到完全相同的結果。改變設定後重跑，即可和上一次的結果比較差異。</p>
         </Section>
         {error && <ErrorBox error={error} />}
         {runError && <ErrorBox error={runError} />}
       </div>
 
       <div className="results">
-        <div className="results-head"><h2>批量結果</h2></div>
+        <div className="results-head"><h3>批量結果</h3></div>
         {!result && <p className="muted">按「開始模擬」執行。</p>}
         {result && <Results run={result} baseline={baseline} />}
       </div>
-    </div>
+    </>
   );
 }
 

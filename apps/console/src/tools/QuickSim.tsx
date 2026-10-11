@@ -1,8 +1,7 @@
 import { aggregate, batchSeed, simulateOne, type BatchStats, type BattleIssue, type BattleSummary, type Project } from "@gml/core";
 import { useEffect, useRef, useState } from "react";
+import { fmt, pct, useBattleSetup } from "@gml/ui";
 import { GoLink } from "../nav";
-import { fmt, pct } from "../ui";
-import { useBattleSetup } from "./battle/common";
 
 /** Max time per slice before yielding to the UI. */
 const SLICE_MS = 12;

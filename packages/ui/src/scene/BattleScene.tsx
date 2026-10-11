@@ -18,8 +18,8 @@ import {
   type UnitDef,
 } from "@gml/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Backdrop, type Theme } from "../art/Backdrop";
-import { Sprite, elementColor, spriteScale } from "../art/Sprite";
+import { Backdrop, type Theme } from "./art/Backdrop";
+import { Sprite, elementColor, spriteScale } from "./art/Sprite";
 import { Particles, type BurstKind } from "./particles";
 
 export interface BattleOutcome {
@@ -327,6 +327,12 @@ export function BattleScene({ project, waves, theme, seed, title, onFinish, onQu
           }
           break;
         }
+        case "hp": // hp cost / set (rules 0.9): show the change, the final state is exact anyway
+          setU(e.uid, { hp: Math.max(0, e.after) });
+          if (e.after < e.before) addFloat(e.uid, `-${(e.before - e.after).toLocaleString()}`, "dmg");
+          else if (e.after > e.before) addFloat(e.uid, `+${(e.after - e.before).toLocaleString()}`, "heal");
+          await sleep(200);
+          break;
         case "energy":
           setU(e.uid, { energy: e.after });
           break;

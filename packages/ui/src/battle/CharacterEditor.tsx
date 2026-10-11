@@ -1,27 +1,46 @@
-import { analyzeDamage, type PhaseDef, type Project, type Scenario, type UnitDef } from "@gml/core";
-import { useEffect, useMemo, useState } from "react";
-import { Field, NumberField, Section, Segmented, fmt } from "./ui";
+import { analyzeDamage, type DepRef, type PhaseDef, type Project, type Scenario, type UnitDef } from "@gml/core";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Field, NumberField, Section, Segmented, fmt } from "../base";
 import { IssueList, elementLabel, useBattleSetup, type Updater } from "./common";
 import { useElementOptions } from "./elements";
 import { KNOWN_STATS, STAT_GROUPS } from "./meta";
 import { PassiveList, SkillList } from "./SkillEditor";
 
-type Tab = "stats" | "skills" | "passives" | "phases";
+export type CharacterTab = "stats" | "skills" | "passives" | "phases";
 
-/** Edits one unit of the project: base stats, skills, passives and (enemies) phases. The unit list is owned by the lab. */
-export function CharacterEditor({ project, update, unitId }: { project: Project; update: Updater; unitId: string }) {
+/** A request to show a tab / skill / passive (e.g. from a link). A new `seq` re-applies the same request. */
+export interface CharacterFocus { seq: number; tab?: CharacterTab; skillId?: string; passiveId?: string }
+
+/**
+ * Edits one unit of the project: base stats, skills, passives and phases. The unit list belongs to the caller.
+ * `actions` go in the header (e.g. copy / delete); `refs` (from contentReferences) enables "used by" info;
+ * `showPreview={false}` lets the caller place <CharacterPreview> elsewhere; `defaultTab` is the tab each unit opens on.
+ */
+export function CharacterEditor({ project, update, unitId, refs, actions, focus, showPreview = true, defaultTab = "stats" }: {
+  project: Project; update: Updater; unitId: string;
+  refs?: DepRef[]; actions?: ReactNode; focus?: CharacterFocus | null; showPreview?: boolean; defaultTab?: CharacterTab;
+}) {
   const units = project.battle.units;
   const unit = units.find((u) => u.id === unitId);
-  const [tab, setTab] = useState<Tab>("stats");
+  const [tab, setTab] = useState<CharacterTab>(defaultTab);
   const [openSkill, setOpenSkill] = useState<string | null>(null);
   const { issues, setup } = useBattleSetup(project);
   const unitIssues = issues.filter((i) => i.where.unitId === unitId);
 
-  // A different unit starts on the stats tab with its first skill open.
-  useEffect(() => { setTab("stats"); setOpenSkill(units.find((u) => u.id === unitId)?.skills[0]?.id ?? null); }, [unitId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A different unit starts on the default tab with its first skill open.
+  useEffect(() => { setTab(defaultTab); setOpenSkill(units.find((u) => u.id === unitId)?.skills[0]?.id ?? null); }, [unitId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Declared after the reset above so a focus that also switches the unit wins.
+  useEffect(() => {
+    if (!focus) return;
+    if (focus.tab) setTab(focus.tab);
+    if (focus.skillId) setOpenSkill(focus.skillId);
+    const anchor = focus.skillId ? `skill-${focus.skillId}` : focus.passiveId ? `passive-${focus.passiveId}` : null;
+    if (anchor) window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ block: "center", behavior: "smooth" }), 50);
+  }, [focus?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!unit) return <p className="muted">請先選一個角色。</p>;
   const editUnit = (fn: (u: UnitDef) => void) => update((p) => { const u = p.battle.units.find((x) => x.id === unitId); if (u) fn(u); });
+  const source = unit.source;
 
   return (
     <div className="character-editor">
@@ -29,6 +48,8 @@ export function CharacterEditor({ project, update, unitId }: { project: Project;
         <h3>{unit.name}</h3>
         <span className={`el el-${unit.element}`}>{elementLabel(unit.element)}</span>
         <code className="muted">{unit.id}</code>
+        {source && <span className="muted small" title={source.key}>來源：{source.kind === "reference-enemy" ? "參考敵人" : source.kind === "reference-character" ? "參考角色" : source.kind}・{source.note}</span>}
+        {actions && <><span className="spacer" />{actions}</>}
       </div>
       <IssueList issues={unitIssues} />
       <Segmented
@@ -38,14 +59,14 @@ export function CharacterEditor({ project, update, unitId }: { project: Project;
           { value: "stats", label: "基本與數值" },
           { value: "skills", label: `技能（${unit.skills.length}）` },
           { value: "passives", label: `被動（${unit.passives?.length ?? 0}）` },
-          ...(unit.team === "enemy" ? [{ value: "phases" as Tab, label: `階段（${(unit.phases?.length ?? 0) + 1}）` }] : []),
+          ...(unit.team === "enemy" || unit.phases?.length ? [{ value: "phases" as CharacterTab, label: `階段（${(unit.phases?.length ?? 0) + 1}）` }] : []),
         ]}
       />
       {tab === "stats" && <BasicAndStats unit={unit} units={units} statusCategories={[...new Set(project.battle.statuses.map((s) => s.category).filter((c): c is string => !!c))]} edit={editUnit} damageStatKeys={setup?.damage.stats.map((s) => s.key) ?? []} />}
-      {tab === "skills" && <SkillList unit={unit} units={units} edit={editUnit} statuses={project.battle.statuses} issues={unitIssues} open={openSkill} setOpen={setOpenSkill} />}
+      {tab === "skills" && <SkillList unit={unit} units={units} edit={editUnit} statuses={project.battle.statuses} issues={unitIssues} {...(refs ? { refs } : {})} open={openSkill} setOpen={setOpenSkill} />}
       {tab === "passives" && <PassiveList unit={unit} edit={editUnit} issues={unitIssues} />}
       {tab === "phases" && <PhaseList unit={unit} units={units} edit={editUnit} />}
-      <Preview project={project} unit={unit} />
+      {showPreview && <CharacterPreview project={project} unit={unit} />}
     </div>
   );
 }
@@ -211,7 +232,8 @@ function PhaseList({ unit, units, edit }: { unit: UnitDef; units: UnitDef[]; edi
   );
 }
 
-function Preview({ project, unit }: { project: Project; unit: UnitDef }) {
+/** Action value, turn count and per-skill damage estimates for one unit against a chosen opponent. */
+export function CharacterPreview({ project, unit }: { project: Project; unit: UnitDef }) {
   const { setup } = useBattleSetup(project);
   const foes = project.battle.units.filter((u) => u.team !== unit.team);
   const [targetId, setTargetId] = useState(foes[0]?.id ?? "");

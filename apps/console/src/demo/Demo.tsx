@@ -3,16 +3,14 @@ import { safeDisclosure } from "../tools/gacha/common";
 import type { ReplayRequest } from "./link";
 import { useEffect, useMemo, useState } from "react";
 import type { Updater } from "../useProject";
-import { Backdrop } from "./art/Backdrop";
-import { Sprite, elementColor } from "./art/Sprite";
-import { BattleScene, type BattleOutcome } from "./battle/BattleScene";
+import { Backdrop, BattleScene, Sprite, elementColor, type BattleOutcome } from "@gml/ui";
 import {
   EXP_DUPE, MAX_LEVEL,
   activeBanner, bannerUnits, battleProject, levelCost, levelOf, levelScale, loadSave, modsOf, rosterOf, stagesOf, storeSave, summon, teamOf,
   type DemoSave, type Granted, type Mods, type Stage,
 } from "./game";
-import "./demo.css";
-import "./battle.css";
+import "@gml/ui/demo.css";
+import "@gml/ui/scene.css";
 import "./screens.css";
 
 type Screen =

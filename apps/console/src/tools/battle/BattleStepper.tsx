@@ -11,9 +11,9 @@ import {
   type UnitState,
 } from "@gml/core";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { elementLabel, ErrorBox, fmt, Section, SeedField, useBattleSetup } from "@gml/ui";
 import type { Updater } from "../../useProject";
-import { ErrorBox, Section, fmt } from "../../ui";
-import { EncounterBar, SeedField, describeEvent, elementLabel, useBattleSetup } from "./common";
+import { EncounterBar, describeEvent } from "./common";
 import { openReplay } from "../../demo/link";
 
 export function BattleStepper({ project, update }: { project: Project; update: Updater }) {

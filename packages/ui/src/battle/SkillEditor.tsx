@@ -1,18 +1,21 @@
-import { printExpr, type BattleIssue, type Effect, type Num, type PassiveDef, type SkillDef, type SkillType, type StatusDef, type UnitDef } from "@gml/core";
+import { printExpr, type BattleIssue, type DepRef, type Effect, type Num, type PassiveDef, type SkillDef, type SkillType, type StatusDef, type UnitDef } from "@gml/core";
 import { useState } from "react";
-import { Badge, Field, NumberField, Section } from "./ui";
-import { ExprField, elementLabel } from "./common";
+import { Badge, Field, NumberField, Section } from "../base";
+import { ExprField, RefLink, elementLabel, useRefLinks } from "./common";
 import { useElementOptions } from "./elements";
 import { AI_VARS, DAMAGE_EFFECT_SCALES, EFFECT_GROUPS, EFFECT_KINDS, SKILL_TYPES, TARGETING, TARGET_MODES, TARGET_VARS, TRIGGERS, TRIGGER_SUBJECT, defaultEffect, nextId } from "./meta";
 
 type Edit = (fn: (u: UnitDef) => void) => void;
 
-export function SkillList({ unit, units, edit, statuses, issues, open, setOpen }: {
-  unit: UnitDef; units: UnitDef[]; edit: Edit; statuses: StatusDef[]; issues: BattleIssue[];
+/** `refs` (optional, from contentReferences): shows who uses each skill and blocks deleting a skill in use. */
+export function SkillList({ unit, units, edit, statuses, issues, refs = [], open, setOpen }: {
+  unit: UnitDef; units: UnitDef[]; edit: Edit; statuses: StatusDef[]; issues: BattleIssue[]; refs?: DepRef[];
   open: string | null; setOpen: (id: string | null) => void;
 }) {
   const editSkill = (id: string, fn: (s: SkillDef) => void) => edit((u) => { const s = u.skills.find((x) => x.id === id); if (s) fn(s); });
   const elements = useElementOptions(units);
+  // Who points at this skill: own passives/AI, and other units' "next action" effects.
+  const usedBy = (id: string) => refs.filter((r) => r.to.kind === "skill" && r.to.id === id && (r.to.unitId === unit.id || (r.to.unitId === undefined && r.from.unitId !== unit.id)));
 
   return (
     <Section
@@ -29,6 +32,7 @@ export function SkillList({ unit, units, edit, statuses, issues, open, setOpen }
         {unit.skills.map((sk, i) => {
           const isOpen = open === sk.id;
           const skIssues = issues.filter((x) => x.where.skillId === sk.id);
+          const users = usedBy(sk.id);
           return (
             <div key={sk.id} id={`skill-${sk.id}`} className={`skill-card ${isOpen ? "open" : ""} ${skIssues.some((x) => x.level === "error") ? "has-issue" : ""}`}>
               <button className="skill-head" onClick={() => setOpen(isOpen ? null : sk.id)}>
@@ -95,6 +99,11 @@ export function SkillList({ unit, units, edit, statuses, issues, open, setOpen }
                     ))}
                   </div>
                   <Field label="說明"><textarea rows={2} value={sk.description ?? ""} onChange={(e) => editSkill(sk.id, (s) => { s.description = e.target.value; })} /></Field>
+                  {users.length > 0 && (
+                    <p className="small used-by">被使用：{users.map((r, k) => (
+                      <span key={k}>{k > 0 && "、"}<RefLink node={r.from}>{refLabel(r, units)}</RefLink></span>
+                    ))}</p>
+                  )}
                   <div className="row-gap">
                     <code className="muted small">ID：{sk.id}</code>
                     <span className="spacer" />
@@ -102,7 +111,8 @@ export function SkillList({ unit, units, edit, statuses, issues, open, setOpen }
                     <button className="btn small ghost" disabled={i === unit.skills.length - 1} onClick={() => edit((u) => { const [x] = u.skills.splice(i, 1); u.skills.splice(i + 1, 0, x!); })}>下移</button>
                     <button
                       className="btn small ghost"
-                      disabled={unit.skills.length <= 1}
+                      disabled={users.length > 0 || unit.skills.length <= 1}
+                      title={users.length ? `使用中：${users.map((r) => refLabel(r, units)).join("、")}` : unit.skills.length <= 1 ? "至少要保留一個技能" : ""}
                       onClick={() => { if (confirm(`刪除「${sk.name}」？`)) edit((u) => { u.skills = u.skills.filter((x) => x.id !== sk.id); }); }}
                     >刪除</button>
                   </div>
@@ -116,6 +126,19 @@ export function SkillList({ unit, units, edit, statuses, issues, open, setOpen }
       <p className="muted small">技能在列表中的順序就是行動選單的順序；我方自動策略會選第一個「戰技」與「普攻」。</p>
     </Section>
   );
+}
+
+const VIA_LABEL: Record<DepRef["via"], string> = {
+  applies: "施加", detonates: "引爆", adjusts: "調整層數", summons: "召喚", dismisses: "移除", queues: "指定下次行動", casts: "被動施放", ai: "AI 規則", condition: "條件引用", roster: "出場",
+};
+
+export function refLabel(r: DepRef, units: UnitDef[]): string {
+  const owner = units.find((u) => u.id === (r.from.unitId ?? r.from.id));
+  const name = r.from.kind === "skill" ? `${owner?.name ?? "?"}・${owner?.skills.find((s) => s.id === r.from.id)?.name ?? r.from.id}`
+    : r.from.kind === "passive" ? `${owner?.name ?? "?"}・被動 ${owner?.passives?.find((p) => p.id === r.from.id)?.name ?? r.from.id}`
+    : r.from.kind === "unit" ? owner?.name ?? r.from.id
+    : r.from.id ? `戰鬥 ${r.from.id}` : "目前戰鬥";
+  return `${name}（${VIA_LABEL[r.via]}）`;
 }
 
 /** A number field that also shows formula values (rules 0.9 §16.1); formulas are edited in the project file. */
@@ -163,6 +186,7 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
   const set = <K extends string>(k: K, v: unknown) => onChange({ ...e, [k]: v } as Effect);
   const unset = (k: string) => { const copy = { ...e } as Record<string, unknown>; delete copy[k]; onChange(copy as Effect); };
   const sameTeam = units.filter((u) => u.team === unit.team);
+  const links = useRefLinks();
   const statusSelect = (value: string, onPick: (v: string) => void, allowAny = false) => (
     <select value={value} onChange={(ev) => onPick(ev.target.value)}>
       {allowAny && <option value="">全部持續傷害</option>}
@@ -262,6 +286,7 @@ function EffectRow({ effect: e, unit, units, statuses, first, last, onChange, on
               </select>
             </Field>
             <Field label="數量" hint="場上人數達上限時停止"><NumberField value={e.count} min={1} onChange={(v) => set("count", Math.max(1, Math.round(v)))} /></Field>
+            {links && sameTeam.some((u) => u.id === e.unitId) && <p className="small"><RefLink node={{ kind: "unit", id: e.unitId }}>編輯 {units.find((u) => u.id === e.unitId)!.name} →</RefLink></p>}
           </>
         )}
         {e.kind === "dismiss" && (

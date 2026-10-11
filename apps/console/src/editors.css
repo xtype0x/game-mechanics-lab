@@ -5,7 +5,7 @@
 .unit-item.on { border-color: var(--accent); background: var(--accent-soft); }
 .unit-item .muted.small { flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .editor-head { display: flex; align-items: center; gap: 10px; }
-.editor-head h2 { font-size: 18px; }
+.editor-head h2, .editor-head h3 { font-size: 18px; }
 .issue-list { display: flex; flex-direction: column; gap: 4px; }
 .grow { flex: 1; min-width: 120px; }
 

@@ -179,7 +179,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .workspace, .results { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .results { position: sticky; top: 0; }
 .workspace-head, .results-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-.results-head h2 { font-size: 15px; }
+.results-head h2, .results-head h3 { font-size: 15px; }
 
 .section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
 .section-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }

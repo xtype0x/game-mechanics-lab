@@ -2,8 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./styles.css";
-import "./scene/demo.css";
-import "./scene/scene.css";
+import "@gml/ui/demo.css";
+import "@gml/ui/scene.css";
 import "./play.css";
 
 createRoot(document.getElementById("root")!).render(
