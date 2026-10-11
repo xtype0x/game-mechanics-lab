@@ -31,7 +31,7 @@ apps/console ───────────────► packages/ui ──
 2. **兩處需要就提升（rule of two）**：程式先寫在小專案裡；當第二個專案或 App 也需要時，在**同一個變更**中搬到 `packages/`。規則邏輯搬到 `core`；React 元件搬到 `ui`；某款遊戲的共用資料放進 `packages/data-<game>`（已有 `data-hsr`）。不准複製一份過去，也不准跨專案 import。
 3. **共用元件不帶宿主專屬的版面或導覽**。差異用 props、插槽（例如 `before`、`actions`）或 context（例如 `RefLinkProvider`）處理，宿主自己的外層包裝留在宿主裡。範例：console 的 `tools/battle/CharacterEditor.tsx` 包住共用的單一角色編輯器。
 4. **改 packages 的公開介面時，同一個變更要修好所有使用者**。`npm run typecheck` 會檢查每個工作區。
-5. 共用元件只用 class 名稱，編輯器的樣式由各宿主或專案自己的 CSS 負責；只有動畫戰鬥畫面附帶自己的 CSS。
+5. 共用元件只用 class 名稱，編輯器的樣式由各宿主或專案自己的 CSS 負責；只有動畫戰鬥畫面與判定時間軸元件（`timing.css`）附帶自己的 CSS。
 
 ## 新增小專案（檢查清單）
 1. 建立 `projects/<id>/`（`<id>` 用小寫英文加 `-`，資料夾名＝id＝套件名尾碼）：

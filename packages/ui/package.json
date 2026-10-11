@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./scene.css": "./src/scene/scene.css",
-    "./demo.css": "./src/scene/demo.css"
+    "./demo.css": "./src/scene/demo.css",
+    "./timing.css": "./src/timing/timing.css"
   },
   "dependencies": {
     "@gml/core": "*"

@@ -19,3 +19,6 @@ export { Backdrop, type Theme } from "./scene/art/Backdrop";
 export { Sprite, ELEMENT_COLORS, elementColor, generatedLook, spriteScale } from "./scene/art/Sprite";
 export { Hero, type Extra, type HairStyle, type HeroLook, type Weapon } from "./scene/art/Hero";
 export { Bat, Colossus, Golem, Sentinel, Slime } from "./scene/art/Monsters";
+
+// Timing components (editor, frame bar, log). Import "@gml/ui/timing.css" once in the host page.
+export * from "./timing";
