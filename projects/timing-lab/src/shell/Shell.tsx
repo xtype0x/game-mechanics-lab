@@ -6,6 +6,7 @@ import { LabMode } from "../lab/LabMode";
 import { loadSharedConfig, saveSharedConfig } from "./config";
 import { useText } from "./i18n";
 import { relocalizeGameConfig } from "./presets";
+import type { ReplayData } from "./replay";
 
 // The game (canvas loop, audio, asset packs) is only fetched when the visitor opens it.
 const PlayMode = lazy(() => import("../play/PlayMode").then((m) => ({ default: m.PlayMode })));
@@ -20,6 +21,8 @@ export function Shell({ host = {} }: { host?: ProjectHost }) {
   const t = useText();
   const [mode, setMode] = useState<Mode>(modeFromHash);
   const [config, setConfig] = useState<Timing.TimingConfig>(loadSharedConfig);
+  // A window recorded in the game, waiting for the lab to pick it up.
+  const [pendingReplay, setPendingReplay] = useState<ReplayData | null>(null);
 
   useEffect(() => {
     const onHash = () => setMode(modeFromHash());
@@ -70,10 +73,12 @@ export function Shell({ host = {} }: { host?: ProjectHost }) {
       </div>
       <div id="tl-panel" role="tabpanel" aria-labelledby={`tl-tab-${mode}`}>
         {mode === "lab" ? (
-          <LabMode config={config} onConfigChange={setConfig} onSwitchMode={() => switchMode("play")} />
+          <LabMode config={config} onConfigChange={setConfig} onSwitchMode={() => switchMode("play")}
+            incomingReplay={pendingReplay} onReplayConsumed={() => setPendingReplay(null)} />
         ) : (
           <Suspense fallback={<p className="tl-loading">{t.loadingPlay}</p>}>
-            <PlayMode config={config} onConfigChange={setConfig} onSwitchMode={() => switchMode("lab")} />
+            <PlayMode config={config} onConfigChange={setConfig} onSwitchMode={() => switchMode("lab")}
+              onInspect={(r) => { setPendingReplay(r); switchMode("lab"); }} />
           </Suspense>
         )}
       </div>

@@ -4,6 +4,7 @@ export * from "./hud";
 export * from "./judge";
 export * from "./keys";
 export * from "../../shell/presets";
+export * from "./replay";
 export * from "./rules";
 export * from "./session";
 export * from "./util";

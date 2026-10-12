@@ -27,7 +27,7 @@ npm run site:dev   # http://127.0.0.1:5180/timing-lab/   （#play 為試玩；�
 ## 瀏覽器儲存鍵
 - 介面語言跟隨網站語言設定（`gml.site.locale.v1`），頁首有中文／English 切換；文字在 `src/shell/i18n/`、`src/lab/i18n/`、`src/play/i18n/`，規則編輯器等共用元件的文字在 `packages/ui/src/timing/i18n/`。
 - `gml.timing-lab.config.v1`：共用判定規則，`{ format: "gml-timing-config", version: 1, config }`。壞掉的存檔會退回預設。
-- `gml.timing-lab.session.v1`：逐幀分析的招式庫、序列、按鍵腳本。
+- `gml.timing-lab.session.v1`：逐幀分析的招式庫、序列、按鍵腳本，以及（選填）最近一次的實戰回放 `replay` 與來源 `source`。
 - **以下三個保留舊專案名稱 `bullet-parry`，刻意不改名**（遊戲原本是獨立專案，訪客的存檔與上傳的素材包都在這些名稱下）：
   - `gml.bullet-parry.best.v1`：最佳分數。
   - `gml.bullet-parry.settings.v1`：`{ difficulty, showFrameBar, packActive, packLast, volume, muted, practice, judgeFreeze, keys }`（`keys` 是 `{ 互動 id: KeyboardEvent.code }`；後面幾個欄位是後來加的，舊存檔缺少時用預設，所以沒有升版）。舊版這裡還有 `config`，現在讀取時忽略（只在共用鍵不存在時遷移一次），儲存時不再寫入。
@@ -37,6 +37,14 @@ npm run site:dev   # http://127.0.0.1:5180/timing-lab/   （#play 為試玩；�
 - **規則來源**：`Timing.TIMING_PRESETS` 與遊戲預設；格擋、閃避只是互動資料，可以新增自己的互動。
 - **即時模式**：按下互動的 `key` 提示鍵（例如 KeyJ）或畫面按鈕，按鍵記錄在「下一幀」；**回放模式**以腳本重現同一個情境。「全部重設」把規則重設為遊戲預設並清空招式庫、序列與腳本。
 - 共用元件：`TimingEditor`、`FrameBar`、`TimingLog`（樣式 `@gml/ui/timing.css`）。
+
+### 逐幀檢視實戰（回放）
+暫停或結束畫面的「逐幀檢視最後 6 秒」把這一局最後約 330–360 幀（再加 40 幀尾巴讓晚到的結算看得到）交給逐幀分析：同樣的子彈、同樣的按鍵，可以逐幀看、改按鍵、改規則（例如判定窗加寬 2 幀）後重跑。
+- **錄製**（`src/play/game/replay.ts`，純 TS）：`ReplayRecorder` 掛在遊戲 `Session` 上，每個世界幀記下實際送進 `stepTiming` 的按鍵（`StepResult.presses`）與撞擊的 `AttackEvent`（環形 420 幀）、子彈開火／撞擊幀（64 筆），每 30 幀存一份 `TimingState` 快照（14 份）。`buildReplay(session)` 取不早於 360 幀前的最舊快照為原點，用 `Timing.rebaseTimingState` 平移成 frame 0 起算。由於核心的接續性質（規格 timing §7.1/§7.3），`runTiming(config, script, { initial })` 會重現與遊戲當時相同的事件。
+- **格式** `ReplayData`（`src/shell/replay.ts`，`parseReplay` 驗證）：`{ format: "gml-timing-replay", version: 1, createdAt, practice, difficulty, configName, initial, frames, presses, originalPresses, attacks, bullets[{ id, name, kind, color, fire, impact }] }`，所有幀都已平移（`fire` 可為負）。
+- **儲存**：放在 `gml.timing-lab.session.v1` 裡（`session.replay`＋`session.source: "sequence" | "replay"`，舊存檔缺少時視為序列）；驗證失敗就丟掉回放。
+- **逐幀分析**：回放來源下，場景與幀數條把每顆子彈畫成一個合成招式（可重疊）；招式序列面板停用，腳本面板編輯回放的按鍵；「還原原始按鍵」復原、「回到招式序列」／「實戰回放」切換來源。即時模式＝用同一批子彈再試一次（「開始」會清空回放按鍵）。規則編輯器照常運作。若規則被改到初始狀態對不上（資源／互動 id 不見），會顯示不相容提示。
+- **限制**：練習模式在遊戲端每幀補血，快照含補血但視窗內的補血不會重現（`practice: true`，橫幅會標示）。視窗內的子彈只包含已撞擊的；視窗起點前就撞擊、尚在等待結算的攻擊來自初始狀態，沒有對應的子彈畫面。
 
 ## 實戰試玩
 ### 玩法與操作
@@ -91,4 +99,5 @@ Esc 或 P 暫停；切走分頁會自動暫停。按鍵可在設定逐一重設�
 - `test/play-game.test.ts`：子彈抵達幀、完美格擋反彈與命中槍手、不可格擋彈扣血、閃避穿過與充能回復、技能無敵、三次受傷結束、頓幀與慢動作時鐘、導演以固定種子逐步解鎖。
 - `test/play-assets.test.ts`：素材包驗證、匯出再匯入、遊戲事件 → 音效 id、設定舊存檔相容。IndexedDB／WebAudio 部分未做單元測試，靠瀏覽器手動驗證。
 - `test/play-polish.test.ts`：環形緩衝與 JudgeLog 有界、幀條模型、撞擊幀預測、按鍵重設解析與衝突、練習模式、前 30 秒難度、驗證閘門與預設比對、自訂互動可按且有素材槽、設定存檔相容。
+- `test/play-replay.test.ts`：種子局錄製後，`runTiming(initial)` 重現遊戲自己的結算／接受事件；短局、空錄製、`parseReplay` 與實驗室 session 存取。
 - `test/play-i18n.test.ts`：兩種語言的字典形狀與內建資料一致。

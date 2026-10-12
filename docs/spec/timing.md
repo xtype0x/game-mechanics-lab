@@ -1,6 +1,8 @@
-# 反應判定規格 1.0（格擋、閃避與自訂互動）
+# 反應判定規格 1.1（格擋、閃避與自訂互動）
 
-規則版本 1.0.0。實作：`packages/core/src/timing/`（`@gml/core` 匯出為命名空間 `Timing`）。向量：`packages/core/vectors/timing.json`。型別：`timing/types.ts`。
+規則版本 1.1.0。實作：`packages/core/src/timing/`（`@gml/core` 匯出為命名空間 `Timing`）。向量：`packages/core/vectors/timing.json`。型別：`timing/types.ts`。
+
+變更紀錄：1.1.0 — 新增 `runTiming` 的 `initial` 選項（§7.1）與狀態平移 `rebaseTimingState`（§7.3），可從中途狀態接續執行；既有規則與向量不變。
 
 動作遊戲裡「在特定幾幀內按下按鍵」的判定。**格擋和閃避不是寫死的規則**，只是兩筆內建的互動資料；使用者可以新增互動，定義它的判定窗、對每種攻擊標籤的結果，以及結果帶來的效果。
 
@@ -147,11 +149,32 @@ UI 把它畫成矩陣：每列一個標籤（由上往下＝優先順序），�
 
 **結尾**：`frame = t + 1`。
 
-### 7.1 腳本執行 `runTiming(config, script)`
+### 7.1 腳本執行 `runTiming(config, script, opts?)`
 從 `createTimingState(config)` 開始，對 `t = 0 … frames-1` 呼叫 `stepTiming`，本幀的按鍵是 `script.presses` 中 `frame = t` 的項目（依列表順序），攻擊是 `script.attacks` 中 `frame = t` 的項目。回傳全部事件與最終狀態。
+
+選項 `opts.initial?: TimingState`：給定時改從它的複本開始，不用 `createTimingState`，也不修改傳入的物件。`initial.frame` 必須是 0，否則丟出 `TimingError`（「初始狀態的 frame 必須是 0（請先用 rebaseTimingState）」）。要接續中途狀態時，先用 §7.3 的 `rebaseTimingState` 平移。（`opts.trace` 見 §10。）
 
 ### 7.2 初始狀態
 `frame = 0`；資源取 `initial`；沒有狀態；`stunUntil = 0`；沒有動作；有充能的互動 `count = max`、`pending = []`；`readyAt` 全為 0；沒有緩衝、歷史、待結算攻擊；`defeated = false`。
+
+### 7.3 狀態平移 `rebaseTimingState(state, origin)`
+回傳深複本（不修改輸入），其中每個**絕對幀值**都減去 `origin`，因此新的 `frame = state.frame - origin`。純粹的平移：結果可以是負數（例如 `readyAt` 0 變成 `-origin`、窗口之前的按鍵歷史），已過期的狀態／冷卻也不清理。
+
+平移的欄位（共同構成「絕對幀」的完整清單；`TimingState` 新增存放幀號的欄位時必須同步更新）：
+- `frame`、`stunUntil`
+- `statuses[*]`（結束幀）
+- `action.start`、`action.activeEnd`、`action.recoveryEnd`（不是 null 時）、`action.windows[*].from`／`to`
+- `charges[*].pending[*]`（充能到期幀）
+- `readyAt[*]`
+- `buffered.frame`（`buffered.shrink` 不平移）
+- `presses[*][0]`（按鍵歷史的幀號）
+- `pending[*].frame`（待結算攻擊的命中幀）
+
+不變：`resources`、`charges[*].count`、`action.interaction`／`buffered`／`shrink`／`catches`、`buffered.interaction`／`shrink`、按鍵歷史的互動 id、攻擊的 `id`／`tags`／`damage`、`defeated`。
+
+**接續性質**：對設定 C、長度 N 的腳本 S 與切點 `0 < F < N`，令 `mid` 為只跑前 F 幀的最終狀態，S' 為 `frame ≥ F` 的按鍵與攻擊各減 F、長度 `N - F` 的腳本。則 `runTiming(C, S', { initial: rebaseTimingState(mid, F) })` 的事件，等於完整執行 `runTiming(C, S)` 在 `frame ≥ F` 的事件、並把事件中的絕對幀欄位（`frame`、`pressFrame`、`impactFrame`、`accept.windows[*].from`／`to`）各減 F（`effect.frames` 是持續時間，不平移）；最終狀態等於 `rebaseTimingState(完整執行的 final, F)`。
+
+**已知的可觀察差異**：§5 的公式變數 `frame` 在接續執行中是平移後的幀號。公式直接讀取絕對 `frame` 的設定，接續執行的行為可能與完整執行不同（內建預設設定都不讀 `frame`，上述性質對它們成立）。`status.<id>` 等剩餘幀數變數不受影響。
 
 ## 8. 驗證（`validateTiming`）
 錯誤：id 重複（各類別內）；引用不存在的結果、互動、資源、狀態、標籤、判定窗；幀數欄位不是非負整數；`fps ≤ 0`；`charges.max < 1` 或 `recharge < 1`；`healthResource` 不存在；公式結構不合法或引用 §5 以外的變數。

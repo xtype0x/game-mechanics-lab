@@ -53,6 +53,7 @@ import {
   type BannerDef,
   type TargetSpec,
 } from "../src";
+import { continueFrom } from "./timing-continuation";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "vectors");
 const UPDATE = process.env.UPDATE_VECTORS === "1";
@@ -642,6 +643,17 @@ function timingVectors() {
     script: { frames: 20, presses: [pr(5, "parry")], attacks: [atk("x1", 0, ["bullet"], 4), atk("x2", 0, ["bullet"]), atk("x3", 30, ["bullet"])] },
   });
   const cases = raw.map(({ id, config, script }) => ({ id, config, script, expected: Timing.runTiming(config, script) }));
+  // Continuation (spec §7.3): cut a case's script at frame `cut`, rebase the state, run the rest from it.
+  const cuts: [string, number][] = [
+    ["souls/parry-windows", 4], ["souls/parry-windows", 44], ["souls/unblockable", 12], ["souls/spam", 15], ["sekiro/buffer", 31], ["sekiro/buffer", 56],
+    ["sekiro/dodge-charges", 30], ["witch/dodge-barrage", 25], ["lenient/input-offset", 41], ["lenient/skill-invulnerable", 21], ["showcase/custom-interactions", 104],
+    ["souls/defeated", 10],
+  ];
+  const continuations = cuts.map(([from, cut]) => {
+    const src = raw.find((x) => x.id === from)!;
+    const k = continueFrom(src.config, src.script, cut);
+    return { id: `${from}@${cut}`, from, cut, mid: k.mid, initial: k.rebased, script: k.script, expected: k.run };
+  });
   const conversions = [
     { ms: 100, fps: 60 }, { ms: 25, fps: 60 }, { ms: 50, fps: 30 }, { ms: 0, fps: 60 }, { ms: 16.7, fps: 60 }, { ms: 1000, fps: 144 },
   ].map((x) => ({ ...x, frames: Timing.msToFrames(x.ms, x.fps) }));
@@ -654,6 +666,7 @@ function timingVectors() {
     version: Timing.RULES_VERSION,
     presets: Timing.TIMING_PRESETS,
     cases,
+    continuations,
     conversions: { msToFrames: conversions, framesToMs: frameMs },
     expand: defs.map((d) => ({ ...d, expected: Timing.expandAttack(d.def, d.start) })),
   };

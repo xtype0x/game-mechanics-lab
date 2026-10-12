@@ -6,9 +6,10 @@ import { AssetStore } from "./assets/store";
 import { JudgePanel } from "./JudgePanel";
 import { soundsForEvents } from "./audio/events";
 import {
-  BULLET_KINDS, bulletKindName, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, scoreOf, shouldSaveBest,
+  BULLET_KINDS, bulletKindName, buildKeyMap, buildReplay, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, scoreOf, shouldSaveBest,
   startBlocker, tickSession, type Hud, type Session,
 } from "./game";
+import type { ReplayData } from "../shell/replay";
 import { useText } from "./i18n";
 import { createRenderer, type Renderer } from "./render/renderer";
 import { SettingsPanel } from "./SettingsPanel";
@@ -42,9 +43,11 @@ interface PlayModeProps {
   config: Timing.TimingConfig;
   onConfigChange: (config: Timing.TimingConfig) => void;
   onSwitchMode: () => void;
+  /** Open the last seconds of this run in the frame lab. */
+  onInspect: (replay: ReplayData) => void;
 }
 
-export function PlayMode({ config, onConfigChange, onSwitchMode }: PlayModeProps) {
+export function PlayMode({ config, onConfigChange, onSwitchMode, onInspect }: PlayModeProps) {
   const t = useText().app;
   const th = useText().how;
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
@@ -226,6 +229,14 @@ export function PlayMode({ config, onConfigChange, onSwitchMode }: PlayModeProps
     return () => { document.removeEventListener("visibilitychange", vis); window.removeEventListener("blur", hide); };
   }, []);
 
+  // The inspect button only shows when something was recorded (pause / game over).
+  const canInspect = (paused && screen === "playing") || screen === "over" ? buildReplay(sessionRef.current) !== null : false;
+  const inspect = () => {
+    const r = buildReplay(sessionRef.current);
+    if (r) onInspect(r);
+  };
+  const inspectButton = canInspect ? <button type="button" className="bp-btn" onClick={inspect}>{t.inspectLast}</button> : null;
+
   const blocker = startBlocker(config);
   const keyChips = (
     <p className="bp-keychips" aria-label={t.keysLabel}>
@@ -284,6 +295,7 @@ export function PlayMode({ config, onConfigChange, onSwitchMode }: PlayModeProps
               <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>{t.settings}</button>
               <button type="button" className="bp-btn" onClick={() => setPanel("assets")}>{t.assets}</button>
               <button type="button" className="bp-btn" onClick={() => setPanel("how")}>{t.howToPlay}</button>
+              {inspectButton}
               <button type="button" className="bp-btn ghost" onClick={toTitle}>{t.toTitle}</button>
             </div>
             <PackSwitch store={store} snap={assets} onManage={manage} />
@@ -301,6 +313,7 @@ export function PlayMode({ config, onConfigChange, onSwitchMode }: PlayModeProps
             <div className="bp-row">
               <button type="button" className="bp-btn primary" onClick={start} autoFocus disabled={!!blocker}>{t.retry}</button>
               <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>{t.settings}</button>
+              {inspectButton}
               <button type="button" className="bp-btn ghost" onClick={toTitle}>{t.toTitle}</button>
             </div>
           </div>

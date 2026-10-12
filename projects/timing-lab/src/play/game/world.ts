@@ -72,6 +72,8 @@ export interface StepResult {
   /** Slow motion request (host command): `scale` for `frames` real frames. */
   timeScale: { scale: number; frames: number } | null;
   timing: Timing.TimingEvent[];
+  /** The presses actually fed to `stepTiming` this frame (queued ids of known interactions). */
+  presses: string[];
   /** Bullets that reached the hit line this frame. */
   impacts: { frame: number; kind: BulletKindId }[];
 }
@@ -148,7 +150,7 @@ interface Ctx {
 
 /** Run one world frame (60 Hz). `presses` are interaction ids queued since the previous step. */
 export function stepWorld(w: World, presses: string[]): StepResult {
-  const res: StepResult = { events: [], attacks: [], hitstop: 0, timeScale: null, timing: [], impacts: [] };
+  const res: StepResult = { events: [], attacks: [], hitstop: 0, timeScale: null, timing: [], presses: [], impacts: [] };
   if (w.over) return res;
   const cfg = w.config;
   const f = w.frame;
@@ -203,7 +205,8 @@ export function stepWorld(w: World, presses: string[]): StepResult {
 
   // Timing rules.
   const known = new Set(cfg.interactions.map((i) => i.id));
-  const out = Timing.stepTiming(cfg, w.timing, { presses: presses.filter((p) => known.has(p)), attacks: res.attacks });
+  res.presses = presses.filter((p) => known.has(p));
+  const out = Timing.stepTiming(cfg, w.timing, { presses: res.presses, attacks: res.attacks });
   w.timing = out.state;
   res.timing = out.events;
   if (w.practice) refillLives(w, res);

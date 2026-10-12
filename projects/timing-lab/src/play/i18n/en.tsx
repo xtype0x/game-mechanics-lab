@@ -32,6 +32,7 @@ export const en: BulletText = {
     best: (n: number) => `Best ${n}`,
     survived: (time: string, perfects: number, hits: number) => `Survived ${time} · Perfects ${perfects} · Hits taken ${hits}`,
     retry: "Try again",
+    inspectLast: "Inspect last 6 s frame by frame",
     close: "Close",
   },
   how: {

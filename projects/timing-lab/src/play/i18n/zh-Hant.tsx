@@ -29,6 +29,7 @@ export const zhHant = {
     best: (n: number) => `最佳 ${n}`,
     survived: (time: string, perfects: number, hits: number) => `撐了 ${time}・完美 ${perfects}・受傷 ${hits}`,
     retry: "再試一次",
+    inspectLast: "逐幀檢視最後 6 秒",
     close: "關閉",
   },
   how: {

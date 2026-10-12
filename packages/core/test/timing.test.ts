@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { c, op, r, Timing } from "../src";
+import { continueFrom, shiftEvent } from "./timing-continuation";
 
 type Cfg = Timing.TimingConfig;
 type Inter = Timing.InteractionDef;
@@ -597,6 +598,121 @@ describe("validateTiming", () => {
       "interactions[0].table", "interactions[0].table", // perfect and normal have no cell in a default row (there is none)
       "interactions[1]", // no windows and no onAccept
     ]);
+  });
+});
+
+describe("rebaseTimingState and initial", () => {
+  const hand = (): Timing.TimingState => ({
+    frame: 100,
+    resources: { hp: 2, gauge: 40 },
+    statuses: { invulnerable: 130, counter: 90 },
+    stunUntil: 110,
+    action: {
+      interaction: "parry", start: 98, buffered: false, shrink: 1, catches: 1,
+      windows: [{ id: "perfect", name: "perfect", from: 100, to: 102 } as unknown as Timing.WindowSpan, { id: "normal", from: 102, to: 110 }],
+      activeEnd: 110, recoveryEnd: 118,
+    },
+    charges: { dodge: { count: 1, pending: [105, 120] } },
+    readyAt: { parry: 0, dodge: 99 },
+    buffered: { interaction: "parry", frame: 97, shrink: -1 },
+    presses: [[90, "parry"], [97, "parry"]],
+    pending: [{ id: "a", frame: 101, tags: ["bullet"], damage: 2 }],
+    defeated: false,
+  });
+
+  it("shifts exactly the absolute-frame fields (hand-checked, origin 100)", () => {
+    const before = hand();
+    const r = Timing.rebaseTimingState(before, 100);
+    const w = hand().action!.windows;
+    expect(r).toEqual({
+      frame: 0,
+      resources: { hp: 2, gauge: 40 },
+      statuses: { invulnerable: 30, counter: -10 },
+      stunUntil: 10,
+      action: {
+        interaction: "parry", start: -2, buffered: false, shrink: 1, catches: 1,
+        windows: [{ ...w[0]!, from: 0, to: 2 }, { id: "normal", from: 2, to: 10 }],
+        activeEnd: 10, recoveryEnd: 18,
+      },
+      charges: { dodge: { count: 1, pending: [5, 20] } },
+      readyAt: { parry: -100, dodge: -1 },
+      buffered: { interaction: "parry", frame: -3, shrink: -1 },
+      presses: [[-10, "parry"], [-3, "parry"]],
+      pending: [{ id: "a", frame: 1, tags: ["bullet"], damage: 2 }],
+      defeated: false,
+    });
+    expect(before).toEqual(hand()); // input untouched
+    const idle = { ...hand(), action: { ...hand().action!, recoveryEnd: null }, buffered: null };
+    const r2 = Timing.rebaseTimingState(idle, 40);
+    expect(r2.action!.recoveryEnd).toBeNull();
+    expect(r2.buffered).toBeNull();
+    expect(r2.frame).toBe(60);
+  });
+
+  it("initial must start at frame 0 and is not mutated", () => {
+    const c = cfg([parry()]);
+    const mid = runTiming(c, script(10, [press(0)], [bullet(5)])).final;
+    expect(() => runTiming(c, script(5, []), { initial: mid })).toThrow(Timing.TimingError);
+    expect(() => runTiming(c, script(5, []), { initial: mid })).toThrow("rebaseTimingState");
+    const init = Timing.rebaseTimingState(mid, 10);
+    const copy = structuredClone(init);
+    const run = runTiming(c, script(20, [press(3)], [bullet(8)]), { initial: init, trace: true });
+    expect(init).toEqual(copy);
+    expect(run.trace).toHaveLength(20);
+    expect(run.final.frame).toBe(20);
+  });
+});
+
+describe("continuation property", () => {
+  const withOffset = (p: Cfg): Cfg => ({ ...structuredClone(p), id: `${p.id}-offset3`, inputOffset: 3 });
+  const fullGauge = (p: Cfg): Cfg => {
+    const q = structuredClone(p);
+    q.id = `${p.id}-fullgauge`;
+    for (const r of q.resources) if (r.id === "gauge") r.initial = r.max;
+    return q;
+  };
+  const configs: Cfg[] = [...TIMING_PRESETS, withOffset(TIMING_PRESETS[0]!), withOffset(TIMING_PRESETS[2]!), fullGauge(TIMING_PRESETS[0]!)];
+  const tagSets = [["bullet"], ["unblockable"], ["thrust"], ["sweep"], ["energy"], [], ["bullet", "thrust"]];
+
+  /** Deterministic scripts: a dense one (a press every 9 frames, an attack every 13) and a sparse one with a burst. */
+  function scriptsFor(c: Cfg): Timing.TimingScript[] {
+    const ids = c.interactions.map((i) => i.id);
+    const dense = script(300, [], []);
+    for (let i = 0; i < 33; i++) dense.presses.push(press(i * 9 + (i % 3), ids[i % ids.length]!));
+    for (let i = 0; i < 23; i++) dense.attacks.push(bullet(i * 13 + 2, `d${i}`, tagSets[i % tagSets.length]!.slice(), i % 5 === 0 ? 2 : undefined));
+    const sparse = script(300, [press(0, ids[0]!), press(1, ids[1]!), press(2, ids[0]!), press(3, ids[0]!), press(4, ids[1]!), press(50, ids[ids.length - 1]!), press(51, ids[0]!), press(140, ids[1]!), press(141, ids[1]!)], [
+      bullet(4, "s0"), bullet(5, "s1", ["thrust"]), bullet(40, "s2", ["unblockable"], 2), bullet(52, "s3"), bullet(143, "s4", ["bullet"]), bullet(200, "s5", []), bullet(201, "s6", ["energy"]),
+    ]);
+    return [dense, sparse];
+  }
+
+  it("runTiming(rebase(mid)) equals the tail of the full run, for every cut", () => {
+    const seen = { action: 0, buffered: 0, pending: 0, chargePending: 0, stun: 0, status: 0, recovery: 0 };
+    for (const c of configs) {
+      for (const s of scriptsFor(c)) {
+        const full = runTiming(c, s);
+        for (let cut = 1; cut < s.frames; cut += cut < 120 ? 1 : 7) {
+          const k = continueFrom(c, s, cut);
+          const label = `${c.id} cut ${cut}`;
+          expect(k.rebased.frame, label).toBe(0);
+          expect(k.run.events, label).toEqual(full.events.filter((e) => e.frame >= cut).map((e) => shiftEvent(e, cut)));
+          expect(k.run.final, label).toEqual(Timing.rebaseTimingState(full.final, cut));
+          if (k.mid.action) seen.action++;
+          if (k.mid.action?.recoveryEnd != null) seen.recovery++;
+          if (k.mid.buffered) seen.buffered++;
+          if (k.mid.pending.length) seen.pending++;
+          if (Object.values(k.mid.charges).some((ch) => ch.pending.length)) seen.chargePending++;
+          if (k.mid.stunUntil > cut) seen.stun++;
+          if (Object.keys(k.mid.statuses).length) seen.status++;
+        }
+      }
+    }
+    // The cuts really did land in the interesting states.
+    for (const [k, n] of Object.entries(seen)) expect(n, k).toBeGreaterThan(0);
+  });
+
+  it("no built-in preset reads the absolute `frame` variable", () => {
+    for (const p of TIMING_PRESETS) expect(JSON.stringify(p), p.id).not.toContain('{"ref":"frame"}');
   });
 });
 

@@ -1,5 +1,5 @@
 /**
- * Timing rules 1.0 — data-driven reactive interactions (parry, dodge, and anything users define).
+ * Timing rules 1.1 — data-driven reactive interactions (parry, dodge, and anything users define).
  * Authoritative spec: docs/spec/timing.md. All times are integer frames; `fps` is only for display/ms conversion.
  */
 import type { Expr } from "../expr";
@@ -183,6 +183,10 @@ export interface ChargeState {
   pending: number[];
 }
 
+/**
+ * NOTE: every field holding an ABSOLUTE frame number must be shifted by `rebaseTimingState` (engine.ts, spec §7.3).
+ * When adding a field to TimingState (or to ActionState / WindowSpan / AttackEvent) that stores a frame, update it.
+ */
 export interface TimingState {
   frame: number;
   resources: Record<string, number>;

@@ -44,8 +44,16 @@ export const zhHant = {
     offsetFrames: (value: string) => `${value} 幀`,
     offsetNote: "偏移 = 命中幀 − 按下幀（正數代表提早按）。",
     scriptTitle: "腳本（按鍵）",
-    footer: "規則：docs/spec/timing.md（反應判定規格 1.0）。判定規則與「實戰試玩」共用。規則與腳本只存在這個瀏覽器（localStorage：gml.timing-lab.config.v1、gml.timing-lab.session.v1；試玩的分數與選項為 gml.bullet-parry.*）。",
+    footer: "規則：docs/spec/timing.md（反應判定規格 1.1）。判定規則與「實戰試玩」共用。規則與腳本只存在這個瀏覽器（localStorage：gml.timing-lab.config.v1、gml.timing-lab.session.v1；試玩的分數與選項為 gml.bullet-parry.*）。",
   },
+  replay: {
+    banner: (config: string, time: string, difficulty: number, practice: boolean) =>
+      `實戰回放：${config}・${time}・難度 ${difficulty}${practice ? "・練習模式（回放不會補血）" : ""}`,
+    restorePresses: "還原原始按鍵",
+    toSequence: "回到招式序列",
+    toReplay: "實戰回放",
+    incompatible: (ids: string) => `回放的初始狀態與目前規則不相容：規則裡找不到 ${ids}（規則被改過）。換回錄製時的規則，或按「回到招式序列」。`,
+    sequenceOff: "目前顯示的是實戰回放，招式序列不使用。按「回到招式序列」可編輯序列。",  },
   script: {
     addPress: "＋ 新增按鍵",
     clearPresses: "清除按鍵",

@@ -9,7 +9,8 @@ import { useText } from "./i18n";
 import { Scene } from "./Scene";
 import { ScriptPanel } from "./ScriptPanel";
 import { SequencePanel } from "./SequencePanel";
-import { SESSION_KEY, buildScript, defaultSession, loadSession, normalizePresses, relocalizeSession, type PressRec, type Session } from "./session";
+import { replayText, type ReplayData } from "../shell/replay";
+import { ReplayMismatch, SESSION_KEY, activePresses, assertReplayFits, buildScript, defaultSession, loadSession, normalizePresses, relocalizeSession, type PressRec, type Session } from "./session";
 import { computeStats } from "./stats";
 import { usePlayback } from "./usePlayback";
 
@@ -30,14 +31,22 @@ interface LabModeProps {
   config: Timing.TimingConfig;
   onConfigChange: (config: Timing.TimingConfig) => void;
   onSwitchMode: () => void;
+  /** A window recorded in the game; the lab adopts it as its scenario and then calls `onReplayConsumed`. */
+  incomingReplay?: ReplayData | null;
+  onReplayConsumed?: () => void;
 }
 
-export function LabMode({ config, onConfigChange, onSwitchMode }: LabModeProps) {
+/** Applies `fn` to the presses of the scenario in use (the replay carries its own list). */
+const mapPresses = (s: Session, fn: (p: PressRec[]) => PressRec[]): Session =>
+  s.source === "replay" && s.replay ? { ...s, replay: { ...s.replay, presses: fn(s.replay.presses) } } : { ...s, presses: fn(s.presses) };
+
+export function LabMode({ config, onConfigChange, onSwitchMode, incomingReplay = null, onReplayConsumed }: LabModeProps) {
   const [locale] = useLocale();
   const T = useText();
   const t = T.app;
   const [session, setSession] = useState(loadSession);
-  const [mode, setMode] = useState<Mode>("live");
+  // A stored replay reopens in playback, the way it was handed over from the game.
+  const [mode, setMode] = useState<Mode>(() => (session.source === "replay" && session.replay ? "replay" : "live"));
   const [speed, setSpeed] = useState(1);
   const [editorOpen, setEditorOpen] = useState(() => typeof window === "undefined" || window.innerWidth >= 960);
   const [notice, setNotice] = useState<string | null>(null);
@@ -58,18 +67,22 @@ export function LabMode({ config, onConfigChange, onSwitchMode }: LabModeProps) 
 
   const modeRef = useRef(mode);
   modeRef.current = mode;
-  const { script, items } = useMemo(() => buildScript(session, config), [session, config]);
+  const { script, items, initial } = useMemo(() => buildScript(session, config), [session, config, locale]); // locale: replay bullet names
+  const replaying = session.source === "replay" && !!session.replay;
+  const presses = activePresses(session);
   const result = useMemo(() => {
     try {
-      return { run: Timing.runTiming(config, script, { trace: true }), error: null as string | null };
+      if (initial && session.replay) assertReplayFits(session.replay, config);
+      return { run: Timing.runTiming(config, script, { trace: true, ...(initial ? { initial } : {}) }), error: null as string | null };
     } catch (e) {
-      return { run: null, error: e instanceof Error ? e.message : String(e) };
+      if (e instanceof ReplayMismatch) return { run: null, error: T.replay.incompatible(e.ids.join(", ")) };
+      return { run: null, error: t.runFailed(e instanceof Error ? e.message : String(e)) };
     }
-  }, [config, script]);
+  }, [config, script, initial, session.replay, T, t]);
   const run = result.run ?? EMPTY_RUN;
 
   const editSession = useCallback((fn: (d: Session) => void) => setSession((s) => { const d = structuredClone(s); fn(d); return d; }), []);
-  const setPresses = useCallback((presses: PressRec[]) => editSession((d) => { d.presses = presses; }), [editSession]);
+  const setPresses = useCallback((next: PressRec[]) => setSession((s) => mapPresses(s, () => next)), []);
 
   const pb = usePlayback({
     total: script.frames, fps: config.fps, speed, loop: session.loop, events: run.events,
@@ -86,8 +99,22 @@ export function LabMode({ config, onConfigChange, onSwitchMode }: LabModeProps) 
   const press = useCallback((interaction: string) => {
     if (modeRef.current !== "live") return;
     const frame = pb.frameRef.current + 1;
-    setSession((s) => ({ ...s, presses: normalizePresses([...s.presses, { frame, interaction }], config) }));
+    setSession((s) => mapPresses(s, (list) => normalizePresses([...list, { frame, interaction }], config)));
   }, [config, pb.frameRef]);
+
+  // Adopt a window handed over from the game: replay mode, from the first frame.
+  useEffect(() => {
+    if (!incomingReplay) return;
+    setSession((s) => ({ ...s, replay: incomingReplay, source: "replay" }));
+    setMode("replay");
+    pb.pause();
+    pb.seek(0);
+    onReplayConsumed?.();
+  }, [incomingReplay]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const backToSequence = () => { editSession((d) => { d.source = "sequence"; }); pb.pause(); pb.seek(0); };
+  const toReplaySource = () => { editSession((d) => { if (d.replay) d.source = "replay"; }); pb.pause(); pb.seek(0); };
+  const restorePresses = () => editSession((d) => { if (d.replay) d.replay.presses = d.replay.originalPresses.map((p) => ({ ...p })); });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -136,11 +163,23 @@ export function LabMode({ config, onConfigChange, onSwitchMode }: LabModeProps) 
         <span className="tm-muted tl-cfgname">{t.current(config.name)}</span>
       </div>
       {notice && <div className="tl-notice" role="alert">{notice}</div>}
-      {result.error && <div className="tl-notice" role="alert">{t.runFailed(result.error)}</div>}
+      {result.error && <div className="tl-notice" role="alert">{result.error}</div>}
 
       <div className={`tl-main${editorOpen ? "" : " no-editor"}`}>
         {editorOpen && <aside className="tl-left"><TimingEditor config={config} onChange={onConfigChange} /></aside>}
         <div className="tl-center">
+          {replaying && session.replay && (
+            <div className="tl-notice tl-replay" role="status">
+              <span>{T.replay.banner(replayText(session.replay.configNames, session.replay.configName, locale), new Date(session.replay.createdAt).toLocaleTimeString(locale), session.replay.difficulty, session.replay.practice)}</span>{" "}
+              <button type="button" className="tm-btn" onClick={restorePresses}>{T.replay.restorePresses}</button>{" "}
+              <button type="button" className="tm-btn" onClick={backToSequence}>{T.replay.toSequence}</button>
+            </div>
+          )}
+          {!replaying && session.replay && (
+            <div className="tl-replay">
+              <button type="button" className="tm-btn" onClick={toReplaySource}>{T.replay.toReplay}</button>
+            </div>
+          )}
           <Scene config={config} frame={pb.frame} trace={trace} events={shown} items={items} fx={pb.fx} />
 
           <div className="tl-transport">
@@ -207,10 +246,14 @@ export function LabMode({ config, onConfigChange, onSwitchMode }: LabModeProps) 
           <div className="tl-cols">
             <section className="tl-card">
               <h3>{t.scriptTitle}</h3>
-              <ScriptPanel config={config} presses={session.presses} onChange={setPresses} onSeek={(f) => { pb.pause(); pb.seek(f); }} />
+              <ScriptPanel config={config} presses={presses} onChange={setPresses} onSeek={(f) => { pb.pause(); pb.seek(f); }} />
             </section>
             <section className="tl-card">
-              <SequencePanel session={session} onChange={editSession} config={config} phase={{ phase: phase.phase, ...(phase.item ? { name: phase.item.def.name } : {}) }} />
+              {replaying ? (
+                <p className="tm-muted tm-note">{T.replay.sequenceOff}</p>
+              ) : (
+                <SequencePanel session={session} onChange={editSession} config={config} phase={{ phase: phase.phase, ...(phase.item ? { name: phase.item.def.name } : {}) }} />
+              )}
             </section>
           </div>
         </div>

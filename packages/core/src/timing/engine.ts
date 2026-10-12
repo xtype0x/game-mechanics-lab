@@ -1,5 +1,5 @@
 /**
- * Timing rules 1.0 engine (docs/spec/timing.md). Pure: `stepTiming` never mutates its input state.
+ * Timing rules 1.1 engine (docs/spec/timing.md). Pure: `stepTiming` never mutates its input state.
  */
 import { evalBool, evalNumber, roundHalfAway, type Expr, type Scope } from "../expr";
 import type {
@@ -422,10 +422,32 @@ export function traceFrame(config: TimingConfig, state: TimingState): FrameTrace
   return tr;
 }
 
+/** spec §7.3: shift every absolute frame by `-origin` (pure shift; values may become negative). */
+export function rebaseTimingState(state: TimingState, origin: number): TimingState {
+  const s = cloneTimingState(state);
+  s.frame -= origin;
+  for (const k of Object.keys(s.statuses)) s.statuses[k]! -= origin;
+  s.stunUntil -= origin;
+  if (s.action) {
+    s.action.start -= origin;
+    s.action.activeEnd -= origin;
+    if (s.action.recoveryEnd !== null) s.action.recoveryEnd -= origin;
+    for (const w of s.action.windows) { w.from -= origin; w.to -= origin; }
+  }
+  for (const k of Object.keys(s.charges)) s.charges[k]!.pending = s.charges[k]!.pending.map((p) => p - origin);
+  for (const k of Object.keys(s.readyAt)) s.readyAt[k]! -= origin;
+  if (s.buffered) s.buffered.frame -= origin; // `shrink` is a length (-1 marker), not a frame
+  for (const p of s.presses) p[0] -= origin;
+  for (const a of s.pending) a.frame -= origin;
+  return s;
+}
+
 export function runTiming(config: TimingConfig, script: TimingScript): TimingRun;
-export function runTiming(config: TimingConfig, script: TimingScript, opts: { trace: true }): TimingRun & { trace: FrameTrace[] };
-export function runTiming(config: TimingConfig, script: TimingScript, opts?: { trace?: boolean }): TimingRun {
-  let state = createTimingState(config);
+export function runTiming(config: TimingConfig, script: TimingScript, opts: { trace: true; initial?: TimingState }): TimingRun & { trace: FrameTrace[] };
+export function runTiming(config: TimingConfig, script: TimingScript, opts?: { trace?: boolean; initial?: TimingState }): TimingRun;
+export function runTiming(config: TimingConfig, script: TimingScript, opts?: { trace?: boolean; initial?: TimingState }): TimingRun {
+  if (opts?.initial && opts.initial.frame !== 0) throw new TimingError("初始狀態的 frame 必須是 0（請先用 rebaseTimingState）");
+  let state = opts?.initial ? cloneTimingState(opts.initial) : createTimingState(config);
   const events: TimingEvent[] = [];
   const trace: FrameTrace[] = [];
   for (let t = 0; t < script.frames; t++) {

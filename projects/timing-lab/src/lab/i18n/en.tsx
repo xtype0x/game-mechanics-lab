@@ -46,8 +46,16 @@ export const en: LabText = {
     offsetFrames: (value: string) => `${value} ${Math.abs(Number(value)) === 1 ? "frame" : "frames"}`,
     offsetNote: "Offset = impact frame − press frame (positive means pressed early).",
     scriptTitle: "Script (inputs)",
-    footer: "Rules: docs/spec/timing.md (timing judgment spec 1.0). The rules are shared with the Bullet parry mode. Rules and script are stored only in this browser (localStorage: gml.timing-lab.config.v1, gml.timing-lab.session.v1; the game's score and options use gml.bullet-parry.*).",
+    footer: "Rules: docs/spec/timing.md (timing judgment spec 1.1). The rules are shared with the Bullet parry mode. Rules and script are stored only in this browser (localStorage: gml.timing-lab.config.v1, gml.timing-lab.session.v1; the game's score and options use gml.bullet-parry.*).",
   },
+  replay: {
+    banner: (config: string, time: string, difficulty: number, practice: boolean) =>
+      `Game replay: ${config} · ${time} · difficulty ${difficulty}${practice ? " · practice mode (the replay does not refill health)" : ""}`,
+    restorePresses: "Restore original presses",
+    toSequence: "Back to move sequence",
+    toReplay: "Game replay",
+    incompatible: (ids: string) => `The replay's starting state does not fit the current rules: they no longer have ${ids} (the rules were edited). Switch back to the rules it was recorded with, or press "Back to move sequence".`,
+    sequenceOff: "A game replay is showing, so the move sequence is not used. Press \"Back to move sequence\" to edit it.",  },
   script: {
     addPress: "+ Add press",
     clearPresses: "Clear presses",
