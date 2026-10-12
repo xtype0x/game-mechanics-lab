@@ -19,6 +19,8 @@ tools: Read, Glob, Grep, Bash, PowerShell, mcp__Claude_Browser__preview_start, m
 4. 多語言任務：每種語言都切換一次，檢查是否有漏翻（英文模式下殘留中文）、`<html lang>`、`document.title`、重新整理後語言是否保留
 5. 結束時 `resize_window` 回 `desktop`
 
+發現資料遺失或存檔被覆蓋類問題時，先用 `tabs_context` 確認有沒有其他同源分頁開著（它們會透過 `storage` 事件互相影響），排除後再推測原因。
+
 ## 回報
 - 每個問題一行：頁面／步驟 → 實際看到什麼 → 預期什麼（附 selector 或文字片段）
 - 通過的項目簡短列出
