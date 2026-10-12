@@ -1,14 +1,9 @@
 /** Sound slots and the pure mapping from game events to sound ids (no audio APIs here). */
 import type { GameEvent } from "../game/world";
 
+/** Sound slots; their labels are in the dictionary (assets.soundLabels, by id). */
 export const SOUND_SLOTS = [
-  { id: "sfx.hit", label: "被打中" },
-  { id: "sfx.parry", label: "格擋" },
-  { id: "sfx.perfect", label: "完美" },
-  { id: "sfx.dodge", label: "閃避" },
-  { id: "sfx.skill", label: "技能" },
-  { id: "sfx.fire", label: "槍手開火" },
-  { id: "sfx.gameOver", label: "遊戲結束" },
+  { id: "sfx.hit" }, { id: "sfx.parry" }, { id: "sfx.perfect" }, { id: "sfx.dodge" }, { id: "sfx.skill" }, { id: "sfx.fire" }, { id: "sfx.gameOver" },
 ] as const;
 
 export type SoundId = (typeof SOUND_SLOTS)[number]["id"];

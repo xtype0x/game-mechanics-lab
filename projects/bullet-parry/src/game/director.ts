@@ -1,4 +1,5 @@
 import type { Rng } from "@gml/core";
+import { text } from "../i18n";
 import { BULLET_KINDS, DIRECTOR, FPS, OPENING, type BulletKindId } from "./config";
 
 export interface ShotSpec { offset: number; kind: BulletKindId }
@@ -7,7 +8,6 @@ export interface Shot { frame: number; kind: BulletKindId }
 
 export interface PatternDef {
   id: string;
-  name: string;
   /** World seconds at which the pattern joins the pool. */
   unlock: number;
   /** Only in the pool at this difficulty or higher. */
@@ -23,30 +23,33 @@ const extra = (d: number) => Math.max(0, Math.floor((d - 1) * 2));
 const range = (rng: Rng, lo: number, hi: number) => lo + rng.int(hi - lo + 1);
 const pick = <T,>(rng: Rng, xs: readonly T[]): T => xs[rng.int(xs.length)] as T;
 
+/** Pattern name in the current language (read at call time). */
+export const patternName = (id: string): string => text().patterns[id] ?? id;
+
 export const PATTERNS: PatternDef[] = [
-  { id: "single", name: "單發", unlock: 0, weight: 3, build: () => [{ offset: 0, kind: "normal" }] },
-  { id: "double", name: "瞄準雙發", unlock: 16, weight: 3, build: (rng) => [{ offset: 0, kind: "normal" }, { offset: range(rng, 34, 46), kind: "normal" }] },
-  { id: "low", name: "低空彈", unlock: 24, weight: 2, build: () => [{ offset: 0, kind: "low" }] },
+  { id: "single", unlock: 0, weight: 3, build: () => [{ offset: 0, kind: "normal" }] },
+  { id: "double", unlock: 16, weight: 3, build: (rng) => [{ offset: 0, kind: "normal" }, { offset: range(rng, 34, 46), kind: "normal" }] },
+  { id: "low", unlock: 24, weight: 2, build: () => [{ offset: 0, kind: "low" }] },
   {
-    id: "red", name: "紅色特殊彈", unlock: 30, weight: 3,
+    id: "red", unlock: 30, weight: 3,
     build: (rng) => (rng.chance(0.5) ? [{ offset: 0, kind: "red" }, { offset: range(rng, 48, 64), kind: "normal" }] : [{ offset: 0, kind: "red" }]),
   },
-  { id: "energy", name: "能量彈", unlock: 36, weight: 2, build: () => [{ offset: 0, kind: "energy" }] },
+  { id: "energy", unlock: 36, weight: 2, build: () => [{ offset: 0, kind: "energy" }] },
   {
-    id: "bounce", name: "彈跳齊射", unlock: 44, weight: 3,
+    id: "bounce", unlock: 44, weight: 3,
     build: (rng, d) => Array.from({ length: range(rng, 2, 3) + Math.min(2, extra(d)) }, (_, i) => ({ offset: i * range(rng, 34, 44), kind: "bounce" as const })),
   },
   {
-    id: "burst", name: "密集連射", unlock: 55, weight: 3,
+    id: "burst", unlock: 55, weight: 3,
     build: (rng, d) => {
       const n = range(rng, 5, 8) + extra(d);
       const gap = range(rng, 10, 14);
       return Array.from({ length: n }, (_, i) => ({ offset: i * gap, kind: "normal" as const }));
     },
   },
-  { id: "feint", name: "變速佯攻", unlock: 65, weight: 3, build: (rng) => [{ offset: 0, kind: "feint" }, { offset: range(rng, 18, 30), kind: "normal" }] },
+  { id: "feint", unlock: 65, weight: 3, build: (rng) => [{ offset: 0, kind: "feint" }, { offset: range(rng, 18, 30), kind: "normal" }] },
   {
-    id: "mixed", name: "混合彈幕", unlock: 80, weight: 4,
+    id: "mixed", unlock: 80, weight: 4,
     build: (rng, d) => {
       const pool: BulletKindId[] = ["normal", "red", "bounce", "low", "feint", "energy"];
       const n = range(rng, 3, 4) + Math.min(3, extra(d));
@@ -61,7 +64,7 @@ export const PATTERNS: PatternDef[] = [
 
 /** Asura tier only (difficulty ≥ 2.6): normal and red alternate, forcing parry → dodge → parry → dodge. */
 PATTERNS.push({
-  id: "switch", name: "交錯彈幕", unlock: 70, minDifficulty: 2.6, weight: 3,
+  id: "switch", unlock: 70, minDifficulty: 2.6, weight: 3,
   build: (rng) => {
     const gap = range(rng, 22, 30);
     return ["normal", "red", "normal", "red"].map((kind, i) => ({ offset: i * gap, kind: kind as BulletKindId }));

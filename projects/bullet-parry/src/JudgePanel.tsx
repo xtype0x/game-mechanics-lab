@@ -1,4 +1,6 @@
+import { getLocale } from "@gml/ui/i18n";
 import { useEffect, useRef, useState } from "react";
+import { useText } from "./i18n";
 import { JUDGE_HISTORY, upcomingImpacts, type ImpactMark, type Session } from "./game";
 import { buildLogLines, buildStripModel, STRIP_AHEAD, STRIP_PAST, type LogLine } from "./judge/model";
 import { drawStrip, stripHeight } from "./judge/strip";
@@ -14,6 +16,7 @@ export function JudgePanel({ sessionRef, paused, freeze }: {
   paused: boolean;
   freeze: boolean;
 }) {
+  const t = useText().judge;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [lines, setLines] = useState<LogLine[]>([]);
   const [scrub, setScrub] = useState(0);
@@ -48,14 +51,14 @@ export function JudgePanel({ sessionRef, paused, freeze }: {
         lastKey = "";
       }
       // Redraw only when the log, playhead or layout changed (upcoming impacts shift with every world step).
-      const key = `${s.judge.version}|${end}|${Math.round(w)}|${cfg.id}|${cfg.interactions.length}`;
+      const key = `${getLocale()}|${s.judge.version}|${end}|${Math.round(w)}|${cfg.id}|${cfg.interactions.length}`;
       if (key === lastKey) return;
       lastKey = key;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const m = buildStripModel(cfg, s.judge, end, back === 0 ? upcomingImpacts(s.world, upcoming) : [], STRIP_PAST, STRIP_AHEAD);
       drawStrip(ctx, w, m, cfg, end);
       const next = buildLogLines(cfg, s.judge, end);
-      const sig = next.map((x) => x.key).join(",");
+      const sig = getLocale() + "|" + next.map((x) => x.key).join(",");
       if (sig !== lastLog) { lastLog = sig; setLines(next); }
     };
     raf = requestAnimationFrame(frame);
@@ -64,21 +67,21 @@ export function JudgePanel({ sessionRef, paused, freeze }: {
 
   const frozen = paused && freeze;
   return (
-    <section className="bp-judge" aria-label="判定幀數條">
+    <section className="bp-judge" aria-label={t.aria}>
       <div className="bp-judge-head">
-        <b>判定幀數條</b>
-        <span className="bp-dim">最近 2 秒・圓點＝來彈撞擊（空心為預測）・▼＝按鍵・◆＝結算</span>
-        {frozen ? <span className="bp-judge-frozen">已凍結</span> : null}
+        <b>{t.title}</b>
+        <span className="bp-dim">{t.legend}</span>
+        {frozen ? <span className="bp-judge-frozen">{t.frozen}</span> : null}
       </div>
       <canvas ref={canvasRef} className="bp-judge-canvas" />
       {frozen ? (
         <label className="bp-judge-scrub">
-          <span>往回看 {(scrub / 60).toFixed(1)} 秒</span>
-          <input type="range" min={0} max={MAX_SCRUB} step={1} value={scrub} onChange={(e) => setScrub(Number(e.target.value))} aria-label="往回檢視判定條" />
+          <span>{t.scrub((scrub / 60).toFixed(1))}</span>
+          <input type="range" min={0} max={MAX_SCRUB} step={1} value={scrub} onChange={(e) => setScrub(Number(e.target.value))} aria-label={t.scrubAria} />
         </label>
       ) : null}
       <ol className="bp-judge-log" role="log" aria-live="off">
-        {lines.length === 0 ? <li className="bp-dim">尚無紀錄。</li> : lines.map((ln) => (
+        {lines.length === 0 ? <li className="bp-dim">{t.empty}</li> : lines.map((ln) => (
           <li key={ln.key} className={"tone-" + ln.tone}><i>{ln.frame}</i>{ln.text}</li>
         ))}
       </ol>

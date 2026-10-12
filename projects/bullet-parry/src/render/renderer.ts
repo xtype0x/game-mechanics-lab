@@ -1,4 +1,5 @@
 /** Canvas 2D renderer. Reads a Session (never mutates it) and draws everything through sprite slots plus procedural fx. */
+import { text as dict } from "../i18n";
 import { ARENA, BULLET_KINDS, GROUND_Y, GUNNER_X, HIT_X, MUZZLE, PLAYER_X } from "../game/config";
 import { telegraphOf } from "../game/director";
 import { hudOf } from "../game/hud";
@@ -74,6 +75,7 @@ export function createRenderer(canvas: HTMLCanvasElement, registry: SlotRegistry
     const H = ARENA.h / k;
     const w = session.world;
     const hud = hudOf(w);
+    const tx = dict().hud;
     const hs = fx.heartShake > 0 && !fx.reduced ? fx.heartShake : 0;
     for (let i = 0; i < hud.hpMax; i++) {
       const on = i < hud.hp;
@@ -81,7 +83,7 @@ export function createRenderer(canvas: HTMLCanvasElement, registry: SlotRegistry
       const oy = hs ? (Math.random() - 0.5) * 12 * hs : 0;
       heart(24 + i * 32 + ox, 18 + oy, 26, on ? "#ff5d73" : "rgba(255,255,255,0.08)", on ? "#ffd2d8" : "rgba(255,255,255,0.35)");
     }
-    if (w.practice) text("練習 ∞", 24 + hud.hpMax * 32 + 4, 38, 14, "#9be7ff");
+    if (w.practice) text(tx.practice, 24 + hud.hpMax * 32 + 4, 38, 14, "#9be7ff");
     let y = 62;
     if (hud.gauge !== null) {
       const frac = Math.min(1, hud.gauge / hud.gaugeMax);
@@ -102,14 +104,14 @@ export function createRenderer(canvas: HTMLCanvasElement, registry: SlotRegistry
       c2.strokeStyle = full ? "rgba(255,240,170," + (0.6 + 0.4 * pulse) + ")" : "rgba(255,255,255,0.4)";
       c2.lineWidth = full ? 3 : 1.5;
       c2.strokeRect(24, y, 224, 16);
-      text("技能", 256, y + 13, 13, "#f0d58a");
+      text(tx.gauge, 256, y + 13, 13, "#f0d58a");
       if (full) {
         const ready = hud.interactions.find((i) => i.cost && i.cost.resource === "gauge" && i.ready);
         if (ready) {
           c2.save();
           c2.translate(24, y + 36 + (fx.reduced ? 0 : Math.sin(t * 6) * 1.5));
           c2.scale(1 + 0.04 * pulse, 1 + 0.04 * pulse);
-          text(ready.name + " 就緒 [" + ui.hint(ready.id) + "]", 0, 0, 14, "#ffe9a3");
+          text(tx.ready(ready.name, ui.hint(ready.id)), 0, 0, 14, "#ffe9a3");
           c2.restore();
         }
       }
@@ -158,9 +160,9 @@ export function createRenderer(canvas: HTMLCanvasElement, registry: SlotRegistry
     }
     const sec = Math.floor(hud.seconds);
     text(String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"), W / 2, 38, 28, "#fff", "center");
-    text("分數 " + hud.score, W - 24, 36, 24, "#fff", "right");
-    text(w.practice ? "練習模式" : "最佳 " + Math.max(ui.best, hud.score), W - 24, 60, 14, "#a7afbd", "right");
-    if (hud.invulnerable > 0 && !w.over) text("無敵 " + (hud.invulnerable / 60).toFixed(1) + "s", 24, y + 14, 14, "#8fe9ff");
+    text(tx.score(hud.score), W - 24, 36, 24, "#fff", "right");
+    text(w.practice ? tx.practiceMode : tx.best(Math.max(ui.best, hud.score)), W - 24, 60, 14, "#a7afbd", "right");
+    if (hud.invulnerable > 0 && !w.over) text(tx.invulnerable((hud.invulnerable / 60).toFixed(1)), 24, y + 14, 14, "#8fe9ff");
     c2.restore();
   }
 

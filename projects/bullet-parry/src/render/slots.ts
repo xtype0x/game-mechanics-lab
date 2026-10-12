@@ -4,7 +4,8 @@
  * implementation: an uploaded image / frame strip, or the procedural default. Game logic never touches this module.
  */
 import type { Timing } from "@gml/core";
-import { ARENA, BULLET_KINDS, type BulletKindId } from "../game/config";
+import { ARENA, BULLET_KINDS, bulletKindName, type BulletKindId } from "../game/config";
+import { text } from "../i18n";
 import { proceduralFor } from "./procedural";
 
 /** Extra context for a draw call; everything optional. */
@@ -128,22 +129,23 @@ export interface SlotInfo { id: string; label: string; group: "player" | "gunner
 
 /** Every image slot the game can draw for a given timing config (for the asset manager). */
 export function listSlots(config: Timing.TimingConfig): SlotInfo[] {
+  const L = text().assets.slots;
   const out: SlotInfo[] = [
-    { id: "player.idle", label: "玩家・待機", group: "player" },
-    { id: "player.hurt", label: "玩家・受傷", group: "player" },
-    { id: "player.skill", label: "玩家・技能", group: "player" },
-    { id: "player.action", label: "玩家・通用動作", group: "player" },
+    { id: "player.idle", label: L.playerIdle, group: "player" },
+    { id: "player.hurt", label: L.playerHurt, group: "player" },
+    { id: "player.skill", label: L.playerSkill, group: "player" },
+    { id: "player.action", label: L.playerAction, group: "player" },
   ];
-  for (const i of config.interactions) if (i.id !== "skill") out.push({ id: "player." + i.id, label: "玩家・" + i.name, group: "player" });
+  for (const i of config.interactions) if (i.id !== "skill") out.push({ id: "player." + i.id, label: L.playerCustom(i.name), group: "player" });
   out.push(
-    { id: "gunner.idle", label: "槍手・待機", group: "gunner" },
-    { id: "gunner.shoot", label: "槍手・開火", group: "gunner" },
+    { id: "gunner.idle", label: L.gunnerIdle, group: "gunner" },
+    { id: "gunner.shoot", label: L.gunnerShoot, group: "gunner" },
   );
-  for (const k of Object.values(BULLET_KINDS)) out.push({ id: "bullet." + k.id, label: k.name, group: "bullet" });
+  for (const k of Object.values(BULLET_KINDS)) out.push({ id: "bullet." + k.id, label: bulletKindName(k.id), group: "bullet" });
   out.push(
-    { id: "background", label: "背景", group: "scene" },
-    { id: "screen.title", label: "標題畫面圖片", group: "scene" },
-    { id: "screen.gameOver", label: "遊戲結束畫面圖片", group: "scene" },
+    { id: "background", label: L.background, group: "scene" },
+    { id: "screen.title", label: L.titleScreen, group: "scene" },
+    { id: "screen.gameOver", label: L.gameOverScreen, group: "scene" },
   );
   return out;
 }

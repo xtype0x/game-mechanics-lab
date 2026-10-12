@@ -1,4 +1,5 @@
 /** WebAudio playback: synthesized defaults, uploaded buffers per slot, master volume/mute, per-sound throttle. */
+import { text } from "../i18n";
 import { SOUND_THROTTLE_MS } from "./events";
 import { DEFAULT_SYNTH, type Synth } from "./synth";
 
@@ -44,7 +45,7 @@ export class AudioEngine {
   /** Decode an uploaded file. An offline context is used so no running AudioContext is needed before a gesture. */
   async decode(blob: Blob): Promise<AudioBuffer> {
     const Off = win().OfflineAudioContext ?? win().webkitOfflineAudioContext;
-    if (!Off) throw new Error("此瀏覽器不支援音訊解碼");
+    if (!Off) throw new Error(text().store.audioDecodeUnsupported);
     this.offline ??= new Off(2, 1, 44100);
     return this.offline.decodeAudioData(await blob.arrayBuffer());
   }

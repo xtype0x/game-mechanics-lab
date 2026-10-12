@@ -1,11 +1,12 @@
 import { Timing } from "@gml/core";
 import { TimingEditor, exportTimingConfig, parseTimingConfig } from "@gml/ui";
-import { useLocale } from "@gml/ui/i18n";
+import { LanguageSwitch, useLocale } from "@gml/ui/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESERVED_KEYS, gamePresets, keyConflicts, keyHint, keyLabel, matchPreset, rulesStatus, type KeyOverrides } from "./game";
 import { VolumeControl } from "./AssetPanel";
 import type { AssetSnapshot, AssetStore } from "./assets/store";
-import { DIFFICULTY_RANGE, DIFFICULTY_TIERS, defaultSettings, tierName, type GameSettings } from "./storage";
+import { useText } from "./i18n";
+import { DIFFICULTY_RANGE, DIFFICULTY_TIERS, defaultSettings, tierId, tierName, type GameSettings } from "./storage";
 
 const ms = (frames: number, fps: number) => Math.round(Timing.framesToMs(frames, fps));
 
@@ -20,6 +21,7 @@ function download(name: string, text: string): void {
 
 /** Button that waits for the next key press and reports its `code` (Esc cancels; reserved keys are refused). */
 function KeyCapture({ onPick, label }: { onPick: (code: string) => void; label: string }) {
+  const t = useText().settings;
   const [on, setOn] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   useEffect(() => {
@@ -28,18 +30,18 @@ function KeyCapture({ onPick, label }: { onPick: (code: string) => void; label: 
       e.preventDefault();
       e.stopPropagation();
       if (e.code === "Escape") { setOn(false); return; }
-      if (RESERVED_KEYS.includes(e.code)) { setMsg(keyLabel(e.code) + " 是系統保留鍵，請換一個。"); return; }
+      if (RESERVED_KEYS.includes(e.code)) { setMsg(t.reservedKey(keyLabel(e.code))); return; }
       setMsg(null);
       setOn(false);
       onPick(e.code);
     };
     window.addEventListener("keydown", down, true);
     return () => window.removeEventListener("keydown", down, true);
-  }, [on, onPick]);
+  }, [on, onPick, t]);
   return (
     <>
       <button type="button" className={"bp-btn small" + (on ? " primary" : "")} aria-label={label} onClick={() => { setMsg(null); setOn((v) => !v); }}>
-        {on ? "請按下新按鍵…（Esc 取消）" : "重設按鍵"}
+        {on ? t.capturing : t.rebind}
       </button>
       {msg ? <small className="bp-err-inline">{msg}</small> : null}
     </>
@@ -50,6 +52,7 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
   const { settings, onChange, onClose, inGame, store, assets } = props;
   const { config } = settings;
   const [locale] = useLocale();
+  const t = useText().settings;
   const presets = useMemo(() => gamePresets(locale), [locale]);
   const matched = matchPreset(config, presets);
   const status = useMemo(() => rulesStatus(config), [config]);
@@ -75,16 +78,17 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
   };
 
   return (
-    <div className="bp-panel wide" role="dialog" aria-label="設定">
+    <div className="bp-panel wide" role="dialog" aria-label={t.dialog}>
       <div className="bp-panel-head">
-        <h2>設定</h2>
-        <button type="button" className="bp-btn ghost" onClick={onClose}>關閉</button>
+        <h2>{t.title}</h2>
+        <LanguageSwitch className="bp-lang bp-lang-panel" />
+        <button type="button" className="bp-btn ghost" onClick={onClose}>{t.close}</button>
       </div>
-      {inGame ? <p className="bp-note">設定會在下一局開始時生效。</p> : null}
+      {inGame ? <p className="bp-note">{t.nextRound}</p> : null}
 
-      <h3>判定規則</h3>
+      <h3>{t.rulesHeading}</h3>
       <label className="bp-field">
-        <span>載入預設</span>
+        <span>{t.loadPreset}</span>
         <select
           value={matched ?? "__custom"}
           onChange={(e) => {
@@ -92,88 +96,88 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
             if (p) onChange({ ...settings, config: structuredClone(p) });
           }}
         >
-          {matched ? null : <option value="__custom">{config.name}（{presets.some((p) => p.id === config.id) ? "已修改" : "自訂"}）</option>}
+          {matched ? null : <option value="__custom">{t.customOption(config.name, presets.some((p) => p.id === config.id))}</option>}
           {presets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </label>
       {config.description ? <p className="bp-note">{config.description}</p> : null}
       <div className="bp-row left">
-        <button type="button" className="bp-btn small" onClick={() => download((config.id || "timing") + ".json", exportTimingConfig(config))}>匯出判定設定</button>
-        <button type="button" className="bp-btn small" onClick={() => fileRef.current?.click()}>匯入判定設定</button>
+        <button type="button" className="bp-btn small" onClick={() => download((config.id || "timing") + ".json", exportTimingConfig(config))}>{t.exportConfig}</button>
+        <button type="button" className="bp-btn small" onClick={() => fileRef.current?.click()}>{t.importConfig}</button>
         <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => void doImport(e.target.files?.[0])} />
       </div>
       {importMsg ? <p className="bp-error" role="alert">{importMsg}</p> : null}
       {!status.ok ? (
         <div className="bp-error" role="alert">
-          有 {status.errors.length} 個錯誤，修正前無法開始遊戲：
+          {t.errorsBlock(status.errors.length)}
           <ul>{status.errors.slice(0, 5).map((i, k) => <li key={k}><code>{i.path}</code> {i.message}</li>)}</ul>
         </div>
       ) : null}
       {status.warnings.length > 0 ? (
         <div className="bp-warn">
-          {status.warnings.length} 個警告（不影響開始遊戲）：
+          {t.warningsBlock(status.warnings.length)}
           <ul>{status.warnings.slice(0, 4).map((i, k) => <li key={k}><code>{i.path}</code> {i.message}</li>)}</ul>
         </div>
       ) : null}
 
       <details className="bp-details">
-        <summary>進階：判定規則編輯器（新增互動、改判定窗、結果與效果）</summary>
+        <summary>{t.advanced}</summary>
         <div className="bp-editor">
           <TimingEditor config={config} onChange={(c) => onChange({ ...settings, config: c })} />
         </div>
       </details>
 
-      <h3>互動與按鍵</h3>
+      <h3>{t.keysHeading}</h3>
       <ul className="bp-list bp-keys">
         {config.interactions.map((i, n) => (
           <li key={n + ":" + i.id}>
             <b style={{ color: i.color }}>{i.name}</b>
-            <span className="bp-key">{keyHint(config, i.id, keyLabel, settings.keys) || "無按鍵（只能點按鈕）"}</span>
-            <KeyCapture label={"重設 " + i.name + " 的按鍵"} onPick={(code) => setKey(i.id, code)} />
-            {settings.keys[i.id] ? <button type="button" className="bp-btn small ghost" onClick={() => setKey(i.id, null)}>預設</button> : null}
+            <span className="bp-key">{keyHint(config, i.id, keyLabel, settings.keys) || t.noKey}</span>
+            <KeyCapture label={t.rebindLabel(i.name)} onPick={(code) => setKey(i.id, code)} />
+            {settings.keys[i.id] ? <button type="button" className="bp-btn small ghost" onClick={() => setKey(i.id, null)}>{t.defaultKey}</button> : null}
             <span className="bp-dim bp-grow">
               {i.windows.length > 0
-                ? "啟動 " + i.startup + "f；" + i.windows.map((w) => w.name + " " + w.frames + "f/" + ms(w.frames, config.fps) + "ms").join("、")
-                : "即時發動"}
-              {i.charges ? "；充能 " + i.charges.max + "，每 " + (i.charges.recharge / config.fps).toFixed(1) + " 秒回 1" : ""}
-              {i.cost ? "；消耗 " + i.cost.amount : ""}
+                ? t.startupWindows(i.startup, i.windows.map((w) => t.windowEntry(w.name, w.frames, ms(w.frames, config.fps))).join(t.listSep))
+                : t.instant}
+              {i.charges ? t.charges(i.charges.max, (i.charges.recharge / config.fps).toFixed(1)) : ""}
+              {i.cost ? t.cost(i.cost.amount) : ""}
             </span>
           </li>
         ))}
       </ul>
       {conflicts.length > 0 ? (
         <p className="bp-warn">
-          按鍵重複：{conflicts.map((c) => keyLabel(c.code) + "（" + c.ids.map(nameOf).join("、") + "）").join("；")}。重複時只有排在前面的互動會被觸發。
+          {t.keyConflict(conflicts.map((c) => ({ key: keyLabel(c.code), names: c.ids.map(nameOf) })))}
         </p>
       ) : null}
 
-      <h3>遊戲選項</h3>
+      <h3>{t.optionsHeading}</h3>
       <label className="bp-field">
-        <span>難度倍率 ×{settings.difficulty.toFixed(1)}・{tierName(settings.difficulty)}</span>
+        <span>{t.difficulty(settings.difficulty.toFixed(1), tierName(settings.difficulty))}</span>
         <input
           type="range" min={DIFFICULTY_RANGE.min} max={DIFFICULTY_RANGE.max} step={DIFFICULTY_RANGE.step}
           value={settings.difficulty} onChange={(e) => onChange({ ...settings, difficulty: Number(e.target.value) })}
         />
-        <small>越高節奏越快：攻擊變化更早出現、出招更頻繁、連射更密集（子彈速度不變）。修羅級會出現格擋與閃避交替的「交錯彈幕」。開局較緩和的階段也會跟著縮短。</small>
-        <span className="bp-tiers">{DIFFICULTY_TIERS.map((t) => (
-          <button key={t.name} type="button" className={tierName(settings.difficulty) === t.name ? "on" : ""} onClick={() => onChange({ ...settings, difficulty: t.at })}>{t.name}</button>
+        <small>{t.difficultyNote}</small>
+        <span className="bp-tiers">{DIFFICULTY_TIERS.map((tier) => (
+          <button key={tier.id} type="button" className={tierId(settings.difficulty) === tier.id ? "on" : ""} onClick={() => onChange({ ...settings, difficulty: tier.at })}>{t.tiers[tier.id]}</button>
         ))}</span>
       </label>
       <label className="bp-check">
         <input type="checkbox" checked={settings.practice} onChange={(e) => onChange({ ...settings, practice: e.target.checked })} />
-        <span>練習模式：生命無限、子彈較慢，成績不會存成最佳分數</span>
+        <span>{t.practice}</span>
       </label>
       <VolumeControl store={store} snap={assets} />
       <label className="bp-check">
         <input type="checkbox" checked={settings.showFrameBar} onChange={(e) => onChange({ ...settings, showFrameBar: e.target.checked })} />
-        <span>顯示判定幀數條（遊戲畫面下方，最近 2 秒的來彈、窗口、按鍵與結算）</span>
+        <span>{t.showFrameBar}</span>
       </label>
       <label className="bp-check">
         <input type="checkbox" checked={settings.judgeFreeze} disabled={!settings.showFrameBar} onChange={(e) => onChange({ ...settings, judgeFreeze: e.target.checked })} />
-        <span>暫停時凍結判定條，並可往回拖曳檢視剛剛的交手</span>
+        <span>{t.judgeFreeze}</span>
       </label>
       <div className="bp-row">
-        <button type="button" className="bp-btn ghost" onClick={() => onChange({ ...defaultSettings(), packActive: settings.packActive, packLast: settings.packLast, volume: settings.volume, muted: settings.muted })}>重設為預設</button>
+        <button type="button" className="bp-btn ghost" onClick={() => onChange({ ...defaultSettings(), packActive: settings.packActive, packLast: settings.packLast, volume: settings.volume, muted: settings.muted })}>{t.reset}</button>
       </div>
     </div>
   );

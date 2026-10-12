@@ -1,4 +1,5 @@
 /** Static tuning for the bullet-parry sim: arena geometry, bullet kinds, director curve. No DOM. */
+import { text } from "../i18n";
 
 export const FPS = 60;
 /** Logical arena size; the renderer scales this to the canvas. */
@@ -18,7 +19,6 @@ export type Motion = "straight" | "bounce" | "variable";
 
 export interface BulletKind {
   id: BulletKindId;
-  name: string;
   color: string;
   /** Pixels per world frame at difficulty 1 and no ramp. */
   speed: number;
@@ -30,13 +30,16 @@ export interface BulletKind {
   telegraph: number;
 }
 
+/** Bullet kind name in the current language (read at call time). */
+export const bulletKindName = (id: string): string => text().bulletKinds[id] ?? id;
+
 export const BULLET_KINDS: Record<BulletKindId, BulletKind> = {
-  normal: { id: "normal", name: "一般彈", color: "#ffb454", speed: 6.6, radius: 9, tags: ["bullet"], damage: 1, motion: "straight", telegraph: 36 },
-  red: { id: "red", name: "紅色特殊彈", color: "#ff4d5e", speed: 6.2, radius: 11, tags: ["bullet", "unblockable"], damage: 1, motion: "straight", telegraph: 46 },
-  bounce: { id: "bounce", name: "彈跳彈", color: "#7bdcff", speed: 5.6, radius: 9, tags: ["bullet"], damage: 1, motion: "bounce", telegraph: 34 },
-  low: { id: "low", name: "低空彈", color: "#c78bff", speed: 7.2, radius: 8, tags: ["bullet", "sweep"], damage: 1, motion: "straight", telegraph: 30 },
-  energy: { id: "energy", name: "能量彈", color: "#5eea9a", speed: 4.6, radius: 15, tags: ["energy"], damage: 1, motion: "straight", telegraph: 38 },
-  feint: { id: "feint", name: "變速彈", color: "#f4f06a", speed: 6, radius: 9, tags: ["bullet"], damage: 1, motion: "variable", telegraph: 34 },
+  normal: { id: "normal", color: "#ffb454", speed: 6.6, radius: 9, tags: ["bullet"], damage: 1, motion: "straight", telegraph: 36 },
+  red: { id: "red", color: "#ff4d5e", speed: 6.2, radius: 11, tags: ["bullet", "unblockable"], damage: 1, motion: "straight", telegraph: 46 },
+  bounce: { id: "bounce", color: "#7bdcff", speed: 5.6, radius: 9, tags: ["bullet"], damage: 1, motion: "bounce", telegraph: 34 },
+  low: { id: "low", color: "#c78bff", speed: 7.2, radius: 8, tags: ["bullet", "sweep"], damage: 1, motion: "straight", telegraph: 30 },
+  energy: { id: "energy", color: "#5eea9a", speed: 4.6, radius: 15, tags: ["energy"], damage: 1, motion: "straight", telegraph: 38 },
+  feint: { id: "feint", color: "#f4f06a", speed: 6, radius: 9, tags: ["bullet"], damage: 1, motion: "variable", telegraph: 34 },
 };
 
 /** Feint speed profile by flight progress 0..1: cruise, crawl, then dash. */

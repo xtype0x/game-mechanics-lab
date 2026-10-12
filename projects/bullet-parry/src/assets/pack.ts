@@ -1,4 +1,5 @@
 /** Asset pack data model, file format and validation. Pure (Blob/atob/btoa only), no DOM. */
+import { text } from "../i18n";
 
 export const PACK_FORMAT = "gml-bullet-parry-pack";
 export const PACK_VERSION = 1;
@@ -68,7 +69,7 @@ export const sanitizeVolume = (v: unknown): number => clamp(num(v, 1), 0, 2);
 
 export function cleanName(name: string): string {
   const n = name.replace(/[\r\n\t]+/g, " ").trim().slice(0, LIMITS.nameLength);
-  return n || "未命名素材包";
+  return n || text().pack.unnamed;
 }
 
 export function newPackId(): string {
@@ -89,11 +90,11 @@ export function packBytes(p: Pack): number {
 
 export const formatBytes = (n: number): string => (n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
 
-/** Check a single file chosen for an upload. Returns a Chinese error message or null. */
+/** Check a single file chosen for an upload. Returns an error message in the current language, or null. */
 export function checkUpload(kind: "image" | "sound", file: { type: string; size: number }): string | null {
-  if (kind === "image" && !isImageMime(file.type)) return "只接受 PNG、JPG、WebP、GIF 圖片。";
-  if (kind === "sound" && !isAudioMime(file.type)) return "只接受音訊檔（MP3、WAV、OGG 等）。";
-  if (file.size > LIMITS.fileBytes) return "檔案太大（" + formatBytes(file.size) + "），單檔上限 " + formatBytes(LIMITS.fileBytes) + "。";
+  if (kind === "image" && !isImageMime(file.type)) return text().pack.onlyImages;
+  if (kind === "sound" && !isAudioMime(file.type)) return text().pack.onlyAudio;
+  if (file.size > LIMITS.fileBytes) return text().pack.fileTooLarge(formatBytes(file.size), formatBytes(LIMITS.fileBytes));
   return null;
 }
 
@@ -136,25 +137,26 @@ const SLOT_ID = /^[A-Za-z0-9._-]{1,64}$/;
 /** Validate a parsed `.bppack.json` and turn it into an in-memory pack (new id). */
 export function parsePackFile(json: unknown): ParseResult {
   const fail = (error: string): ParseResult => ({ ok: false, error });
-  if (!isRecord(json) || json.format !== PACK_FORMAT) return fail("這不是子彈格擋的素材包檔案（format 不符）。");
-  if (json.version !== PACK_VERSION) return fail("不支援的素材包版本：" + String(json.version) + "。");
+  const tp = text().pack;
+  if (!isRecord(json) || json.format !== PACK_FORMAT) return fail(tp.notAPack);
+  if (json.version !== PACK_VERSION) return fail(tp.unsupportedVersion(String(json.version)));
   const images = json.images ?? {};
   const sounds = json.sounds ?? {};
-  if (!isRecord(images) || !isRecord(sounds)) return fail("素材包內容格式錯誤。");
-  if (Object.keys(images).length + Object.keys(sounds).length > LIMITS.slots) return fail("素材包的素材數量過多。");
-  const pack = emptyPack(typeof json.name === "string" ? json.name : "匯入的素材包");
+  if (!isRecord(images) || !isRecord(sounds)) return fail(tp.badContent);
+  if (Object.keys(images).length + Object.keys(sounds).length > LIMITS.slots) return fail(tp.tooManySlots);
+  const pack = emptyPack(typeof json.name === "string" ? json.name : tp.imported);
   let total = 0;
   const take = (slot: string, entry: unknown, kind: "image" | "sound"): string | null => {
-    if (!SLOT_ID.test(slot)) return "素材槽名稱不合法：" + slot.slice(0, 20);
-    if (!isRecord(entry) || typeof entry.dataUrl !== "string") return "「" + slot + "」缺少檔案內容。";
+    if (!SLOT_ID.test(slot)) return tp.badSlotName(slot.slice(0, 20));
+    if (!isRecord(entry) || typeof entry.dataUrl !== "string") return tp.missingContent(slot);
     const d = parseDataUrl(entry.dataUrl);
-    if (!d) return "「" + slot + "」的檔案內容不是合法的 data URL。";
-    if (kind === "image" ? !isImageMime(d.mime) : !isAudioMime(d.mime)) return "「" + slot + "」的檔案類型不被接受（" + d.mime + "）。";
-    if (d.bytes > LIMITS.fileBytes) return "「" + slot + "」超過單檔上限 " + formatBytes(LIMITS.fileBytes) + "。";
+    if (!d) return tp.badDataUrl(slot);
+    if (kind === "image" ? !isImageMime(d.mime) : !isAudioMime(d.mime)) return tp.badMime(slot, d.mime);
+    if (d.bytes > LIMITS.fileBytes) return tp.slotTooLarge(slot, formatBytes(LIMITS.fileBytes));
     total += d.bytes;
-    if (total > LIMITS.totalBytes) return "素材包總大小超過上限 " + formatBytes(LIMITS.totalBytes) + "。";
+    if (total > LIMITS.totalBytes) return tp.packTooLarge(formatBytes(LIMITS.totalBytes));
     let blob: Blob;
-    try { blob = dataUrlToBlob(d); } catch { return "「" + slot + "」的檔案內容無法解碼。"; }
+    try { blob = dataUrlToBlob(d); } catch { return tp.undecodableContent(slot); }
     if (kind === "image") pack.images[slot] = { blob, ...sanitizeImageOptions(entry as Partial<ImageOptions>) };
     else pack.sounds[slot] = { blob, volume: sanitizeVolume(entry.volume) };
     return null;
@@ -165,10 +167,10 @@ export function parsePackFile(json: unknown): ParseResult {
 }
 
 /** Parse raw file text (size-checked before JSON.parse). */
-export function parsePackText(text: string): ParseResult {
-  if (text.length > LIMITS.textBytes) return { ok: false, error: "檔案太大，素材包總大小上限 " + formatBytes(LIMITS.totalBytes) + "。" };
+export function parsePackText(raw: string): ParseResult {
+  if (raw.length > LIMITS.textBytes) return { ok: false, error: text().pack.importTooLarge(formatBytes(LIMITS.totalBytes)) };
   let json: unknown;
-  try { json = JSON.parse(text); } catch { return { ok: false, error: "無法讀取：檔案不是有效的 JSON。" }; }
+  try { json = JSON.parse(raw); } catch { return { ok: false, error: text().pack.notJson }; }
   return parsePackFile(json);
 }
 

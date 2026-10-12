@@ -1,5 +1,6 @@
 /** Draws a StripModel on a 2D canvas (CSS pixel coordinates; the caller sets the DPR transform). */
 import type { Timing } from "@gml/core";
+import { text } from "../i18n";
 import { TONE_COLORS, type StripModel } from "./model";
 
 export const ROW_H = 16;
@@ -23,7 +24,8 @@ export function drawStrip(ctx: CanvasRenderingContext2D, w: number, m: StripMode
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
   const nR = m.rows.length;
-  const labels = ["來彈", ...m.rows.map((r) => r.name), "結算", "狀態"];
+  const tj = text().judge;
+  const labels = [tj.rowIncoming, ...m.rows.map((r) => r.name), tj.rowResolve, tj.rowState];
   const y0 = (r: number) => PAD + r * ROW_H;
   for (let r = 0; r < labels.length; r++) {
     if (r % 2 === 0) { ctx.fillStyle = "rgba(255,255,255,0.035)"; ctx.fillRect(0, y0(r), w, ROW_H); }

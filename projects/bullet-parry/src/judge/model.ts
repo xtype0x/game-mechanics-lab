@@ -1,6 +1,6 @@
 /** Pure view model of the judgement strip and log, derived from the session's rolling JudgeLog. */
 import type { Timing } from "@gml/core";
-import { actionSpans, describeEvent, eventCategory, eventTone, pressMarks, traceRanges, type ActionSpans, type PressMark } from "@gml/ui";
+import { actionSpans, describeEvent, describeEventBody, eventCategory, eventTone, pressMarks, traceRanges, type ActionSpans, type PressMark } from "@gml/ui";
 import { BULLET_KINDS, type BulletKindId, type ImpactMark, type JudgeLog } from "../game";
 
 export const STRIP_PAST = 120;
@@ -65,7 +65,7 @@ export function buildLogLines(config: Timing.TimingConfig, log: JudgeLog, end: n
     if (e.frame > end) continue;
     const cat = eventCategory(e);
     if (cat !== "key" && cat !== "judge") continue;
-    out.push({ key: `${i}:${e.frame}:${e.type}`, frame: e.frame, text: describeEvent(config, e).replace(/^第 \d+ 幀｜/, ""), tone: eventTone(config, e) });
+    out.push({ key: `${i}:${e.frame}:${e.type}`, frame: e.frame, text: describeEventBody(config, e), tone: eventTone(config, e) });
   }
   return out;
 }

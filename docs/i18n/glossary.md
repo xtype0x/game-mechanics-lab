@@ -71,3 +71,10 @@
 | 充能 | charges |
 | 輸入延遲校正 | input offset |
 | 魂系／隻狼風／魔女時間／看破 | Souls-like / Sekiro-like / Witch Time / Mikiri |
+| 判定規則 | timing rules |
+| 判定幀數條 | timing bar |
+| 素材包／素材 | asset pack / assets |
+| 影格（圖片動畫） | frame（與判定單位「幀」同字，依上下文） |
+| 槍手 | gunner |
+| 交錯彈幕 | crossfire barrage |
+| 難度：簡單／普通／困難／地獄／修羅 | Easy / Normal / Hard / Hell / Asura |

@@ -1,5 +1,6 @@
 import { Timing } from "@gml/core";
 import { getLocale } from "@gml/ui/i18n";
+import { text } from "./i18n";
 import { bulletParryDefault, cleanOverrides, relocalizeGameConfig, type KeyOverrides } from "./game";
 
 export const BEST_KEY = "gml.bullet-parry.best.v1";
@@ -27,15 +28,19 @@ export interface GameSettings {
 
 export const DIFFICULTY_RANGE = { min: 0.5, max: 3, step: 0.1 } as const;
 
-/** Named tiers shown next to the slider (the value at or below the current difficulty wins). */
+/** Named tiers shown next to the slider (the value at or below the current difficulty wins). Names: dictionary settings.tiers. */
 export const DIFFICULTY_TIERS = [
-  { at: 0.5, name: "輕鬆" },
-  { at: 1, name: "普通" },
-  { at: 1.5, name: "困難" },
-  { at: 2, name: "地獄" },
-  { at: 2.6, name: "修羅" },
+  { at: 0.5, id: "easy" },
+  { at: 1, id: "normal" },
+  { at: 1.5, id: "hard" },
+  { at: 2, id: "hell" },
+  { at: 2.6, id: "asura" },
 ] as const;
-export const tierName = (d: number): string => [...DIFFICULTY_TIERS].reverse().find((t) => d >= t.at - 1e-9)?.name ?? DIFFICULTY_TIERS[0].name;
+export type TierId = (typeof DIFFICULTY_TIERS)[number]["id"];
+/** Tier id for a difficulty value. */
+export const tierId = (d: number): TierId => [...DIFFICULTY_TIERS].reverse().find((t) => d >= t.at - 1e-9)?.id ?? DIFFICULTY_TIERS[0].id;
+/** Tier name in the current language. */
+export const tierName = (d: number): string => text().settings.tiers[tierId(d)];
 
 export function defaultSettings(): GameSettings {
   return { config: bulletParryDefault(), difficulty: 1, showFrameBar: false, packActive: null, packLast: null, volume: 0.7, muted: false, practice: false, judgeFreeze: true, keys: {} };

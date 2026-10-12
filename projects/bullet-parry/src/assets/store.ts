@@ -4,6 +4,7 @@
  * Images are decoded to ImageBitmaps (closed when replaced), so no object URLs are created for rendering.
  */
 import { AudioEngine } from "../audio/engine";
+import { text } from "../i18n";
 import { SlotRegistry, type SlotArt } from "../render/slots";
 import { dbDeletePack, dbLoadPacks, dbPutPack } from "./db";
 import {
@@ -151,7 +152,7 @@ export class AssetStore {
         this.bitmaps.get(slot)?.bmp.close();
         this.bitmaps.set(slot, { bmp, blob: a.blob });
       } catch {
-        if (epoch === this.epoch) this.fail("「" + slot + "」的圖片無法解碼，已改用預設圖。");
+        if (epoch === this.epoch) this.fail(text().store.imageUndecodable(slot));
         return;
       }
     }
@@ -168,7 +169,7 @@ export class AssetStore {
       this.audio.setCustom(slot, buf, a.volume);
       this.emit();
     } catch {
-      if (epoch === this.epoch) this.fail("「" + slot + "」的音訊無法解碼，已改用預設音效。");
+      if (epoch === this.epoch) this.fail(text().store.soundUndecodable(slot));
     }
   }
 
@@ -195,7 +196,7 @@ export class AssetStore {
   // ---- pack management --------------------------------------------------------------------------------------
 
   createPack(name?: string): Pack {
-    const pack = emptyPack(name ?? "素材包 " + (this.packs.length + 1));
+    const pack = emptyPack(name ?? text().pack.newPackName(this.packs.length + 1));
     this.packs.push(pack);
     void this.save(pack);
     this.setActive(pack.id);
@@ -214,7 +215,7 @@ export class AssetStore {
     const p = this.packs.find((x) => x.id === id);
     if (!p) return;
     const copy: Pack = {
-      id: newPackId(), name: cleanName(p.name + " 副本"), createdAt: Date.now(),
+      id: newPackId(), name: cleanName(text().pack.copyName(p.name)), createdAt: Date.now(),
       images: Object.fromEntries(Object.entries(p.images).map(([k, v]) => [k, { ...v }])),
       sounds: Object.fromEntries(Object.entries(p.sounds).map(([k, v]) => [k, { ...v }])),
     };
@@ -232,10 +233,10 @@ export class AssetStore {
   }
 
   async importPack(file: File): Promise<boolean> {
-    if (file.size > LIMITS.textBytes) { this.fail("檔案太大，素材包總大小上限 " + formatBytes(LIMITS.totalBytes) + "。"); return false; }
-    let text: string;
-    try { text = await file.text(); } catch { this.fail("無法讀取檔案。"); return false; }
-    const r = parsePackText(text);
+    if (file.size > LIMITS.textBytes) { this.fail(text().pack.importTooLarge(formatBytes(LIMITS.totalBytes))); return false; }
+    let raw: string;
+    try { raw = await file.text(); } catch { this.fail(text().store.readFailed); return false; }
+    const r = parsePackText(raw);
     if (!r.ok) { this.fail(r.error); return false; }
     this.packs.push(r.pack);
     void this.save(r.pack);
@@ -257,13 +258,13 @@ export class AssetStore {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } catch { this.fail("匯出失敗。"); }
+    } catch { this.fail(text().store.exportFailed); }
   }
 
   // ---- slot editing (always on the active pack; creates one when the default is active) ---------------------
 
   private editable(): Pack {
-    return this.snap.active ?? this.createPack("我的素材包");
+    return this.snap.active ?? this.createPack(text().pack.myPack);
   }
 
   async setImage(slot: string, file: File): Promise<void> {
@@ -271,10 +272,10 @@ export class AssetStore {
     if (err) { this.fail(err); return; }
     const pack = this.editable();
     if (packBytes(pack) - (pack.images[slot]?.blob.size ?? 0) + file.size > LIMITS.totalBytes) {
-      this.fail("素材包總大小會超過上限 " + formatBytes(LIMITS.totalBytes) + "。");
+      this.fail(text().store.wouldExceed(formatBytes(LIMITS.totalBytes)));
       return;
     }
-    try { (await createImageBitmap(file)).close(); } catch { this.fail("這個圖片檔無法解碼。"); return; }
+    try { (await createImageBitmap(file)).close(); } catch { this.fail(text().store.imageFileUndecodable); return; }
     const prev = pack.images[slot];
     pack.images[slot] = { blob: file, ...(prev ? sanitizeImageOptions(prev) : DEFAULT_IMAGE_OPTIONS) };
     this.error = null;
@@ -305,11 +306,11 @@ export class AssetStore {
     if (err) { this.fail(err); return; }
     const pack = this.editable();
     if (packBytes(pack) - (pack.sounds[slot]?.blob.size ?? 0) + file.size > LIMITS.totalBytes) {
-      this.fail("素材包總大小會超過上限 " + formatBytes(LIMITS.totalBytes) + "。");
+      this.fail(text().store.wouldExceed(formatBytes(LIMITS.totalBytes)));
       return;
     }
     let buf: AudioBuffer;
-    try { buf = await this.audio.decode(file); } catch { this.fail("這個音訊檔無法解碼。"); return; }
+    try { buf = await this.audio.decode(file); } catch { this.fail(text().store.soundFileUndecodable); return; }
     pack.sounds[slot] = { blob: file, volume: pack.sounds[slot]?.volume ?? 1 };
     this.audio.setCustom(slot, buf, pack.sounds[slot].volume);
     this.error = null;

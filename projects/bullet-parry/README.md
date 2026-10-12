@@ -54,6 +54,7 @@ Esc 或 P 暫停；切走分頁會自動暫停。按鍵可在設定逐一重設�
 設定勾選「顯示判定幀數條」後，遊戲畫面下方（舞台之外，不遮畫面）顯示最近 2 秒＋未來 0.7 秒：來彈撞擊點（依子彈種類上色，空心＝預測）、每個互動的啟動／判定窗／收招、按鍵標記（白＝接受、黃＝緩衝、紅＝丟棄）、結算菱形（金＝完美、綠＝成功、紅＝失敗）、硬直／無敵條，加上最近 8 行滾動紀錄。紀錄存在 session 的環形緩衝（240 幀，超過就覆蓋，不會無限成長）。勾選「暫停時凍結」時，暫停後出現滑桿可往回看最多 2 秒（總共 4 秒）。
 
 ## 瀏覽器儲存鍵
+- 介面語言跟隨網站語言設定（`gml.site.locale.v1`），頁首有中文／English 切換；文字在 `src/i18n/`（目前英文是中文佔位，待翻譯）。
 - `gml.bullet-parry.best.v1`：最佳分數。
 - `gml.bullet-parry.settings.v1`：`{ config: TimingConfig, difficulty, showFrameBar, packActive, packLast, volume, muted, practice, judgeFreeze, keys }`（`keys` 是 `{ 互動 id: KeyboardEvent.code }`；後面幾個欄位是後來加的，舊存檔缺少時用預設，所以沒有升版。結構完整但驗證不過的規則會保留，讓玩家能在編輯器修好；結構殘缺才退回預設）。
 - IndexedDB `gml.bullet-parry.assets.v1`：物件庫 `packs`（keyPath `id`），每筆是一個素材包，圖片與音效以 Blob 存放。

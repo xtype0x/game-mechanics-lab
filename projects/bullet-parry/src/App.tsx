@@ -1,14 +1,15 @@
 import type { ProjectHost } from "@gml/ui";
-import { localize, useLocale } from "@gml/ui/i18n";
+import { LanguageSwitch, localize, useLocale } from "@gml/ui/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AssetPanel, PackSwitch } from "./AssetPanel";
 import { AssetStore } from "./assets/store";
 import { JudgePanel } from "./JudgePanel";
 import { soundsForEvents } from "./audio/events";
 import {
-  BULLET_KINDS, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, relocalizeGameConfig, scoreOf, shouldSaveBest,
+  BULLET_KINDS, bulletKindName, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, relocalizeGameConfig, scoreOf, shouldSaveBest,
   startBlocker, tickSession, type Hud, type Session,
 } from "./game";
+import { useText } from "./i18n";
 import { createRenderer, type Renderer } from "./render/renderer";
 import { SettingsPanel } from "./SettingsPanel";
 import { loadBest, loadSettings, saveBest, saveSettings, type GameSettings } from "./storage";
@@ -19,6 +20,16 @@ type Panel = null | "settings" | "how" | "assets";
 interface Result { score: number; seconds: number; perfects: number; hits: number; newBest: boolean; practice: boolean }
 
 /** Session for the current settings; rules with errors fall back to the default so the backdrop still runs. */
+/** Copies `name`/`description` strings from `src` into the same-shaped `dst` (a relocalized copy of the same rules). */
+function copyText(dst: unknown, src: unknown): void {
+  if (!dst || !src || typeof dst !== "object" || typeof src !== "object") return;
+  const d = dst as Record<string, unknown>, s = src as Record<string, unknown>;
+  for (const k of Object.keys(s)) {
+    if ((k === "name" || k === "description") && typeof s[k] === "string") d[k] = s[k];
+    else copyText(d[k], s[k]);
+  }
+}
+
 const sessionFor = (s: GameSettings, seed?: number): Session =>
   createSession(playableConfig(s.config), { difficulty: s.difficulty, practice: s.practice, ...(seed !== undefined ? { seed } : {}) });
 
@@ -27,6 +38,8 @@ const GAME_OVER_DELAY_TICKS = 50;
 
 export function App({ host }: { host?: ProjectHost }) {
   const [locale] = useLocale();
+  const t = useText().app;
+  const th = useText().how;
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [store] = useState(() => new AssetStore({ activeId: settings.packActive, lastId: settings.packLast, volume: settings.volume, muted: settings.muted }));
   const assets = useSyncExternalStore(store.subscribe, store.getSnapshot);
@@ -112,7 +125,13 @@ export function App({ host }: { host?: ProjectHost }) {
     lastLocale.current = locale;
     const next = relocalizeGameConfig(live.current.settings.config, locale);
     // Not saved: loading relocalizes anyway, and saving would let an idle tab overwrite another tab's edits.
-    if (next) changeSettings({ ...live.current.settings, config: next }, false);
+    if (!next) return;
+    changeSettings({ ...live.current.settings, config: next }, false);
+    // A game in progress keeps its world; only the display names change (same structure, so copy the text in place).
+    if (live.current.screen !== "title") {
+      copyText(sessionRef.current.world.config, playableConfig(next));
+      setHud(hudOf(sessionRef.current.world));
+    }
   }, [locale, changeSettings]);
 
   // Main loop: fixed 60 Hz ticks, render every animation frame.
@@ -203,11 +222,11 @@ export function App({ host }: { host?: ProjectHost }) {
   const config = settings.config;
   const blocker = startBlocker(config);
   const keyChips = (
-    <p className="bp-keychips" aria-label="按鍵">
+    <p className="bp-keychips" aria-label={t.keysLabel}>
       {config.interactions.map((i, n) => (
-        <span key={n + ":" + i.id}><b style={{ color: i.color }}>{i.name}</b><kbd>{hint(i.id) || "按鈕"}</kbd></span>
+        <span key={n + ":" + i.id}><b style={{ color: i.color }}>{i.name}</b><kbd>{hint(i.id) || t.buttonFallback}</kbd></span>
       ))}
-      <span><b>暫停</b><kbd>Esc / P</kbd></span>
+      <span><b>{t.pause}</b><kbd>Esc / P</kbd></span>
     </p>
   );
   const items = (hud ?? hudOf(sessionRef.current.world)).interactions;
@@ -218,16 +237,19 @@ export function App({ host }: { host?: ProjectHost }) {
   return (
     <div className="bp-root">
       <header className="bp-top">
-        {host?.back ? <a className="bp-back" href={host.back.href}>← {localize(host.back.label, locale)}</a> : <span />}
-        <h1>子彈格擋試玩</h1>
-        <span className="bp-dim">判定規則：{config.name}</span>
+        <div className="bp-topleft">
+          {host?.back ? <a className="bp-back" href={host.back.href}>← {localize(host.back.label, locale)}</a> : null}
+          <LanguageSwitch className="bp-lang" />
+        </div>
+        <h1>{t.topTitle}</h1>
+        <span className="bp-dim">{t.rulesLabel(config.name)}</span>
       </header>
 
       <div className="bp-stage">
         <canvas ref={canvasRef} className="bp-canvas" />
 
         {screen === "playing" && !paused && !panel ? (
-          <button type="button" className="bp-pause" aria-label="暫停" onClick={() => setPaused(true)}>Ⅱ</button>
+          <button type="button" className="bp-pause" aria-label={t.pauseAria} onClick={() => setPaused(true)}>Ⅱ</button>
         ) : null}
 
         {screen === "playing" && !paused && !panel ? (
@@ -236,33 +258,33 @@ export function App({ host }: { host?: ProjectHost }) {
 
         {screen === "title" && !panel ? (
           <div className={"bp-overlay" + artClass("screen.title")}>
-            <h2 className="bp-title">子彈格擋</h2>
-            <p className="bp-sub">格擋、閃避、發動技能，撐過槍手的彈幕。</p>
-            {best > 0 ? <p className="bp-dim">最佳分數 {best}</p> : null}
-            {settings.practice ? <p className="bp-practice">練習模式：生命無限、子彈較慢，成績不會存成最佳分數</p> : null}
+            <h2 className="bp-title">{t.gameTitle}</h2>
+            <p className="bp-sub">{t.tagline}</p>
+            {best > 0 ? <p className="bp-dim">{t.bestScore(best)}</p> : null}
+            {settings.practice ? <p className="bp-practice">{t.practiceNote}</p> : null}
             {blocker ? <p className="bp-error" role="alert">{blocker}</p> : null}
             <div className="bp-row">
-              <button type="button" className="bp-btn primary" onClick={start} autoFocus disabled={!!blocker}>開始遊戲</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>設定</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("assets")}>素材</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("how")}>玩法說明</button>
+              <button type="button" className="bp-btn primary" onClick={start} autoFocus disabled={!!blocker}>{t.startGame}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>{t.settings}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("assets")}>{t.assets}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("how")}>{t.howToPlay}</button>
             </div>
             <PackSwitch store={store} snap={assets} onManage={manage} />
             {keyChips}
-            <p className="bp-dim bp-hint">Enter 開始</p>
+            <p className="bp-dim bp-hint">{t.enterToStart}</p>
           </div>
         ) : null}
 
         {screen === "playing" && paused && !panel ? (
           <div className="bp-overlay">
-            <h2>暫停中</h2>
+            <h2>{t.paused}</h2>
             {keyChips}
             <div className="bp-row">
-              <button type="button" className="bp-btn primary" onClick={() => setPaused(false)}>繼續</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>設定</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("assets")}>素材</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("how")}>玩法說明</button>
-              <button type="button" className="bp-btn ghost" onClick={toTitle}>回標題</button>
+              <button type="button" className="bp-btn primary" onClick={() => setPaused(false)}>{t.resume}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>{t.settings}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("assets")}>{t.assets}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("how")}>{t.howToPlay}</button>
+              <button type="button" className="bp-btn ghost" onClick={toTitle}>{t.toTitle}</button>
             </div>
             <PackSwitch store={store} snap={assets} onManage={manage} />
           </div>
@@ -270,16 +292,16 @@ export function App({ host }: { host?: ProjectHost }) {
 
         {screen === "over" && result ? (
           <div className={"bp-overlay" + artClass("screen.gameOver")}>
-            <h2>遊戲結束</h2>
+            <h2>{t.gameOver}</h2>
             <p className="bp-score">{result.score}</p>
-            {result.practice ? <p className="bp-dim">練習模式・成績不計入最佳</p> : result.newBest ? <p className="bp-newbest">新紀錄！</p> : <p className="bp-dim">最佳 {best}</p>}
+            {result.practice ? <p className="bp-dim">{t.practiceOver}</p> : result.newBest ? <p className="bp-newbest">{t.newBest}</p> : <p className="bp-dim">{t.best(best)}</p>}
             <p className="bp-dim">
-              撐了 {Math.floor(result.seconds / 60)}:{String(Math.floor(result.seconds % 60)).padStart(2, "0")}・完美 {result.perfects}・受傷 {result.hits}
+              {t.survived(`${Math.floor(result.seconds / 60)}:${String(Math.floor(result.seconds % 60)).padStart(2, "0")}`, result.perfects, result.hits)}
             </p>
             <div className="bp-row">
-              <button type="button" className="bp-btn primary" onClick={start} autoFocus disabled={!!blocker}>再試一次</button>
-              <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>設定</button>
-              <button type="button" className="bp-btn ghost" onClick={toTitle}>回標題</button>
+              <button type="button" className="bp-btn primary" onClick={start} autoFocus disabled={!!blocker}>{t.retry}</button>
+              <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>{t.settings}</button>
+              <button type="button" className="bp-btn ghost" onClick={toTitle}>{t.toTitle}</button>
             </div>
           </div>
         ) : null}
@@ -300,35 +322,36 @@ export function App({ host }: { host?: ProjectHost }) {
           <div className="bp-overlay solid">
             <div className="bp-panel">
               <div className="bp-panel-head">
-                <h2>玩法說明</h2>
-                <button type="button" className="bp-btn ghost" onClick={() => setPanel(null)}>關閉</button>
+                <h2>{t.howToPlay}</h2>
+                <LanguageSwitch className="bp-lang bp-lang-panel" />
+                <button type="button" className="bp-btn ghost" onClick={() => setPanel(null)}>{t.close}</button>
               </div>
-              <p>槍手會發射子彈。子彈碰到你身前的虛線時才結算，所以要在<b>碰到之前一瞬間</b>按下對應的動作；越準，效果越好。</p>
+              <p>{th.intro()}</p>
               <ul className="bp-list">
                 {config.interactions.map((i) => (
                   <li key={i.id}>
                     <b style={{ color: i.color }}>{i.name}</b>
                     <span className="bp-key">{keyHint(config, i.id, keyLabel)}</span>
                     <span className="bp-dim">
-                      {i.id === "parry" ? "完美時機會把子彈反彈回去打槍手；不可格擋的紅彈沒用。"
-                        : i.id === "dodge" ? "有充能限制，窗口內的子彈都會穿過你；完美閃避會觸發慢動作。"
-                        : i.id === "skill" ? "量表滿才能用，短時間無敵。完美動作能累積量表。"
-                        : "自訂互動，判定窗與效果由規則資料決定。"}
+                      {i.id === "parry" ? th.parry
+                        : i.id === "dodge" ? th.dodge
+                        : i.id === "skill" ? th.skill
+                        : th.custom}
                     </span>
                   </li>
                 ))}
               </ul>
-              <h3>子彈種類</h3>
+              <h3>{th.bulletsHeading}</h3>
               <ul className="bp-list">
                 {Object.values(BULLET_KINDS).map((k) => (
-                  <li key={k.id}><i className="bp-dot" style={{ background: k.color }} /><b>{k.name}</b>
+                  <li key={k.id}><i className="bp-dot" style={{ background: k.color }} /><b>{bulletKindName(k.id)}</b>
                     <span className="bp-dim">
-                      {k.id === "red" ? "不可格擋，必須閃避或用技能。" : k.id === "bounce" ? "會彈壁，到達時機不一致。"
-                        : k.id === "low" ? "貼地飛行。" : k.id === "energy" ? "較大較慢。" : k.id === "feint" ? "中途減速再加速，小心提早出手。" : "最基本的子彈。"}
+                      {k.id === "red" ? th.bulletRed : k.id === "bounce" ? th.bulletBounce
+                        : k.id === "low" ? th.bulletLow : k.id === "energy" ? th.bulletEnergy : k.id === "feint" ? th.bulletFeint : th.bulletNormal}
                     </span></li>
                 ))}
               </ul>
-              <p className="bp-dim">槍手開火前槍口會發光，越亮越近。Esc 或 P 暫停。分數 = 存活時間 + 完美次數。</p>
+              <p className="bp-dim">{th.footer}</p>
             </div>
           </div>
         ) : null}
@@ -338,7 +361,7 @@ export function App({ host }: { host?: ProjectHost }) {
         <JudgePanel sessionRef={sessionRef} paused={paused || panel !== null || screen === "over"} freeze={settings.judgeFreeze} />
       ) : null}
 
-      <div className="bp-controls" aria-label="操作按鈕">
+      <div className="bp-controls" aria-label={t.controlsAria}>
         {items.map((it) => {
           const costFrac = it.cost ? Math.min(1, it.cost.have / it.cost.amount) : null;
           return (

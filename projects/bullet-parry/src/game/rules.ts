@@ -1,5 +1,6 @@
 /** Rules-editor helpers: validation gating, preset matching, best-score policy. Pure. */
 import { Timing } from "@gml/core";
+import { text } from "../i18n";
 import { bulletParryDefault } from "./preset";
 
 export interface RulesStatus {
@@ -13,7 +14,7 @@ export function rulesStatus(config: Timing.TimingConfig): RulesStatus {
   try {
     issues = Timing.validateTiming(config);
   } catch {
-    issues = [{ level: "error", path: "config", message: "結構不完整，無法驗證" }];
+    issues = [{ level: "error", path: "config", message: text().rules.incomplete }];
   }
   const errors = issues.filter((i) => i.level === "error");
   return { errors, warnings: issues.filter((i) => i.level !== "error"), ok: errors.length === 0 };
@@ -24,7 +25,7 @@ export function startBlocker(config: Timing.TimingConfig): string | null {
   const s = rulesStatus(config);
   if (s.ok) return null;
   const first = s.errors[0]!;
-  return `判定規則有 ${s.errors.length} 個錯誤，請先到設定修正：${first.path} ${first.message}`;
+  return text().rules.blocker(s.errors.length, first.path, first.message);
 }
 
 /** The config the world can safely run: the player's rules when valid, otherwise the game default (title backdrop only). */

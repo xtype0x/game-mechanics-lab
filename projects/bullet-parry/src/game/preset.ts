@@ -1,6 +1,7 @@
 import { Timing, c } from "@gml/core";
 import { relocalizeTimingConfig, timingPresets } from "@gml/ui";
 import { getLocale, type Locale } from "@gml/ui/i18n";
+import { textFor } from "../i18n";
 
 type Cfg = Timing.TimingConfig;
 
@@ -15,8 +16,9 @@ export function bulletParryDefault(locale: Locale = getLocale()): Cfg {
   if (!base) throw new Error("core preset 'lenient' missing");
   const cfg = base;
   cfg.id = GAME_PRESET_ID;
-  cfg.name = "子彈格擋（預設）";
-  cfg.description = "寬鬆判定窗；閃避 2 次充能、每 3 秒回 1 次；技能耗滿量表、無敵 4 秒；完美格擋會把子彈打回去。";
+  const t = textFor(locale).preset;
+  cfg.name = t.name;
+  cfg.description = t.description;
   const dodge = cfg.interactions.find((i) => i.id === "dodge");
   if (dodge) dodge.charges = { max: 2, recharge: 180, mode: "sequential" };
   const skill = cfg.interactions.find((i) => i.id === "skill");
