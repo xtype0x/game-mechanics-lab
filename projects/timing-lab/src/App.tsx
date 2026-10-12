@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Timing } from "@gml/core";
-import { FrameBar, Segmented, TimingEditor, TimingLog, TimingPresetMenu, exportTimingConfig, parseTimingConfig, pct, type ProjectHost } from "@gml/ui";
-import { localize, useLocale } from "@gml/ui/i18n";
+import { FrameBar, Segmented, TimingEditor, TimingLog, TimingPresetMenu, exportTimingConfig, parseTimingConfig, pct, relocalizeTimingConfig, type ProjectHost } from "@gml/ui";
+import { LanguageSwitch, localize, useLocale } from "@gml/ui/i18n";
 import { attackPhaseAt } from "./attacks";
+import { useText } from "./i18n";
 import { Scene } from "./Scene";
 import { ScriptPanel } from "./ScriptPanel";
 import { SequencePanel } from "./SequencePanel";
-import { CONFIG_KEY, SESSION_KEY, buildScript, defaultConfig, defaultSession, loadConfig, loadSession, normalizePresses, save, type PressRec, type Session } from "./session";
+import { CONFIG_KEY, SESSION_KEY, buildScript, defaultConfig, defaultSession, loadConfig, loadSession, normalizePresses, relocalizeSession, save, type PressRec, type Session } from "./session";
 import { computeStats } from "./stats";
 import { usePlayback } from "./usePlayback";
 
@@ -24,6 +25,8 @@ function download(name: string, text: string) {
 
 export function App({ host = {} }: { host?: ProjectHost }) {
   const [locale] = useLocale();
+  const T = useText();
+  const t = T.app;
   const [config, setConfig] = useState(loadConfig);
   const [session, setSession] = useState(loadSession);
   const [mode, setMode] = useState<Mode>("live");
@@ -31,6 +34,18 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   const [editorOpen, setEditorOpen] = useState(() => typeof window === "undefined" || window.innerWidth >= 960);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Untouched built-in rules and attacks follow the language; edited ones are the visitor's data and stay.
+  // The swap is not saved: loading relocalizes anyway, and saving it would let an idle tab (synced through the
+  // storage event) overwrite edits made in another tab.
+  const lastLocale = useRef(locale);
+  const skipSave = useRef({ config: false, session: false });
+  useEffect(() => {
+    if (lastLocale.current === locale) return;
+    lastLocale.current = locale;
+    setConfig((c) => { const next = relocalizeTimingConfig(c, locale); if (next) skipSave.current.config = true; return next ?? c; });
+    setSession((s) => { const next = relocalizeSession(s, locale); if (next !== s) skipSave.current.session = true; return next; });
+  }, [locale]);
 
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -53,8 +68,16 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   });
 
   // Persist (best effort).
-  useEffect(() => { const t = window.setTimeout(() => save(CONFIG_KEY, { format: "gml-timing-config", version: 1, config }), 300); return () => window.clearTimeout(t); }, [config]);
-  useEffect(() => { const t = window.setTimeout(() => save(SESSION_KEY, session), 300); return () => window.clearTimeout(t); }, [session]);
+  useEffect(() => {
+    if (skipSave.current.config) { skipSave.current.config = false; return; }
+    const t = window.setTimeout(() => save(CONFIG_KEY, { format: "gml-timing-config", version: 1, config }), 300);
+    return () => window.clearTimeout(t);
+  }, [config]);
+  useEffect(() => {
+    if (skipSave.current.session) { skipSave.current.session = false; return; }
+    const t = window.setTimeout(() => save(SESSION_KEY, session), 300);
+    return () => window.clearTimeout(t);
+  }, [session]);
 
   const press = useCallback((interaction: string) => {
     if (modeRef.current !== "live") return;
@@ -80,7 +103,8 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   const trace = run.trace[pb.frame];
   const shown = useMemo(() => (mode === "live" ? run.events.filter((e) => e.frame <= pb.frame) : run.events), [mode, run.events, pb.frame]);
   const barRun = useMemo(() => (mode === "live" ? { events: shown, trace: run.trace.slice(0, pb.frame + 1) } : run), [mode, shown, run, pb.frame]);
-  const stats = useMemo(() => computeStats(config, shown), [config, shown]);
+  // locale: the "blocked by invulnerability" label is looked up in the current language.
+  const stats = useMemo(() => computeStats(config, shown), [config, shown, locale]);
   const phase = attackPhaseAt(items, pb.frame);
   const nameOf = (id: string) => config.interactions.find((i) => i.id === id)?.name ?? id;
 
@@ -99,21 +123,22 @@ export function App({ host = {} }: { host?: ProjectHost }) {
     <div className="tl">
       <header className="tl-top">
         {host.back && <a className="tl-back" href={host.back.href}>← {localize(host.back.label, locale)}</a>}
-        <h1>格擋閃避判定研究室</h1>
-        <p className="tm-muted">格擋和閃避只是兩筆互動資料：可以改判定窗、結果與效果，也能新增自己的互動，再用攻擊序列和按鍵腳本逐幀拆解。</p>
+        <LanguageSwitch className="tl-lang" />
+        <h1>{t.title}</h1>
+        <p className="tm-muted">{t.intro}</p>
       </header>
 
       <div className="tl-bar">
-        <button type="button" className="tm-btn" onClick={() => setEditorOpen((o) => !o)} aria-expanded={editorOpen}>{editorOpen ? "收起規則編輯器" : "展開規則編輯器"}</button>
+        <button type="button" className="tm-btn" onClick={() => setEditorOpen((o) => !o)} aria-expanded={editorOpen}>{editorOpen ? t.editorCollapse : t.editorExpand}</button>
         <TimingPresetMenu onPick={(c) => { setConfig(c); setNotice(null); }} />
-        <button type="button" className="tm-btn" onClick={() => download(`${config.id || "timing"}.json`, exportTimingConfig(config))}>匯出設定</button>
-        <button type="button" className="tm-btn" onClick={() => fileInput.current?.click()}>匯入設定</button>
+        <button type="button" className="tm-btn" onClick={() => download(`${config.id || "timing"}.json`, exportTimingConfig(config))}>{t.exportConfig}</button>
+        <button type="button" className="tm-btn" onClick={() => fileInput.current?.click()}>{t.importConfig}</button>
         <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={(e) => void onImport(e.target.files?.[0])} />
-        <button type="button" className="tm-btn" onClick={() => { setConfig(defaultConfig()); setSession(defaultSession()); pb.seek(0); setNotice(null); }}>全部重設</button>
-        <span className="tm-muted tl-cfgname">目前：{config.name}</span>
+        <button type="button" className="tm-btn" onClick={() => { setConfig(defaultConfig()); setSession(defaultSession()); pb.seek(0); setNotice(null); }}>{t.resetAll}</button>
+        <span className="tm-muted tl-cfgname">{t.current(config.name)}</span>
       </div>
       {notice && <div className="tl-notice" role="alert">{notice}</div>}
-      {result.error && <div className="tl-notice" role="alert">規則執行失敗：{result.error}。請檢查編輯器的驗證面板。</div>}
+      {result.error && <div className="tl-notice" role="alert">{t.runFailed(result.error)}</div>}
 
       <div className={`tl-main${editorOpen ? "" : " no-editor"}`}>
         {editorOpen && <aside className="tl-left"><TimingEditor config={config} onChange={setConfig} /></aside>}
@@ -121,37 +146,37 @@ export function App({ host = {} }: { host?: ProjectHost }) {
           <Scene config={config} frame={pb.frame} trace={trace} events={shown} items={items} fx={pb.fx} />
 
           <div className="tl-transport">
-            <Segmented<Mode> value={mode} onChange={(m) => { setMode(m); pb.pause(); }} options={[{ value: "live", label: "即時" }, { value: "replay", label: "回放" }]} />
+            <Segmented<Mode> value={mode} onChange={(m) => { setMode(m); pb.pause(); }} options={[{ value: "live", label: t.modeLive }, { value: "replay", label: t.modeReplay }]} />
             {mode === "live" ? (
               <>
-                <button type="button" className="tm-btn primary" onClick={startLive}>{pb.playing ? "重新開始" : "開始"}</button>
-                <button type="button" className="tm-btn" onClick={() => (pb.playing ? pb.pause() : pb.play())} disabled={!pb.playing && pb.frame === 0}>{pb.playing ? "暫停" : "繼續"}</button>
+                <button type="button" className="tm-btn primary" onClick={startLive}>{pb.playing ? t.restart : t.start}</button>
+                <button type="button" className="tm-btn" onClick={() => (pb.playing ? pb.pause() : pb.play())} disabled={!pb.playing && pb.frame === 0}>{pb.playing ? t.pause : t.resume}</button>
               </>
             ) : (
               <>
-                <button type="button" className="tm-btn primary" onClick={() => (pb.playing ? pb.pause() : pb.play())}>{pb.playing ? "暫停" : "播放"}</button>
-                <button type="button" className="tm-btn" onClick={() => { pb.pause(); pb.seek(pb.frame - 1); }} aria-label="上一幀">◀ 幀</button>
-                <button type="button" className="tm-btn" onClick={() => { pb.pause(); pb.seek(pb.frame + 1); }} aria-label="下一幀">幀 ▶</button>
-                <button type="button" className="tm-btn" onClick={() => pb.seek(0)}>回到開頭</button>
+                <button type="button" className="tm-btn primary" onClick={() => (pb.playing ? pb.pause() : pb.play())}>{pb.playing ? t.pause : t.play}</button>
+                <button type="button" className="tm-btn" onClick={() => { pb.pause(); pb.seek(pb.frame - 1); }} aria-label={t.prevFrameLabel}>{t.prevFrame}</button>
+                <button type="button" className="tm-btn" onClick={() => { pb.pause(); pb.seek(pb.frame + 1); }} aria-label={t.nextFrameLabel}>{t.nextFrame}</button>
+                <button type="button" className="tm-btn" onClick={() => pb.seek(0)}>{t.toStart}</button>
               </>
             )}
-            <label className="tl-inline">速度
-              <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="速度">
+            <label className="tl-inline">{t.speed}
+              <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label={t.speed}>
                 <option value={1}>×1</option><option value={0.5}>×0.5</option><option value={0.25}>×0.25</option>
               </select>
             </label>
-            <label className="tm-chip"><input type="checkbox" checked={session.loop} onChange={(e) => editSession((d) => { d.loop = e.target.checked; })} />循環</label>
+            <label className="tm-chip"><input type="checkbox" checked={session.loop} onChange={(e) => editSession((d) => { d.loop = e.target.checked; })} />{t.loop}</label>
           </div>
-          <input className="tl-scrub" type="range" min={0} max={Math.max(0, script.frames - 1)} value={pb.frame} onChange={(e) => { if (mode === "replay") pb.pause(); pb.seek(Number(e.target.value)); }} aria-label="時間軸" />
+          <input className="tl-scrub" type="range" min={0} max={Math.max(0, script.frames - 1)} value={pb.frame} onChange={(e) => { if (mode === "replay") pb.pause(); pb.seek(Number(e.target.value)); }} aria-label={t.timeline} />
 
-          <div className="tl-keys" aria-label="按鍵">
+          <div className="tl-keys" aria-label={t.keys}>
             {config.interactions.map((i) => (
               <button key={i.id} type="button" className="tl-key" style={{ borderColor: i.color }} disabled={mode !== "live" || !pb.playing}
                 onPointerDown={(e) => { e.preventDefault(); press(i.id); }}>
                 {i.name}<small>{i.key ?? ""}</small>
               </button>
             ))}
-            <span className="tm-muted tl-keyhint">{mode === "live" ? (pb.playing ? "用鍵盤或按鈕出手" : "按「開始」後可按鍵") : "回放模式：按鍵來自腳本"}</span>
+            <span className="tm-muted tl-keyhint">{mode === "live" ? (pb.playing ? t.keyHintPlaying : t.keyHintIdle) : t.keyHintReplay}</span>
           </div>
 
           <FrameBar config={config} run={barRun} attacks={items.map((i) => ({ def: i.def, start: i.start }))} from={0} to={script.frames} playhead={pb.frame}
@@ -159,31 +184,31 @@ export function App({ host = {} }: { host?: ProjectHost }) {
 
           <div className="tl-cols">
             <section className="tl-card">
-              <h3>判定紀錄</h3>
+              <h3>{t.logTitle}</h3>
               <TimingLog config={config} events={shown} newestFirst={mode === "live"} onSeek={(f) => { pb.pause(); pb.seek(f); }} />
             </section>
             <section className="tl-card">
-              <h3>統計</h3>
-              <p>結算 <b>{stats.total}</b> 次，完美率 <b>{pct(stats.perfectRate)}</b></p>
+              <h3>{t.statsTitle}</h3>
+              <p>{t.statsSummary(stats.total, pct(stats.perfectRate))}</p>
               <ul className="tl-stats">
                 {stats.outcomes.map((o) => <li key={o.outcome ?? "inv"} className={`k-${o.kind}`}><span className="tl-kdot" />{o.label}<b>{o.count}</b></li>)}
-                {stats.outcomes.length === 0 && <li className="tm-muted">尚無結算。</li>}
+                {stats.outcomes.length === 0 && <li className="tm-muted">{t.noStats}</li>}
               </ul>
               <table className="tl-table">
-                <thead><tr><th>互動</th><th>攔截</th><th title="命中幀 − 按下幀；正數 = 提早按">平均偏移</th></tr></thead>
+                <thead><tr><th>{t.colInteraction}</th><th>{t.colCatches}</th><th title={t.meanOffsetTip}>{t.colMeanOffset}</th></tr></thead>
                 <tbody>
                   {stats.interactions.filter((s) => s.catches > 0).map((s) => (
-                    <tr key={s.interaction}><td>{nameOf(s.interaction)}</td><td>{s.catches}</td><td>{s.meanOffset === null ? "—" : `${s.meanOffset > 0 ? "+" : ""}${Math.round(s.meanOffset * 100) / 100} 幀`}</td></tr>
+                    <tr key={s.interaction}><td>{nameOf(s.interaction)}</td><td>{s.catches}</td><td>{s.meanOffset === null ? "—" : t.offsetFrames(`${s.meanOffset > 0 ? "+" : ""}${Math.round(s.meanOffset * 100) / 100}`)}</td></tr>
                   ))}
                 </tbody>
               </table>
-              <p className="tm-muted tm-note">偏移 = 命中幀 − 按下幀（正數代表提早按）。</p>
+              <p className="tm-muted tm-note">{t.offsetNote}</p>
             </section>
           </div>
 
           <div className="tl-cols">
             <section className="tl-card">
-              <h3>腳本（按鍵）</h3>
+              <h3>{t.scriptTitle}</h3>
               <ScriptPanel config={config} presses={session.presses} onChange={setPresses} onSeek={(f) => { pb.pause(); pb.seek(f); }} />
             </section>
             <section className="tl-card">
@@ -192,7 +217,7 @@ export function App({ host = {} }: { host?: ProjectHost }) {
           </div>
         </div>
       </div>
-      <footer className="tl-foot">規則：docs/spec/timing.md（反應判定規格 1.0）。設定與腳本只存在這個瀏覽器（localStorage：gml.timing-lab.*）。</footer>
+      <footer className="tl-foot">{t.footer}</footer>
     </div>
   );
 }

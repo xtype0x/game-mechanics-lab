@@ -1,6 +1,7 @@
 import type { Timing } from "@gml/core";
 import { outcomeKind } from "@gml/ui";
-import { PHASE_LABEL, attackPhaseAt, type ScheduledAttack } from "./attacks";
+import { attackPhaseAt, type ScheduledAttack } from "./attacks";
+import { useText } from "./i18n";
 import type { PlaybackFx } from "./usePlayback";
 
 const GROUND = 205;
@@ -41,6 +42,8 @@ export function Scene({ config, frame, trace, events, items, fx }: {
   items: ScheduledAttack[];
   fx: PlaybackFx;
 }) {
+  const T = useText();
+  const t = T.scene;
   const ap = attackPhaseAt(items, frame);
   const idx = trace?.interaction ? config.interactions.findIndex((i) => i.id === trace.interaction) : -1;
   const it = idx >= 0 ? config.interactions[idx] : undefined;
@@ -108,10 +111,10 @@ export function Scene({ config, frame, trace, events, items, fx }: {
     if (age < 0 || age > 45) return;
     if (e.type === "resolve") {
       const k = e.outcome ? outcomeKind(config, e.outcome) : "neutral";
-      const text = e.outcome ? (config.outcomes.find((o) => o.id === e.outcome)?.name ?? e.outcome) : "無敵";
+      const text = e.outcome ? (config.outcomes.find((o) => o.id === e.outcome)?.name ?? e.outcome) : t.floatInvulnerable;
       floats.push({ text, age, color: KIND_COLOR[k]!, key: `r${i}`, size: 20, slot: slotFor(e.frame) });
     } else if (e.type === "whiff" && e.outcome) {
-      floats.push({ text: config.outcomes.find((o) => o.id === e.outcome)?.name ?? "揮空", age, color: KIND_COLOR.fail!, key: `w${i}`, size: 16, slot: slotFor(e.frame) });
+      floats.push({ text: config.outcomes.find((o) => o.id === e.outcome)?.name ?? t.floatWhiff, age, color: KIND_COLOR.fail!, key: `w${i}`, size: 16, slot: slotFor(e.frame) });
     } else if (e.type === "effect" && e.effect === "cue" && e.target) {
       floats.push({ text: e.target, age, color: "#80d7d8", key: `c${i}`, size: 12, slot: slotFor(e.frame) });
     }
@@ -120,7 +123,7 @@ export function Scene({ config, frame, trace, events, items, fx }: {
   const shake = fx.freeze > 0 ? (frame % 2 ? 2 : -2) : 0;
   return (
     <div className="tl-scene">
-      <svg viewBox="0 0 640 260" role="img" aria-label="動作場景" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 640 260" role="img" aria-label={t.label} preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="tl-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#10222c" /><stop offset="1" stopColor="#0b141b" /></linearGradient>
         </defs>
@@ -140,7 +143,7 @@ export function Scene({ config, frame, trace, events, items, fx }: {
             <circle cx={0} cy={GROUND - 86} r={14} fill="#17282f" stroke={hurt ? "#f0707a" : "#edf3f4"} strokeWidth={3} />
             <Arm sx={0} sy={GROUND - 62} angle={armA} len={34} color={it ? icolor : "#edf3f4"} facing={1} />
           </g>
-          {defeated && <text x={DEF_X} y={GROUND - 120} textAnchor="middle" fill="#f0707a" fontSize={16} fontWeight={700}>敗北</text>}
+          {defeated && <text x={DEF_X} y={GROUND - 120} textAnchor="middle" fill="#f0707a" fontSize={16} fontWeight={700}>{t.defeated}</text>}
 
           {/* attacker */}
           <g transform={`translate(${atkX + atkLean} 0)`}>
@@ -191,17 +194,17 @@ export function Scene({ config, frame, trace, events, items, fx }: {
         })}
         {it && (phase === "active" || phase === "startup" || phase === "recovery") && (
           <text x={DEF_X} y={GROUND + 22} textAnchor="middle" fill={icolor} fontSize={13} fontWeight={700}>
-            {it.name}・{phase === "startup" ? "啟動" : phase === "active" ? `判定${winName ? `：${winName}` : ""}` : "收招"}
+            {it.name}・{phase === "startup" ? t.startup : phase === "active" ? t.active(winName || null) : t.recovery}
           </text>
         )}
-        {phase === "stun" && <text x={DEF_X} y={GROUND + 22} textAnchor="middle" fill="#f0707a" fontSize={13} fontWeight={700}>硬直</text>}
-        {fx.freeze > 0 && <text x={320} y={26} textAnchor="middle" fill="#ecd099" fontSize={14} fontWeight={700}>頓幀</text>}
-        {fx.slow < 1 && <text x={320} y={26} textAnchor="middle" fill="#80d7d8" fontSize={14} fontWeight={700}>慢動作 ×{fx.slow}</text>}
+        {phase === "stun" && <text x={DEF_X} y={GROUND + 22} textAnchor="middle" fill="#f0707a" fontSize={13} fontWeight={700}>{t.stun}</text>}
+        {fx.freeze > 0 && <text x={320} y={26} textAnchor="middle" fill="#ecd099" fontSize={14} fontWeight={700}>{t.freeze}</text>}
+        {fx.slow < 1 && <text x={320} y={26} textAnchor="middle" fill="#80d7d8" fontSize={14} fontWeight={700}>{t.slow(fx.slow)}</text>}
       </svg>
       <div className="tl-scene-info">
-        <span>第 <b>{frame}</b> 幀</span>
-        <span>攻擊動畫：<b>{PHASE_LABEL[ap.phase]}</b>{ap.item ? `（${ap.item.def.name}）` : ""}</span>
-        <span>玩家：<b>{phase === "idle" ? "待機" : phase === "startup" ? "啟動" : phase === "active" ? "判定中" : phase === "recovery" ? "收招" : "硬直"}</b>{it ? `（${it.name}）` : ""}{trace?.invulnerable ? "・無敵" : ""}</span>
+        <span>{t.frameInfo(frame)}</span>
+        <span>{t.attackAnim(T.phase[ap.phase], ap.item ? ap.item.def.name : null)}</span>
+        <span>{t.player(phase === "idle" ? t.playerIdle : phase === "startup" ? t.playerStartup : phase === "active" ? t.playerActive : phase === "recovery" ? t.playerRecovery : t.playerStun, it ? it.name : null, !!trace?.invulnerable)}</span>
       </div>
     </div>
   );

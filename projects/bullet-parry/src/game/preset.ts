@@ -1,4 +1,6 @@
 import { Timing, c } from "@gml/core";
+import { relocalizeTimingConfig, timingPresets } from "@gml/ui";
+import { getLocale, type Locale } from "@gml/ui/i18n";
 
 type Cfg = Timing.TimingConfig;
 
@@ -8,10 +10,10 @@ export const GAME_PRESET_ID = "bullet-parry-default";
  * Game-tuned default: the core "lenient" preset with a 2-charge sequential dodge (3 s each), a full-gauge skill
  * granting 4 s of invulnerability.
  */
-export function bulletParryDefault(): Cfg {
-  const base = Timing.TIMING_PRESETS.find((p) => p.id === "lenient");
+export function bulletParryDefault(locale: Locale = getLocale()): Cfg {
+  const base = timingPresets(locale).find((p) => p.id === "lenient");
   if (!base) throw new Error("core preset 'lenient' missing");
-  const cfg = structuredClone(base);
+  const cfg = base;
   cfg.id = GAME_PRESET_ID;
   cfg.name = "子彈格擋（預設）";
   cfg.description = "寬鬆判定窗；閃避 2 次充能、每 3 秒回 1 次；技能耗滿量表、無敵 4 秒；完美格擋會把子彈打回去。";
@@ -28,7 +30,12 @@ export function bulletParryDefault(): Cfg {
   return cfg;
 }
 
-/** Game default first, then every core preset (cloned so edits never leak back). */
-export function gamePresets(): Cfg[] {
-  return [bulletParryDefault(), ...Timing.TIMING_PRESETS.map((p) => structuredClone(p))];
+/** Game default first, then every core preset (fresh copies, in the current language, so edits never leak back). */
+export function gamePresets(locale: Locale = getLocale()): Cfg[] {
+  return [bulletParryDefault(locale), ...timingPresets(locale)];
+}
+
+/** An untouched built-in (game default or core preset, in any language) in language `to`; null when edited or custom. */
+export function relocalizeGameConfig(config: Cfg, to: Locale): Cfg | null {
+  return relocalizeTimingConfig(config, to, gamePresets);
 }

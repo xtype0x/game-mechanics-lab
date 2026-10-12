@@ -1,5 +1,6 @@
 import { Timing } from "@gml/core";
 import { TimingEditor, exportTimingConfig, parseTimingConfig } from "@gml/ui";
+import { useLocale } from "@gml/ui/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RESERVED_KEYS, gamePresets, keyConflicts, keyHint, keyLabel, matchPreset, rulesStatus, type KeyOverrides } from "./game";
 import { VolumeControl } from "./AssetPanel";
@@ -48,7 +49,8 @@ function KeyCapture({ onPick, label }: { onPick: (code: string) => void; label: 
 export function SettingsPanel(props: { settings: GameSettings; onChange: (s: GameSettings) => void; onClose: () => void; inGame: boolean; store: AssetStore; assets: AssetSnapshot }) {
   const { settings, onChange, onClose, inGame, store, assets } = props;
   const { config } = settings;
-  const presets = useMemo(gamePresets, []);
+  const [locale] = useLocale();
+  const presets = useMemo(() => gamePresets(locale), [locale]);
   const matched = matchPreset(config, presets);
   const status = useMemo(() => rulesStatus(config), [config]);
   const conflicts = useMemo(() => keyConflicts(config, settings.keys), [config, settings.keys]);

@@ -1,5 +1,6 @@
 import { Timing } from "@gml/core";
-import { bulletParryDefault, cleanOverrides, type KeyOverrides } from "./game";
+import { getLocale } from "@gml/ui/i18n";
+import { bulletParryDefault, cleanOverrides, relocalizeGameConfig, type KeyOverrides } from "./game";
 
 export const BEST_KEY = "gml.bullet-parry.best.v1";
 export const SETTINGS_KEY = "gml.bullet-parry.settings.v1";
@@ -70,7 +71,8 @@ export function parseSettings(raw: string | null): GameSettings {
     const d = Number(v.difficulty);
     const vol = typeof v.volume === "number" ? v.volume : Number.NaN;
     return {
-      config,
+      // An untouched built-in saved in another language is shown in the current one.
+      config: relocalizeGameConfig(config, getLocale()) ?? config,
       difficulty: Number.isFinite(d) ? Math.min(DIFFICULTY_RANGE.max, Math.max(DIFFICULTY_RANGE.min, d)) : 1,
       showFrameBar: v.showFrameBar === true,
       packActive: typeof v.packActive === "string" ? v.packActive : null,

@@ -1,5 +1,7 @@
 // Pure helpers for the timing components (no React): ids, config import/export, event descriptions.
+// Text comes from timingText() (current locale); the functions are still plain calls, so they work outside React.
 import { Timing } from "@gml/core";
+import { timingText } from "./i18n";
 
 type TimingConfig = Timing.TimingConfig;
 type TimingEvent = Timing.TimingEvent;
@@ -16,72 +18,63 @@ export function exportTimingConfig(config: TimingConfig): string {
   return JSON.stringify({ format: TIMING_CONFIG_FORMAT, version: 1, config }, null, 2);
 }
 
-/** Accepts the exported wrapper or a bare config; throws a Chinese message on any problem. */
+/** Accepts the exported wrapper or a bare config; throws a localized message on any problem (validation messages come from the core). */
 export function parseTimingConfig(text: string): TimingConfig {
+  const t = timingText().describe.parse;
   let raw: unknown;
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error("不是有效的 JSON 檔案。");
+    throw new Error(t.notJson);
   }
   const obj = raw as { format?: unknown; version?: unknown; config?: unknown } | null;
-  if (!obj || typeof obj !== "object") throw new Error("檔案內容不是設定物件。");
+  if (!obj || typeof obj !== "object") throw new Error(t.notObject);
   let cfg: unknown = obj;
   if (obj.format !== undefined || obj.config !== undefined) {
-    if (obj.format !== TIMING_CONFIG_FORMAT) throw new Error(`檔案格式不符（需要 ${TIMING_CONFIG_FORMAT}）。`);
-    if (obj.version !== 1) throw new Error(`不支援的檔案版本：${String(obj.version)}。`);
+    if (obj.format !== TIMING_CONFIG_FORMAT) throw new Error(t.badFormat(TIMING_CONFIG_FORMAT));
+    if (obj.version !== 1) throw new Error(t.badVersion(String(obj.version)));
     cfg = obj.config;
   }
   const c = cfg as Partial<TimingConfig> | null;
-  if (!c || typeof c !== "object" || c.version !== 1) throw new Error("設定缺少 version: 1。");
+  if (!c || typeof c !== "object" || c.version !== 1) throw new Error(t.missingVersion);
   for (const k of ["tags", "resources", "statuses", "outcomes", "interactions"] as const) {
-    if (!Array.isArray(c[k])) throw new Error(`設定缺少清單欄位「${k}」。`);
+    if (!Array.isArray(c[k])) throw new Error(t.missingList(k));
   }
   if (typeof c.fps !== "number" || typeof c.hitOutcome !== "string" || typeof c.healthResource !== "string") {
-    throw new Error("設定缺少 fps、hitOutcome 或 healthResource。");
+    throw new Error(t.missingScalars);
   }
   let issues: Timing.ValidationIssue[];
   try {
     issues = Timing.validateTiming(c as TimingConfig);
   } catch {
-    throw new Error("設定內容結構不完整，無法驗證。");
+    throw new Error(t.incomplete);
   }
   const first = issues.find((i) => i.level === "error");
-  if (first) throw new Error(`設定有錯誤：${first.path} ${first.message}`);
+  if (first) throw new Error(t.hasError(first.path, first.message));
   return c as TimingConfig;
 }
 
 /** Variables usable in formulas (spec §5), plus those derived from the config's own ids. */
 export function formulaVariables(config: TimingConfig): { name: string; desc: string }[] {
+  const d = timingText().describe.variables;
   return [
-    { name: "frame", desc: "目前幀" },
-    { name: "attack.damage", desc: "被結算攻擊的傷害（無攻擊時 0）" },
-    ...config.resources.map((r) => ({ name: `res.${r.id}`, desc: `資源「${r.name}」目前值` })),
-    ...[{ id: "invulnerable", name: "無敵" }, ...config.statuses].map((s) => ({ name: `status.${s.id}`, desc: `狀態「${s.name}」剩餘幀數` })),
-    ...config.interactions.map((i) => ({ name: `charges.${i.id}`, desc: `「${i.name}」目前充能數` })),
-    { name: "catch.index", desc: "這次攔截之前，目前動作已攔截的次數" },
-    { name: "action.shrink", desc: "目前動作的嚴格窗縮減量（緩衝為 -1）" },
-    { name: "action.buffered", desc: "目前動作是否來自緩衝" },
+    { name: "frame", desc: d.frame },
+    { name: "attack.damage", desc: d.attackDamage },
+    ...config.resources.map((r) => ({ name: `res.${r.id}`, desc: d.resource(r.name) })),
+    ...[{ id: "invulnerable", name: timingText().common.invulnerable }, ...config.statuses].map((s) => ({ name: `status.${s.id}`, desc: d.status(s.name) })),
+    ...config.interactions.map((i) => ({ name: `charges.${i.id}`, desc: d.charges(i.name) })),
+    { name: "catch.index", desc: d.catchIndex },
+    { name: "action.shrink", desc: d.actionShrink },
+    { name: "action.buffered", desc: d.actionBuffered },
   ];
 }
 
-const DROP_REASONS: Record<Timing.DropReason, string> = {
-  busy: "動作槽忙碌",
-  cooldown: "冷卻中",
-  noCharge: "沒有充能",
-  noResource: "資源不足",
-  conflict: "同幀有更高優先的按鍵",
-  spamLockout: "連打鎖定",
-  bufferExpired: "緩衝逾期",
-  bufferReplaced: "緩衝被新按鍵取代",
-  defeated: "已敗北",
-};
-export const dropReasonText = (r: Timing.DropReason): string => DROP_REASONS[r] ?? r;
+export const dropReasonText = (r: Timing.DropReason): string => timingText().describe.dropReasons[r] ?? r;
 
 const iName = (c: TimingConfig, id: string) => c.interactions.find((i) => i.id === id)?.name ?? id;
-const oName = (c: TimingConfig, id: string | null | undefined) => (id ? (c.outcomes.find((o) => o.id === id)?.name ?? id) : "無");
+const oName = (c: TimingConfig, id: string | null | undefined) => (id ? (c.outcomes.find((o) => o.id === id)?.name ?? id) : timingText().common.none);
 const rName = (c: TimingConfig, id: string) => c.resources.find((r) => r.id === id)?.name ?? id;
-const sName = (c: TimingConfig, id: string) => (id === "invulnerable" ? "無敵" : (c.statuses.find((s) => s.id === id)?.name ?? id));
+const sName = (c: TimingConfig, id: string) => (id === "invulnerable" ? timingText().common.invulnerable : (c.statuses.find((s) => s.id === id)?.name ?? id));
 const wName = (c: TimingConfig, iid: string | undefined, wid: string | undefined) =>
   (iid && wid && c.interactions.find((i) => i.id === iid)?.windows.find((w) => w.id === wid)?.name) || wid || "";
 const signed = (n: number) => (n >= 0 ? `+${num(n)}` : num(n));
@@ -92,22 +85,23 @@ export function outcomeKind(config: TimingConfig, id: string | null | undefined)
 }
 
 export function describeEffect(config: TimingConfig, e: Extract<TimingEvent, { type: "effect" }>): string {
+  const d = timingText().describe.effect;
   const v = e.value ?? 0;
   switch (e.effect) {
     case "damage": return `${rName(config, config.healthResource)} -${num(v)}`;
     case "addResource": return `${rName(config, e.target ?? "")} ${signed(v)}`;
-    case "invulnerable": return `無敵 ${e.frames ?? 0} 幀`;
-    case "status": return `${sName(config, e.target ?? "")} ${e.frames ?? 0} 幀`;
-    case "stun": return `硬直 ${e.frames ?? 0} 幀`;
-    case "restoreCharge": return `${iName(config, e.target ?? "")} 充能 +${num(v)}`;
-    case "cancelRecovery": return "取消收招";
-    case "hitstop": return `頓幀 ${e.frames ?? 0} 幀`;
-    case "timeScale": return `慢動作 ×${num(v)}，${e.frames ?? 0} 幀`;
-    case "cue": return `訊號 ${e.target ?? ""}${e.value !== undefined ? `（${num(v)}）` : ""}`;
+    case "invulnerable": return d.invulnerable(e.frames ?? 0);
+    case "status": return d.status(sName(config, e.target ?? ""), e.frames ?? 0);
+    case "stun": return d.stun(e.frames ?? 0);
+    case "restoreCharge": return d.restoreCharge(iName(config, e.target ?? ""), num(v));
+    case "cancelRecovery": return d.cancelRecovery;
+    case "hitstop": return d.hitstop(e.frames ?? 0);
+    case "timeScale": return d.timeScale(num(v), e.frames ?? 0);
+    case "cue": return d.cue(e.target ?? "", e.value !== undefined ? num(v) : null);
   }
 }
 
-/** Window length changes caused by spam shrink, e.g. ["完美 3→1", "普通 6→8"]. */
+/** Window length changes caused by spam shrink, e.g. ["完美 3→1", "普通 6→8"] (names come from the config). */
 export function windowChanges(config: TimingConfig, ev: Extract<TimingEvent, { type: "accept" }>): string[] {
   const def = config.interactions.find((i) => i.id === ev.interaction);
   const out: string[] = [];
@@ -118,43 +112,44 @@ export function windowChanges(config: TimingConfig, ev: Extract<TimingEvent, { t
   return out;
 }
 
-/** One readable Chinese line per event, using names from the config. */
-export function describeEvent(config: TimingConfig, ev: TimingEvent): string {
-  const head = `第 ${ev.frame} 幀｜`;
+/** The event line without its "frame N" prefix (the log groups lines by frame). */
+export function describeEventBody(config: TimingConfig, ev: TimingEvent): string {
+  const d = timingText().describe.event;
   switch (ev.type) {
-    case "press": return `${head}按下 ${iName(config, ev.interaction)}`;
-    case "buffer": return `${head}緩衝 ${iName(config, ev.interaction)}（第 ${ev.pressFrame} 幀按下）`;
+    case "press": return d.press(iName(config, ev.interaction));
+    case "buffer": return d.buffer(iName(config, ev.interaction), ev.pressFrame);
     case "accept": {
       const notes: string[] = [];
-      if (ev.buffered) notes.push("來自緩衝");
-      const ch = windowChanges(config, ev);
-      if (ch.length) notes.push(`${ev.shrink >= 0 ? `縮減 ${ev.shrink} 幀` : "嚴格窗移除"}：${ch.join("、")}`);
-      return `${head}${iName(config, ev.interaction)} 接受${notes.length ? `（${notes.join("；")}）` : ""}`;
+      if (ev.buffered) notes.push(d.fromBuffer);
+      const ch = windowChanges(config, ev).join(d.listSep);
+      if (ch) notes.push(ev.shrink >= 0 ? d.shrink(ev.shrink, ch) : d.strictRemoved(ch));
+      return d.accept(iName(config, ev.interaction), notes.length ? notes.join(d.noteSep) : null);
     }
-    case "drop": return `${head}丟棄 ${iName(config, ev.interaction)}：${dropReasonText(ev.reason)}`;
-    case "phase": return `${head}${iName(config, ev.interaction)} ${ev.phase === "recovery" ? "進入收招" : "回到閒置"}`;
+    case "drop": return d.drop(iName(config, ev.interaction), dropReasonText(ev.reason));
+    case "phase": return ev.phase === "recovery" ? d.phaseRecovery(iName(config, ev.interaction)) : d.phaseIdle(iName(config, ev.interaction));
     case "resolve": {
-      const late = ev.impactFrame !== ev.frame ? `（命中幀 ${ev.impactFrame}）` : "";
+      const late = ev.impactFrame !== ev.frame ? d.late(ev.impactFrame) : "";
       if (ev.via === "interaction") {
-        return `${head}${ev.attack} 命中${late} → ${iName(config, ev.interaction ?? "")}・${wName(config, ev.interaction, ev.window)}窗 → ${oName(config, ev.outcome)}`;
+        return d.resolveInteraction(ev.attack, late, iName(config, ev.interaction ?? ""), wName(config, ev.interaction, ev.window), oName(config, ev.outcome));
       }
-      if (ev.via === "invulnerable") return `${head}${ev.attack} 命中${late} → 無敵，未受傷`;
-      return `${head}${ev.attack} 命中${late} → 未攔截 → ${oName(config, ev.outcome)}`;
+      if (ev.via === "invulnerable") return d.resolveInvulnerable(ev.attack, late);
+      return d.resolveMiss(ev.attack, late, oName(config, ev.outcome));
     }
-    case "whiff": return `${head}${iName(config, ev.interaction)} 揮空${ev.outcome ? ` → ${oName(config, ev.outcome)}` : ""}`;
-    case "effect": return `${head}效果：${describeEffect(config, ev)}（${oName(config, ev.outcome)}）`;
-    case "recharge": return `${head}${iName(config, ev.interaction)} 充能回復（現有 ${ev.count}）`;
-    case "defeated": return `${head}敗北`;
+    case "whiff": return d.whiff(iName(config, ev.interaction), ev.outcome ? oName(config, ev.outcome) : null);
+    case "effect": return d.effect(describeEffect(config, ev), oName(config, ev.outcome));
+    case "recharge": return d.recharge(iName(config, ev.interaction), ev.count);
+    case "defeated": return d.defeated;
   }
 }
 
+/** One readable line per event in the current language, using names from the config. */
+export function describeEvent(config: TimingConfig, ev: TimingEvent): string {
+  return timingText().describe.event.head(ev.frame) + describeEventBody(config, ev);
+}
+
 export type LogCategory = "key" | "judge" | "effect" | "other";
-export const LOG_CATEGORIES: { id: LogCategory; label: string }[] = [
-  { id: "key", label: "按鍵" },
-  { id: "judge", label: "判定" },
-  { id: "effect", label: "效果" },
-  { id: "other", label: "其他" },
-];
+/** Category ids in display order; labels are `timingText().log.categories[id]`. */
+export const LOG_CATEGORIES: readonly LogCategory[] = ["key", "judge", "effect", "other"];
 
 export function eventCategory(ev: TimingEvent): LogCategory {
   switch (ev.type) {

@@ -1,7 +1,9 @@
 // Session = attack library + queued sequence + recorded presses; persisted in this browser only.
 import { Timing } from "@gml/core";
-import { parseTimingConfig } from "@gml/ui";
-import { ATTACKS, buildSchedule, type SeqItem } from "./attacks";
+import { parseTimingConfig, relocalizeTimingConfig, timingPresets } from "@gml/ui";
+import type { Locale } from "@gml/ui/i18n";
+import { getLocale } from "@gml/ui/i18n";
+import { attackLibrary, buildSchedule, relocalizeAttacks, type SeqItem } from "./attacks";
 
 export const CONFIG_KEY = "gml.timing-lab.config.v1";
 export const SESSION_KEY = "gml.timing-lab.session.v1";
@@ -18,10 +20,14 @@ export interface Session {
   presses: PressRec[];
 }
 
-export const defaultConfig = (): Timing.TimingConfig => structuredClone(Timing.TIMING_PRESETS.find((p) => p.id === "souls") ?? Timing.TIMING_PRESETS[0]!);
+/** The starting rules, in the current language. Once saved or imported, a config is the visitor's data and keeps its text. */
+export const defaultConfig = (): Timing.TimingConfig => {
+  const presets = timingPresets(getLocale());
+  return presets.find((p) => p.id === "souls") ?? presets[0]!;
+};
 
 export const defaultSession = (): Session => ({
-  attacks: structuredClone(ATTACKS),
+  attacks: attackLibrary(getLocale()),
   sequence: [
     { attack: "slash", gap: 30 },
     { attack: "thrust", gap: 30 },
@@ -51,13 +57,26 @@ export function parseSession(text: string | null): Session {
   const presses = Array.isArray(o.presses)
     ? (o.presses as PressRec[]).filter((p) => p && isNum(p.frame) && p.frame >= 0 && typeof p.interaction === "string")
     : [];
-  return { attacks: lib, sequence, loop: o.loop === true, presses };
+  return relocalizeSession({ attacks: lib, sequence, loop: o.loop === true, presses }, getLocale());
+}
+
+/**
+ * Built-in attacks the visitor has not edited follow the language (the library is the only part of a session that holds
+ * text; the sequence and presses refer to ids). Returns the same object when nothing changes.
+ */
+export function relocalizeSession(session: Session, to: Locale): Session {
+  const attacks = relocalizeAttacks(session.attacks, to);
+  return attacks.some((a, i) => a !== session.attacks[i]) ? { ...session, attacks } : session;
 }
 
 export function loadConfig(storage: Pick<Storage, "getItem"> | null = safeStorage()): Timing.TimingConfig {
   try {
     const t = storage?.getItem(CONFIG_KEY);
-    if (t) return parseTimingConfig(t);
+    if (t) {
+      const cfg = parseTimingConfig(t);
+      // An untouched built-in saved in another language is shown in the current one.
+      return relocalizeTimingConfig(cfg, getLocale()) ?? cfg;
+    }
   } catch { /* corrupt or unavailable */ }
   return defaultConfig();
 }

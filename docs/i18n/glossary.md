@@ -57,3 +57,17 @@
 | 判定窗 | timing window |
 | 幀 | frame |
 | 無敵 | invincibility（i-frames） |
+| 啟動／前搖／預兆／收招 | startup / windup / telegraph / recovery |
+| 硬直 | stagger |
+| 頓幀 | hitstop |
+| 慢動作 | slow-mo |
+| 緩衝 | buffer |
+| 防連打／鎖定門檻 | anti-spam / lockout threshold |
+| 攔截／未攔截 | catch / no catch |
+| 結算 | resolve |
+| 判定紀錄 | judgment log |
+| 破防 | guard break |
+| 格擋落空 | parry whiff |
+| 充能 | charges |
+| 輸入延遲校正 | input offset |
+| 魂系／隻狼風／魔女時間／看破 | Souls-like / Sekiro-like / Witch Time / Mikiri |

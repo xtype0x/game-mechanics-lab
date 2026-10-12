@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { Timing } from "@gml/core";
-import { ATTACKS, LEAD_FRAMES, TAIL_FRAMES, attackLength, attackPhaseAt, buildSchedule } from "../src/attacks";
-import { buildScript, defaultSession, normalizePresses, parseSession } from "../src/session";
+import { attackLibrary, relocalizeAttack, relocalizeAttacks, LEAD_FRAMES, TAIL_FRAMES, attackLength, attackPhaseAt, buildSchedule } from "../src/attacks";
+import { buildScript, defaultSession, normalizePresses, parseSession, relocalizeSession } from "../src/session";
 import { computeStats } from "../src/stats";
 import { fxByFrame } from "../src/usePlayback";
 
+const ATTACKS = attackLibrary("zh-Hant");
 const souls = Timing.TIMING_PRESETS.find((p) => p.id === "souls")!;
 
 describe("attack schedule", () => {
@@ -71,5 +72,26 @@ describe("stats and host commands", () => {
     const st = computeStats(souls, Timing.runTiming(souls, script).events);
     expect(st.outcomes[0]).toMatchObject({ outcome: "hit", count: 1, kind: "fail" });
     expect(st.perfectRate).toBe(0);
+  });
+});
+
+describe("built-in attacks follow the language", () => {
+  // Stub library: "en" names get a suffix so a swap is visible while the real en dictionary still equals zh.
+  const lib = (l: "zh-Hant" | "en") => attackLibrary("zh-Hant").map((a) => (l === "en" ? { ...a, name: a.name + " (en)" } : a));
+  it("swaps an untouched built-in and leaves edited or custom attacks alone", () => {
+    const slash = lib("zh-Hant")[0]!;
+    expect(relocalizeAttack(slash, "en", lib)!.name).toBe(slash.name + " (en)");
+    expect(relocalizeAttack(lib("en")[0]!, "zh-Hant", lib)).toEqual(slash);
+    expect(relocalizeAttack({ ...slash, windup: slash.windup + 1 }, "en", lib)).toBeNull();
+    expect(relocalizeAttack({ ...slash, id: "custom1" }, "en", lib)).toBeNull();
+    const edited = { ...slash, name: "mine" };
+    const list = relocalizeAttacks([slash, edited], "en", lib);
+    expect(list[0]!.name).toBe(slash.name + " (en)");
+    expect(list[1]).toBe(edited);
+  });
+  it("relocalizeSession keeps the same object when nothing changes", () => {
+    const s = defaultSession();
+    s.attacks = s.attacks.map((a) => ({ ...a, windup: a.windup + 1 }));
+    expect(relocalizeSession(s, "en")).toBe(s);
   });
 });

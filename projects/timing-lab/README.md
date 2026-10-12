@@ -7,4 +7,5 @@
 - **本專案自己的部分**：招式庫與序列排程（`attacks.ts`）、場景（`Scene.tsx`）、播放與頓幀／慢動作（`usePlayback.ts`）、統計（`stats.ts`）、按鍵腳本與儲存（`session.ts`）。
 - **即時模式**：按下互動的 `key` 提示鍵（例如 KeyJ）或畫面按鈕，按鍵記錄在「下一幀」；**回放模式**以腳本重現同一個情境。
 - **瀏覽器儲存鍵**：`gml.timing-lab.config.v1`（規則設定）、`gml.timing-lab.session.v1`（招式庫、序列、按鍵腳本）。壞掉的存檔會退回預設。
+- 介面語言跟隨網站語言設定（`gml.site.locale.v1`），頁首有中文／English 切換；文字在 `src/i18n/`，規則編輯器等共用元件的文字在 `packages/ui/src/timing/i18n/`。
 - 設定可匯出／匯入為 JSON（`format: "gml-timing-config"`）。

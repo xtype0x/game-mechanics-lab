@@ -8,7 +8,16 @@ body { margin: 0; background: #0b141b; color: #edf3f4; font: 14px/1.6 "Segoe UI"
 .tl h3 { font-size: 14px; margin: 0 0 8px; color: #80d7d8; }
 .tl-back { font-size: 12px; color: #aab9c3; text-decoration: none; }
 .tl-back:hover { color: #ecd099; }
+.tl-top { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; }
+.tl-top h1, .tl-top p { flex-basis: 100%; }
 .tl-top p { margin: 0 0 8px; font-size: 13px; max-width: 900px; }
+/* Language switch: compact segmented control at the right of the back-link row. */
+.tl .tl-lang { margin-left: auto; display: inline-flex; flex: none; border: 1px solid #2b3d49; border-radius: 6px; overflow: hidden; }
+.tl .lang-switch-option { background: #17282f; color: #aab9c3; border: 0; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.tl .lang-switch-option + .lang-switch-option { border-left: 1px solid #2b3d49; }
+.tl .lang-switch-option:hover { color: #edf3f4; }
+.tl .lang-switch-option[aria-pressed="true"] { background: #80d7d8; color: #0b141b; font-weight: 700; }
+.tl .lang-switch-option:focus-visible { outline: 2px solid #ecd099; outline-offset: -2px; }
 .tl .tm-muted { color: #aab9c3; }
 .tl .tm-note { font-size: 12px; margin: 0 0 8px; }
 .tl .tm-btn, .tl .tm-preset, .tl select, .tl input:not([type="checkbox"]):not([type="range"]):not([type="color"]) {
@@ -22,6 +31,7 @@ body { margin: 0; background: #0b141b; color: #edf3f4; font: 14px/1.6 "Segoe UI"
 .tl .tm-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border: 1px solid #2b3d49; border-radius: 999px; }
 .tl input[type="checkbox"] { accent-color: #80d7d8; }
 .tl .num-field { display: inline-flex; }
+.tl .num-field input { width: 100%; min-width: 0; }
 .tl .segmented { display: inline-flex; border: 1px solid #2b3d49; border-radius: 6px; overflow: hidden; }
 .tl .segmented button { background: #17282f; color: #aab9c3; border: 0; padding: 4px 14px; cursor: pointer; font: inherit; }
 .tl .segmented button.on { background: #80d7d8; color: #0b141b; font-weight: 700; }

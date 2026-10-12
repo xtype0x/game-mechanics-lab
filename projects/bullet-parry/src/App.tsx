@@ -6,7 +6,7 @@ import { AssetStore } from "./assets/store";
 import { JudgePanel } from "./JudgePanel";
 import { soundsForEvents } from "./audio/events";
 import {
-  BULLET_KINDS, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, scoreOf, shouldSaveBest,
+  BULLET_KINDS, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, relocalizeGameConfig, scoreOf, shouldSaveBest,
   startBlocker, tickSession, type Hud, type Session,
 } from "./game";
 import { createRenderer, type Renderer } from "./render/renderer";
@@ -96,14 +96,24 @@ export function App({ host }: { host?: ProjectHost }) {
     if (l.screen === "playing" && !l.paused && !l.panel) pressInteraction(sessionRef.current, id);
   }, []);
 
-  const changeSettings = useCallback((s: GameSettings) => {
+  const changeSettings = useCallback((s: GameSettings, persist = true) => {
     setSettings(s);
-    saveSettings(s);
+    if (persist) saveSettings(s);
     if (live.current.screen === "title") {
       sessionRef.current = sessionFor(s);
       setHud(hudOf(sessionRef.current.world));
     }
   }, []);
+
+  // When the language changes, untouched built-in rules follow it (edited ones are the player's data and stay).
+  const lastLocale = useRef(locale);
+  useEffect(() => {
+    if (lastLocale.current === locale) return;
+    lastLocale.current = locale;
+    const next = relocalizeGameConfig(live.current.settings.config, locale);
+    // Not saved: loading relocalizes anyway, and saving would let an idle tab overwrite another tab's edits.
+    if (next) changeSettings({ ...live.current.settings, config: next }, false);
+  }, [locale, changeSettings]);
 
   // Main loop: fixed 60 Hz ticks, render every animation frame.
   useEffect(() => {

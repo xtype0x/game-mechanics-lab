@@ -1,20 +1,45 @@
 // Attack library and sequence scheduling. Attack moves are authoring helpers (spec §6); the rules only see AttackEvents.
 import { Timing } from "@gml/core";
+import { stableStringify } from "@gml/ui";
+import { LOCALES, type Locale } from "@gml/ui/i18n";
+import { textFor } from "./i18n";
 
 type AttackDef = Timing.AttackDef;
 
 const hit = (offset: number, tags: string[], damage?: number) => ({ offset, tags, ...(damage !== undefined ? { damage } : {}) });
 
-export const ATTACKS: AttackDef[] = [
-  { id: "slash", name: "單發斬擊", windup: 30, telegraph: 8, recovery: 24, hits: [hit(0, [])] },
-  { id: "thrust", name: "突刺", windup: 24, telegraph: 6, recovery: 20, hits: [hit(0, ["thrust"])] },
-  { id: "sweep", name: "掃腿", windup: 28, telegraph: 8, recovery: 24, hits: [hit(0, ["sweep"])] },
-  { id: "heavy", name: "不可格擋重擊", windup: 40, telegraph: 14, recovery: 36, hits: [hit(0, ["unblockable"])] },
-  { id: "combo", name: "三連擊", windup: 24, telegraph: 6, recovery: 30, hits: [hit(0, []), hit(14, []), hit(28, [])] },
-  { id: "delayed", name: "延遲斬", windup: 72, telegraph: 30, recovery: 28, hits: [hit(0, [])] },
-  { id: "orb", name: "能量彈", windup: 36, telegraph: 10, recovery: 20, hits: [hit(0, ["energy"])] },
-  { id: "volley", name: "子彈連射", windup: 20, telegraph: 6, recovery: 20, hits: [0, 10, 20, 30, 40].map((o) => hit(o, ["bullet"])) },
+/** Built-in attacks without names; names come from the dictionary (attackNames, by id). */
+const ATTACK_BASE: Omit<AttackDef, "name">[] = [
+  { id: "slash", windup: 30, telegraph: 8, recovery: 24, hits: [hit(0, [])] },
+  { id: "thrust", windup: 24, telegraph: 6, recovery: 20, hits: [hit(0, ["thrust"])] },
+  { id: "sweep", windup: 28, telegraph: 8, recovery: 24, hits: [hit(0, ["sweep"])] },
+  { id: "heavy", windup: 40, telegraph: 14, recovery: 36, hits: [hit(0, ["unblockable"])] },
+  { id: "combo", windup: 24, telegraph: 6, recovery: 30, hits: [hit(0, []), hit(14, []), hit(28, [])] },
+  { id: "delayed", windup: 72, telegraph: 30, recovery: 28, hits: [hit(0, [])] },
+  { id: "orb", windup: 36, telegraph: 10, recovery: 20, hits: [hit(0, ["energy"])] },
+  { id: "volley", windup: 20, telegraph: 6, recovery: 20, hits: [0, 10, 20, 30, 40].map((o) => hit(o, ["bullet"])) },
 ];
+
+/** The built-in attack library with names in the given language (fresh objects each call). */
+export function attackLibrary(locale: Locale): AttackDef[] {
+  const names = textFor(locale).attackNames;
+  return ATTACK_BASE.map((a) => structuredClone({ ...a, name: names[a.id] ?? a.id }));
+}
+
+/**
+ * An untouched built-in attack follows the language: returns a fresh `to`-language copy when `def` equals the built-in
+ * attack with the same id in ANY language, else null (edited or custom, i.e. the visitor's data).
+ */
+export function relocalizeAttack(def: AttackDef, to: Locale, library: (locale: Locale) => AttackDef[] = attackLibrary): AttackDef | null {
+  const key = stableStringify(def);
+  if (!LOCALES.some((l) => library(l).some((a) => a.id === def.id && stableStringify(a) === key))) return null;
+  return library(to).find((a) => a.id === def.id) ?? null;
+}
+
+/** relocalizeAttack over a list; edited attacks keep their identity (same object). */
+export function relocalizeAttacks(list: AttackDef[], to: Locale, library: (locale: Locale) => AttackDef[] = attackLibrary): AttackDef[] {
+  return list.map((a) => relocalizeAttack(a, to, library) ?? a);
+}
 
 export interface SeqItem {
   attack: string;
@@ -56,7 +81,6 @@ export function buildSchedule(seq: SeqItem[], library: AttackDef[]): { items: Sc
 }
 
 export type AttackPhase = "idle" | "windup" | "telegraph" | "strike" | "recovery";
-export const PHASE_LABEL: Record<AttackPhase, string> = { idle: "待機", windup: "前搖", telegraph: "預兆（閃光）", strike: "出招", recovery: "收招" };
 
 /** Animation phase of the attacker at a frame; `progress` runs 0..1 inside the phase. */
 export function attackPhaseAt(items: ScheduledAttack[], frame: number): { phase: AttackPhase; item?: ScheduledAttack; progress: number } {

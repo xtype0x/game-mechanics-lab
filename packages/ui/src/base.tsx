@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { getLocale, htmlLang } from "./i18n/locale";
 
 export const fmt = (n: number, digits = 2) =>
-  Number.isFinite(n) ? n.toLocaleString("zh-TW", { maximumFractionDigits: digits }) : String(n);
+  Number.isFinite(n) ? n.toLocaleString(htmlLang(getLocale()), { maximumFractionDigits: digits }) : String(n);
 
 export const pct = (n: number, digits = 1) => `${fmt(n * 100, digits)}%`;
 

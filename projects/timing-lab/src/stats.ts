@@ -1,4 +1,5 @@
 import type { Timing } from "@gml/core";
+import { text } from "./i18n";
 
 export interface OutcomeCount {
   outcome: string | null;
@@ -38,7 +39,7 @@ export function computeStats(config: Timing.TimingConfig, events: Timing.TimingE
     const o = ev.outcome ? config.outcomes.find((x) => x.id === ev.outcome) : undefined;
     if (o?.kind === "perfect") perfect++;
     const key = ev.outcome ?? "(invulnerable)";
-    const row = counts.get(key) ?? { outcome: ev.outcome, label: o?.name ?? (ev.outcome ?? "無敵擋下"), kind: o?.kind ?? "none", count: 0 };
+    const row = counts.get(key) ?? { outcome: ev.outcome, label: o?.name ?? (ev.outcome ?? text().stats.invulnerableBlocked), kind: o?.kind ?? "none", count: 0 };
     row.count++;
     counts.set(key, row);
     if (ev.via === "interaction" && ev.interaction) {
