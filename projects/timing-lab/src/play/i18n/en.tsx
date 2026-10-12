@@ -1,4 +1,4 @@
-// English UI text for the bullet-parry page.
+// English UI text for the bullet-parry mode.
 // Source and shape: zh-Hant.tsx.
 import type { ReactNode } from "react";
 import type { BulletText } from "./zh-Hant";
@@ -7,7 +7,6 @@ const plural = (n: number, one: string, other: string): string => (n === 1 ? one
 
 export const en: BulletText = {
   app: {
-    topTitle: "Bullet parry demo",
     rulesLabel: (name: string) => `Timing rules: ${name}`,
     keysLabel: "Keys",
     buttonFallback: "Button",
@@ -25,6 +24,7 @@ export const en: BulletText = {
     enterToStart: "Press Enter to start",
     paused: "Paused",
     resume: "Resume",
+    frameLab: "Frame lab",
     toTitle: "Back to title",
     gameOver: "Game over",
     practiceOver: "Practice mode · score doesn't count as a best",
@@ -58,6 +58,7 @@ export const en: BulletText = {
     capturing: "Press a new key... (Esc to cancel)",
     rebind: "Rebind key",
     rulesHeading: "Timing rules",
+    sharedRules: "These rules are shared with the frame lab.",
     loadPreset: "Load preset",
     customOption: (name: string, modified: boolean) => `${name} (${modified ? "modified" : "custom"})`,
     exportConfig: "Export timing settings",
@@ -211,10 +212,6 @@ export const en: BulletText = {
   },
   keys: {
     space: "Space",
-  },
-  preset: {
-    name: "Bullet Parry (default)",
-    description: "Generous timing windows; dodge has 2 charges that regain 1 every 3 seconds; the skill uses the full gauge for 4 seconds of invincibility; a perfect parry knocks the bullet back.",
   },
   /** Bullet kind names, by kind id. */
   bulletKinds: {

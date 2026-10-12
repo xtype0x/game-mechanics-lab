@@ -49,7 +49,6 @@ export const gameById = (id: string) => games.find(g => g.id === id);
 export const crossTools: GameTool<CrossToolId>[] = [
   { id: 'gacha', status: 'available', href: 'gacha/index.html', zhOnly: true },
   { id: 'timing-lab', status: 'available', href: 'timing-lab/index.html' },
-  { id: 'bullet-parry', status: 'available', href: 'bullet-parry/index.html' },
 ];
 
 interface ToolText { title: string; summary: string }

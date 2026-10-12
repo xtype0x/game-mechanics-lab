@@ -13,7 +13,6 @@ const CJK = /[一-鿿　-〿＀-￯]/;
 const GUARDED: { dir: string; allow: string[] }[] = [
   { dir: "apps/site/src", allow: ["/i18n/", "/content/pages/"] },
   { dir: "projects/timing-lab/src", allow: ["/i18n/"] },
-  { dir: "projects/bullet-parry/src", allow: ["/i18n/"] },
   { dir: "packages/ui/src/timing", allow: ["/i18n/"] },
 ];
 

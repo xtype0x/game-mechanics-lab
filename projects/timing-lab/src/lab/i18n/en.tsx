@@ -8,10 +8,9 @@ const fr = (n: number): string => `${n} ${n === 1 ? "frame" : "frames"}`;
 
 export const en: LabText = {
   app: {
-    title: "Parry & Dodge Timing Lab",
-    intro: "Parry and dodge are just two pieces of interaction data. Edit their timing windows, outcomes and effects, add your own interactions, then break it all down frame by frame with attack sequences and input scripts.",
     editorCollapse: "Hide rule editor",
     editorExpand: "Show rule editor",
+    playWith: "Play with these rules →",
     exportConfig: "Export config",
     importConfig: "Import config",
     resetAll: "Reset all",
@@ -47,7 +46,7 @@ export const en: LabText = {
     offsetFrames: (value: string) => `${value} ${Math.abs(Number(value)) === 1 ? "frame" : "frames"}`,
     offsetNote: "Offset = impact frame − press frame (positive means pressed early).",
     scriptTitle: "Script (inputs)",
-    footer: "Rules: docs/spec/timing.md (timing judgment spec 1.0). Your config and script are stored only in this browser (localStorage: gml.timing-lab.*).",
+    footer: "Rules: docs/spec/timing.md (timing judgment spec 1.0). The rules are shared with the Bullet parry mode. Rules and script are stored only in this browser (localStorage: gml.timing-lab.config.v1, gml.timing-lab.session.v1; the game's score and options use gml.bullet-parry.*).",
   },
   script: {
     addPress: "+ Add press",

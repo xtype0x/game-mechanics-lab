@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Timing } from "@gml/core";
-import { attackLibrary, relocalizeAttack, relocalizeAttacks, LEAD_FRAMES, TAIL_FRAMES, attackLength, attackPhaseAt, buildSchedule } from "../src/attacks";
-import { buildScript, defaultSession, normalizePresses, parseSession, relocalizeSession } from "../src/session";
-import { computeStats } from "../src/stats";
-import { fxByFrame } from "../src/usePlayback";
+import { attackLibrary, relocalizeAttack, relocalizeAttacks, LEAD_FRAMES, TAIL_FRAMES, attackLength, attackPhaseAt, buildSchedule } from "../src/lab/attacks";
+import { buildScript, defaultSession, normalizePresses, parseSession, relocalizeSession } from "../src/lab/session";
+import { computeStats } from "../src/lab/stats";
+import { fxByFrame } from "../src/lab/usePlayback";
 
 const ATTACKS = attackLibrary("zh-Hant");
 const souls = Timing.TIMING_PRESETS.find((p) => p.id === "souls")!;

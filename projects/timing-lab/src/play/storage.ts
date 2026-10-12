@@ -1,14 +1,13 @@
-import { Timing } from "@gml/core";
-import { getLocale } from "@gml/ui/i18n";
 import { text } from "./i18n";
-import { bulletParryDefault, cleanOverrides, relocalizeGameConfig, type KeyOverrides } from "./game";
+import { cleanOverrides, type KeyOverrides } from "./game";
 
+// These keys (and the IndexedDB `gml.bullet-parry.assets.v1`) keep the old project id on purpose: the game used to be
+// its own project, and visitors' best scores, options and uploaded packs live under these names.
 export const BEST_KEY = "gml.bullet-parry.best.v1";
 export const SETTINGS_KEY = "gml.bullet-parry.settings.v1";
 
-/** Game options that sit next to the timing config (a later editor edits `config` directly). */
+/** Game options. The timing rules are shared with the frame lab and live in the shell (shell/config.ts), not here. */
 export interface GameSettings {
-  config: Timing.TimingConfig;
   difficulty: number;
   showFrameBar: boolean;
   /** Active custom asset pack id (null = built-in default art and sounds). Packs themselves live in IndexedDB. */
@@ -43,7 +42,7 @@ export const tierId = (d: number): TierId => [...DIFFICULTY_TIERS].reverse().fin
 export const tierName = (d: number): string => text().settings.tiers[tierId(d)];
 
 export function defaultSettings(): GameSettings {
-  return { config: bulletParryDefault(), difficulty: 1, showFrameBar: false, packActive: null, packLast: null, volume: 0.7, muted: false, practice: false, judgeFreeze: true, keys: {} };
+  return { difficulty: 1, showFrameBar: false, packActive: null, packLast: null, volume: 0.7, muted: false, practice: false, judgeFreeze: true, keys: {} };
 }
 
 export function loadBest(): number {
@@ -61,23 +60,17 @@ export function saveBest(score: number): void {
 
 /**
  * Parse stored settings. The v1 key is kept: asset/audio fields were added later and default when missing
- * (older saves stay valid), so no version bump or migration step is needed.
+ * (older saves stay valid), so no version bump or migration step is needed. A `config` field written by earlier
+ * versions is ignored here (the shell reads it once, see loadSharedConfig).
  */
 export function parseSettings(raw: string | null): GameSettings {
   const fallback = defaultSettings();
   try {
     if (!raw) return fallback;
     const v = JSON.parse(raw) as Partial<GameSettings>;
-    const config = v.config;
-    if (!config || config.version !== 1 || !Array.isArray(config.interactions) || config.interactions.length === 0) return fallback;
-    // Rules with validation errors are kept so the player can fix them in the editor; starting a run is blocked instead.
-    for (const k of ["tags", "resources", "statuses", "outcomes"] as const) if (!Array.isArray(config[k])) return fallback;
-    if (typeof config.fps !== "number" || typeof config.hitOutcome !== "string" || typeof config.healthResource !== "string") return fallback;
     const d = Number(v.difficulty);
     const vol = typeof v.volume === "number" ? v.volume : Number.NaN;
     return {
-      // An untouched built-in saved in another language is shown in the current one.
-      config: relocalizeGameConfig(config, getLocale()) ?? config,
       difficulty: Number.isFinite(d) ? Math.min(DIFFICULTY_RANGE.max, Math.max(DIFFICULTY_RANGE.min, d)) : 1,
       showFrameBar: v.showFrameBar === true,
       packActive: typeof v.packActive === "string" ? v.packActive : null,

@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   LIMITS, PACK_FORMAT, PACK_VERSION, blobToDataUrl, checkUpload, emptyPack, packToFile, parseDataUrl, parsePackFile, parsePackText,
   sanitizeImageOptions,
-} from "../src/assets/pack";
-import { soundsForEvents } from "../src/audio/events";
-import { defaultSettings, parseSettings } from "../src/storage";
-import type { GameEvent } from "../src/game";
+} from "../src/play/assets/pack";
+import { soundsForEvents } from "../src/play/audio/events";
+import { defaultSettings, parseSettings } from "../src/play/storage";
+import { bulletParryDefault, type GameEvent } from "../src/play/game";
 
 // 1x1 transparent PNG
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -111,9 +111,9 @@ describe("sound events", () => {
 
 describe("settings", () => {
   it("old v1 saves without asset fields still load with defaults", () => {
-    const d = defaultSettings();
-    const old = JSON.stringify({ config: d.config, difficulty: 1.5, showFrameBar: false });
+    const old = JSON.stringify({ config: bulletParryDefault(), difficulty: 1.5, showFrameBar: false });
     const s = parseSettings(old);
+    expect(s).not.toHaveProperty("config"); // rules moved to the shell; a stored copy is ignored
     expect(s.difficulty).toBe(1.5);
     expect(s).toMatchObject({ packActive: null, packLast: null, volume: 0.7, muted: false });
   });

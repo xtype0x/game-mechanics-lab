@@ -1,8 +1,8 @@
 import { LOCALES } from "@gml/ui/i18n";
 import { describe, expect, it } from "vitest";
-import { en } from "../src/i18n/en";
-import { zhHant } from "../src/i18n/zh-Hant";
-import { bulletParryDefault, gamePresets, relocalizeGameConfig } from "../src/game";
+import { en } from "../src/play/i18n/en";
+import { zhHant } from "../src/play/i18n/zh-Hant";
+import { bulletParryDefault, gamePresets, relocalizeGameConfig } from "../src/play/game";
 
 /** Shape of a value: object keys recursively, "fn" for functions, "str" for strings, "node" for JSX/others. */
 function shape(v: unknown): unknown {

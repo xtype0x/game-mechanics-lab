@@ -505,11 +505,12 @@ function ListsSection({ config, upd }: { config: Config; upd: Update }) {
 
 /* --------------------------------- 預設 / 匯出 --------------------------------- */
 
-/** Dropdown that loads one of the built-in presets (a fresh copy). */
-export function TimingPresetMenu({ onPick }: { onPick: (config: Config) => void }) {
+/** Dropdown that loads one of the presets (a fresh copy). `presets` defaults to the core presets; hosts with their own list pass it. */
+export function TimingPresetMenu({ onPick, presets: custom }: { onPick: (config: Config) => void; presets?: Config[] }) {
   const t = useTimingText().editor.presetMenu;
   const [locale] = useLocale();
-  const presets = useMemo(() => timingPresets(locale), [locale]);
+  const builtIn = useMemo(() => timingPresets(locale), [locale]);
+  const presets = custom ?? builtIn;
   return (
     <select className="tm-preset" value="" aria-label={t.label} onChange={(e) => {
       const p = presets.find((x) => x.id === e.target.value);

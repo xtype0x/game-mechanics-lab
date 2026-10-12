@@ -2,6 +2,7 @@ import { Timing } from "@gml/core";
 import { TimingEditor, exportTimingConfig, parseTimingConfig } from "@gml/ui";
 import { LanguageSwitch, useLocale } from "@gml/ui/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { bulletParryDefault } from "../shell/presets";
 import { RESERVED_KEYS, gamePresets, keyConflicts, keyHint, keyLabel, matchPreset, rulesStatus, type KeyOverrides } from "./game";
 import { VolumeControl } from "./AssetPanel";
 import type { AssetSnapshot, AssetStore } from "./assets/store";
@@ -48,9 +49,11 @@ function KeyCapture({ onPick, label }: { onPick: (code: string) => void; label: 
   );
 }
 
-export function SettingsPanel(props: { settings: GameSettings; onChange: (s: GameSettings) => void; onClose: () => void; inGame: boolean; store: AssetStore; assets: AssetSnapshot }) {
-  const { settings, onChange, onClose, inGame, store, assets } = props;
-  const { config } = settings;
+export function SettingsPanel(props: {
+  settings: GameSettings; onChange: (s: GameSettings) => void; config: Timing.TimingConfig; onConfigChange: (c: Timing.TimingConfig) => void;
+  onClose: () => void; inGame: boolean; store: AssetStore; assets: AssetSnapshot;
+}) {
+  const { settings, onChange, config, onConfigChange, onClose, inGame, store, assets } = props;
   const [locale] = useLocale();
   const t = useText().settings;
   const presets = useMemo(() => gamePresets(locale), [locale]);
@@ -69,7 +72,7 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
   const doImport = async (file: File | undefined) => {
     if (!file) return;
     try {
-      onChange({ ...settings, config: parseTimingConfig(await file.text()) });
+      onConfigChange(parseTimingConfig(await file.text()));
       setImportMsg(null);
     } catch (e) {
       setImportMsg(e instanceof Error ? e.message : String(e));
@@ -93,13 +96,14 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
           value={matched ?? "__custom"}
           onChange={(e) => {
             const p = presets.find((x) => x.id === e.target.value);
-            if (p) onChange({ ...settings, config: structuredClone(p) });
+            if (p) onConfigChange(structuredClone(p));
           }}
         >
           {matched ? null : <option value="__custom">{t.customOption(config.name, presets.some((p) => p.id === config.id))}</option>}
           {presets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </label>
+      <p className="bp-note">{t.sharedRules}</p>
       {config.description ? <p className="bp-note">{config.description}</p> : null}
       <div className="bp-row left">
         <button type="button" className="bp-btn small" onClick={() => download((config.id || "timing") + ".json", exportTimingConfig(config))}>{t.exportConfig}</button>
@@ -123,7 +127,7 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
       <details className="bp-details">
         <summary>{t.advanced}</summary>
         <div className="bp-editor">
-          <TimingEditor config={config} onChange={(c) => onChange({ ...settings, config: c })} />
+          <TimingEditor config={config} onChange={onConfigChange} />
         </div>
       </details>
 
@@ -177,7 +181,7 @@ export function SettingsPanel(props: { settings: GameSettings; onChange: (s: Gam
         <span>{t.judgeFreeze}</span>
       </label>
       <div className="bp-row">
-        <button type="button" className="bp-btn ghost" onClick={() => onChange({ ...defaultSettings(), packActive: settings.packActive, packLast: settings.packLast, volume: settings.volume, muted: settings.muted })}>{t.reset}</button>
+        <button type="button" className="bp-btn ghost" onClick={() => { onConfigChange(bulletParryDefault()); onChange({ ...defaultSettings(), packActive: settings.packActive, packLast: settings.packLast, volume: settings.volume, muted: settings.muted }); }}>{t.reset}</button>
       </div>
     </div>
   );

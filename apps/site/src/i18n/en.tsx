@@ -101,8 +101,7 @@ export const en: SiteText = {
   },
   crossTools: {
     gacha: { title: 'Gacha simulator', summary: 'Adjust pity, limited-banner and spark rules to work out the pull-count distribution, cost and odds exactly. Recent banners are built in, or you can set up your own.' },
-    'timing-lab': { title: 'Parry & dodge timing lab', summary: 'How many frames separate a perfect parry or perfect dodge? Adjust timing windows, anti-spam and rewards, step through frame by frame to see how each input is judged, and even define new interactions.' },
-    'bullet-parry': { title: 'Bullet parry demo', summary: 'A 2D mini-game: survive increasingly nasty bullet patterns with parries, dodges and invincibility skills. Timing parameters are adjustable, and you can swap in your own images.' },
+    'timing-lab': { title: 'Parry & dodge timing lab', summary: 'How many frames separate a perfect parry or perfect dodge? Adjust timing windows, anti-spam and rewards, step through frame by frame to see how each input is judged, and even define new interactions. It also has a playable bullet-parry mode that runs on the same rules.' },
   },
   status: {
     researching: 'Deep in research',

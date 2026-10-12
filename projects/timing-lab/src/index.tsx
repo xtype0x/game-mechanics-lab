@@ -1,7 +1,7 @@
 import type { MountProject } from "@gml/ui";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { Shell } from "./shell/Shell";
 import "@gml/ui/timing.css";
 import "./styles.css";
 
@@ -9,7 +9,7 @@ import "./styles.css";
 export const mount: MountProject = (el, host) => {
   createRoot(el).render(
     <StrictMode>
-      <App {...(host ? { host } : {})} />
+      <Shell {...(host ? { host } : {})} />
     </StrictMode>,
   );
 };

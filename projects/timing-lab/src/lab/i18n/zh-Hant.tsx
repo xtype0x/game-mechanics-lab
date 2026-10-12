@@ -6,10 +6,9 @@ export type AttackPhaseKey = "idle" | "windup" | "telegraph" | "strike" | "recov
 
 export const zhHant = {
   app: {
-    title: "格擋閃避判定研究室",
-    intro: "格擋和閃避只是兩筆互動資料：可以改判定窗、結果與效果，也能新增自己的互動，再用攻擊序列和按鍵腳本逐幀拆解。",
     editorCollapse: "收起規則編輯器",
     editorExpand: "展開規則編輯器",
+    playWith: "用這組設定實戰 →",
     exportConfig: "匯出設定",
     importConfig: "匯入設定",
     resetAll: "全部重設",
@@ -45,7 +44,7 @@ export const zhHant = {
     offsetFrames: (value: string) => `${value} 幀`,
     offsetNote: "偏移 = 命中幀 − 按下幀（正數代表提早按）。",
     scriptTitle: "腳本（按鍵）",
-    footer: "規則：docs/spec/timing.md（反應判定規格 1.0）。設定與腳本只存在這個瀏覽器（localStorage：gml.timing-lab.*）。",
+    footer: "規則：docs/spec/timing.md（反應判定規格 1.0）。判定規則與「實戰試玩」共用。規則與腳本只存在這個瀏覽器（localStorage：gml.timing-lab.config.v1、gml.timing-lab.session.v1；試玩的分數與選項為 gml.bullet-parry.*）。",
   },
   script: {
     addPress: "＋ 新增按鍵",

@@ -1,7 +1,7 @@
 /** Rules-editor helpers: validation gating, preset matching, best-score policy. Pure. */
 import { Timing } from "@gml/core";
 import { text } from "../i18n";
-import { bulletParryDefault } from "./preset";
+import { bulletParryDefault } from "../../shell/presets";
 
 export interface RulesStatus {
   errors: Timing.ValidationIssue[];

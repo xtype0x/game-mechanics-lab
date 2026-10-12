@@ -1,27 +1,20 @@
-/* Self-contained dark theme for the bullet-parry page. */
-:root { color-scheme: dark; }
-body { margin: 0; background: #0d1020; }
+/* Self-contained dark theme for the bullet-parry mode. Page-level rules (body, color-scheme) live in ../styles.css. */
 
 .bp-root {
   --bg: #0d1020; --panel: #171b30; --line: #2d3454; --text: #e8ebf5; --dim: #98a1bd; --accent: #7c95ff;
   max-width: 1080px; margin: 0 auto; padding: 8px 16px 24px; color: var(--text); background: var(--bg);
-  font: 15px/1.5 system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif; min-height: 100vh; box-sizing: border-box;
+  font: 15px/1.5 system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif; box-sizing: border-box; border-radius: 12px;
 }
 .bp-root * { box-sizing: border-box; }
-.bp-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 8px 0; }
-.bp-top h1 { margin: 0; font-size: 18px; }
-.bp-top .bp-dim { text-align: right; font-size: 12px; }
-.bp-back { color: var(--accent); text-decoration: none; font-size: 13px; }
-.bp-topleft { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; min-width: 0; }
+.bp-rules { margin: 4px 0 8px; font-size: 12px; }
 .bp-lang { display: inline-flex; flex: none; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .bp-lang .lang-switch-option { background: #232a48; color: var(--dim); border: 0; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .bp-lang .lang-switch-option + .lang-switch-option { border-left: 1px solid var(--line); }
 .bp-lang .lang-switch-option:hover { color: var(--text); }
 .bp-lang .lang-switch-option[aria-pressed="true"] { background: var(--accent); color: #0b1030; font-weight: 700; }
-/* The page top bar is covered by full-screen panels on phones, so panels carry their own switch there. */
+/* The page header is covered by full-screen panels on phones, so panels carry their own switch there. */
 .bp-lang-panel { display: none; }
 .bp-lang .lang-switch-option:focus-visible { outline: 2px solid #ffe27a; outline-offset: -2px; }
-.bp-back:hover { text-decoration: underline; }
 .bp-dim { color: var(--dim); }
 
 .bp-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--line); touch-action: manipulation; user-select: none; }
@@ -84,10 +77,7 @@ body { margin: 0; background: #0d1020; }
 
 @media (max-width: 560px) {
   .bp-root { padding: 4px 8px 16px; }
-  .bp-top { grid-template-columns: 1fr; text-align: center; }
-  .bp-topleft { justify-content: center; }
   .bp-lang.bp-lang-panel { display: inline-flex; }
-  .bp-top .bp-dim { text-align: center; }
   .bp-overlay h2 { font-size: 20px; }
   .bp-overlay { gap: 4px; padding: 6px; }
   .bp-btn { padding: 6px 12px; font-size: 13px; }

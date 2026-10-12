@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Timing } from "@gml/core";
-import { FrameBar, Segmented, TimingEditor, TimingLog, TimingPresetMenu, exportTimingConfig, parseTimingConfig, pct, relocalizeTimingConfig, type ProjectHost } from "@gml/ui";
-import { LanguageSwitch, localize, useLocale } from "@gml/ui/i18n";
+import { FrameBar, Segmented, TimingEditor, TimingLog, TimingPresetMenu, exportTimingConfig, parseTimingConfig, pct } from "@gml/ui";
+import { useLocale } from "@gml/ui/i18n";
+import { save } from "../shell/config";
+import { bulletParryDefault, gamePresets } from "../shell/presets";
 import { attackPhaseAt } from "./attacks";
 import { useText } from "./i18n";
 import { Scene } from "./Scene";
 import { ScriptPanel } from "./ScriptPanel";
 import { SequencePanel } from "./SequencePanel";
-import { CONFIG_KEY, SESSION_KEY, buildScript, defaultConfig, defaultSession, loadConfig, loadSession, normalizePresses, relocalizeSession, save, type PressRec, type Session } from "./session";
+import { SESSION_KEY, buildScript, defaultSession, loadSession, normalizePresses, relocalizeSession, type PressRec, type Session } from "./session";
 import { computeStats } from "./stats";
 import { usePlayback } from "./usePlayback";
 
@@ -23,11 +25,17 @@ function download(name: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
-export function App({ host = {} }: { host?: ProjectHost }) {
+interface LabModeProps {
+  /** The timing rules, shared with the bullet-parry mode (owned by the shell, which also saves them). */
+  config: Timing.TimingConfig;
+  onConfigChange: (config: Timing.TimingConfig) => void;
+  onSwitchMode: () => void;
+}
+
+export function LabMode({ config, onConfigChange, onSwitchMode }: LabModeProps) {
   const [locale] = useLocale();
   const T = useText();
   const t = T.app;
-  const [config, setConfig] = useState(loadConfig);
   const [session, setSession] = useState(loadSession);
   const [mode, setMode] = useState<Mode>("live");
   const [speed, setSpeed] = useState(1);
@@ -35,15 +43,16 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  // Untouched built-in rules and attacks follow the language; edited ones are the visitor's data and stay.
-  // The swap is not saved: loading relocalizes anyway, and saving it would let an idle tab (synced through the
-  // storage event) overwrite edits made in another tab.
+  const presets = useMemo(() => gamePresets(locale), [locale]);
+
+  // Untouched built-in attacks follow the language (the shell does the same for the shared rules); edited ones are the
+  // visitor's data and stay. The swap is not saved: loading relocalizes anyway, and saving it would let an idle tab
+  // (synced through the storage event) overwrite edits made in another tab.
   const lastLocale = useRef(locale);
-  const skipSave = useRef({ config: false, session: false });
+  const skipSave = useRef({ session: false });
   useEffect(() => {
     if (lastLocale.current === locale) return;
     lastLocale.current = locale;
-    setConfig((c) => { const next = relocalizeTimingConfig(c, locale); if (next) skipSave.current.config = true; return next ?? c; });
     setSession((s) => { const next = relocalizeSession(s, locale); if (next !== s) skipSave.current.session = true; return next; });
   }, [locale]);
 
@@ -67,12 +76,7 @@ export function App({ host = {} }: { host?: ProjectHost }) {
     onWrap: () => { if (modeRef.current === "live") setPresses([]); },
   });
 
-  // Persist (best effort).
-  useEffect(() => {
-    if (skipSave.current.config) { skipSave.current.config = false; return; }
-    const t = window.setTimeout(() => save(CONFIG_KEY, { format: "gml-timing-config", version: 1, config }), 300);
-    return () => window.clearTimeout(t);
-  }, [config]);
+  // Persist the session (best effort); the shell persists the rules.
   useEffect(() => {
     if (skipSave.current.session) { skipSave.current.session = false; return; }
     const t = window.setTimeout(() => save(SESSION_KEY, session), 300);
@@ -111,7 +115,7 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   const onImport = async (file: File | undefined) => {
     if (!file) return;
     try {
-      setConfig(parseTimingConfig(await file.text()));
+      onConfigChange(parseTimingConfig(await file.text()));
       setNotice(null);
     } catch (e) {
       setNotice(e instanceof Error ? e.message : String(e));
@@ -120,28 +124,22 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   };
 
   return (
-    <div className="tl">
-      <header className="tl-top">
-        {host.back && <a className="tl-back" href={host.back.href}>← {localize(host.back.label, locale)}</a>}
-        <LanguageSwitch className="tl-lang" />
-        <h1>{t.title}</h1>
-        <p className="tm-muted">{t.intro}</p>
-      </header>
-
+    <div className="tl-lab">
       <div className="tl-bar">
         <button type="button" className="tm-btn" onClick={() => setEditorOpen((o) => !o)} aria-expanded={editorOpen}>{editorOpen ? t.editorCollapse : t.editorExpand}</button>
-        <TimingPresetMenu onPick={(c) => { setConfig(c); setNotice(null); }} />
+        <TimingPresetMenu presets={presets} onPick={(c) => { onConfigChange(c); setNotice(null); }} />
         <button type="button" className="tm-btn" onClick={() => download(`${config.id || "timing"}.json`, exportTimingConfig(config))}>{t.exportConfig}</button>
         <button type="button" className="tm-btn" onClick={() => fileInput.current?.click()}>{t.importConfig}</button>
         <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={(e) => void onImport(e.target.files?.[0])} />
-        <button type="button" className="tm-btn" onClick={() => { setConfig(defaultConfig()); setSession(defaultSession()); pb.seek(0); setNotice(null); }}>{t.resetAll}</button>
+        <button type="button" className="tm-btn" onClick={() => { onConfigChange(bulletParryDefault()); setSession(defaultSession()); pb.seek(0); setNotice(null); }}>{t.resetAll}</button>
+        <button type="button" className="tm-btn primary" onClick={onSwitchMode}>{t.playWith}</button>
         <span className="tm-muted tl-cfgname">{t.current(config.name)}</span>
       </div>
       {notice && <div className="tl-notice" role="alert">{notice}</div>}
       {result.error && <div className="tl-notice" role="alert">{t.runFailed(result.error)}</div>}
 
       <div className={`tl-main${editorOpen ? "" : " no-editor"}`}>
-        {editorOpen && <aside className="tl-left"><TimingEditor config={config} onChange={setConfig} /></aside>}
+        {editorOpen && <aside className="tl-left"><TimingEditor config={config} onChange={onConfigChange} /></aside>}
         <div className="tl-center">
           <Scene config={config} frame={pb.frame} trace={trace} events={shown} items={items} fx={pb.fx} />
 

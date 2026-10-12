@@ -1,40 +1,47 @@
-/* Page chrome for the timing lab (dark, matching the site). Component styles come from @gml/ui/timing.css. */
+/* Page chrome for the timing lab (dark, matching the site): the only global rules (body) live here. Component styles come from
+   @gml/ui/timing.css; the lab mode is scoped under .tl-lab and the game mode brings its own stylesheet (play/play.css). */
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #0b141b; color: #edf3f4; font: 14px/1.6 "Segoe UI", "Microsoft JhengHei", sans-serif; }
 .tl { max-width: 1680px; margin: 0 auto; padding: 14px 16px 40px; }
 .tl a { color: inherit; }
-.tl h1 { font-size: 22px; margin: 4px 0; }
-.tl h3 { font-size: 14px; margin: 0 0 8px; color: #80d7d8; }
+.tl-head { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; }
+.tl-head h1 { flex-basis: 100%; font-size: 22px; margin: 4px 0; }
+.tl-head p { flex-basis: 100%; margin: 0 0 8px; font-size: 13px; max-width: 900px; color: #aab9c3; }
 .tl-back { font-size: 12px; color: #aab9c3; text-decoration: none; }
 .tl-back:hover { color: #ecd099; }
-.tl-top { display: flex; flex-wrap: wrap; align-items: center; column-gap: 12px; }
-.tl-top h1, .tl-top p { flex-basis: 100%; }
-.tl-top p { margin: 0 0 8px; font-size: 13px; max-width: 900px; }
 /* Language switch: compact segmented control at the right of the back-link row. */
-.tl .tl-lang { margin-left: auto; display: inline-flex; flex: none; border: 1px solid #2b3d49; border-radius: 6px; overflow: hidden; }
-.tl .lang-switch-option { background: #17282f; color: #aab9c3; border: 0; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.tl .lang-switch-option + .lang-switch-option { border-left: 1px solid #2b3d49; }
-.tl .lang-switch-option:hover { color: #edf3f4; }
-.tl .lang-switch-option[aria-pressed="true"] { background: #80d7d8; color: #0b141b; font-weight: 700; }
-.tl .lang-switch-option:focus-visible { outline: 2px solid #ecd099; outline-offset: -2px; }
-.tl .tm-muted { color: #aab9c3; }
-.tl .tm-note { font-size: 12px; margin: 0 0 8px; }
-.tl .tm-btn, .tl .tm-preset, .tl select, .tl input:not([type="checkbox"]):not([type="range"]):not([type="color"]) {
+.tl-head .tl-lang { margin-left: auto; display: inline-flex; flex: none; border: 1px solid #2b3d49; border-radius: 6px; overflow: hidden; }
+.tl-head .lang-switch-option { background: #17282f; color: #aab9c3; border: 0; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.tl-head .lang-switch-option + .lang-switch-option { border-left: 1px solid #2b3d49; }
+.tl-head .lang-switch-option:hover { color: #edf3f4; }
+.tl-head .lang-switch-option[aria-pressed="true"] { background: #80d7d8; color: #0b141b; font-weight: 700; }
+.tl-head .lang-switch-option:focus-visible { outline: 2px solid #ecd099; outline-offset: -2px; }
+/* Mode tabs. */
+.tl-tabs { display: flex; gap: 4px; margin: 2px 0 10px; border-bottom: 1px solid #2b3d49; }
+.tl-tab { flex: 0 1 auto; min-width: 0; background: transparent; color: #aab9c3; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 6px 16px; font: inherit; cursor: pointer; }
+.tl-tab:hover { color: #edf3f4; }
+.tl-tab[aria-selected="true"] { color: #80d7d8; border-bottom-color: #80d7d8; font-weight: 700; }
+.tl-tab:focus-visible { outline: 2px solid #ecd099; outline-offset: -2px; }
+.tl-loading { padding: 24px 0; text-align: center; color: #aab9c3; }
+.tl-lab h3 { font-size: 14px; margin: 0 0 8px; color: #80d7d8; }
+.tl-lab .tm-muted { color: #aab9c3; }
+.tl-lab .tm-note { font-size: 12px; margin: 0 0 8px; }
+.tl-lab .tm-btn, .tl-lab .tm-preset, .tl-lab select, .tl-lab input:not([type="checkbox"]):not([type="range"]):not([type="color"]) {
   background: #17282f; color: #edf3f4; border: 1px solid #2b3d49; border-radius: 5px; padding: 3px 8px; font: inherit;
 }
-.tl .tm-btn { cursor: pointer; }
-.tl .tm-btn:hover:not(:disabled) { border-color: #80d7d8; }
-.tl .tm-btn:disabled { opacity: 0.4; cursor: default; }
-.tl .tm-btn.primary { background: #ecd099; color: #17252c; border-color: #ecd099; font-weight: 700; }
-.tl .tm-btn.tm-mini { padding: 0 6px; font-size: 12px; line-height: 20px; }
-.tl .tm-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border: 1px solid #2b3d49; border-radius: 999px; }
-.tl input[type="checkbox"] { accent-color: #80d7d8; }
-.tl .num-field { display: inline-flex; }
-.tl .num-field input { width: 100%; min-width: 0; }
-.tl .segmented { display: inline-flex; border: 1px solid #2b3d49; border-radius: 6px; overflow: hidden; }
-.tl .segmented button { background: #17282f; color: #aab9c3; border: 0; padding: 4px 14px; cursor: pointer; font: inherit; }
-.tl .segmented button.on { background: #80d7d8; color: #0b141b; font-weight: 700; }
+.tl-lab .tm-btn { cursor: pointer; }
+.tl-lab .tm-btn:hover:not(:disabled) { border-color: #80d7d8; }
+.tl-lab .tm-btn:disabled { opacity: 0.4; cursor: default; }
+.tl-lab .tm-btn.primary { background: #ecd099; color: #17252c; border-color: #ecd099; font-weight: 700; }
+.tl-lab .tm-btn.tm-mini { padding: 0 6px; font-size: 12px; line-height: 20px; }
+.tl-lab .tm-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border: 1px solid #2b3d49; border-radius: 999px; }
+.tl-lab input[type="checkbox"] { accent-color: #80d7d8; }
+.tl-lab .num-field { display: inline-flex; }
+.tl-lab .num-field input { width: 100%; min-width: 0; }
+.tl-lab .segmented { display: inline-flex; border: 1px solid #2b3d49; border-radius: 6px; overflow: hidden; }
+.tl-lab .segmented button { background: #17282f; color: #aab9c3; border: 0; padding: 4px 14px; cursor: pointer; font: inherit; }
+.tl-lab .segmented button.on { background: #80d7d8; color: #0b141b; font-weight: 700; }
 .tl-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
 .tl-cfgname { font-size: 12px; margin-left: auto; }
 .tl-notice { border: 1px solid #f0707a; background: #3d1f22; color: #ffb4ba; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; }
@@ -71,11 +78,11 @@ body { margin: 0; background: #0b141b; color: #edf3f4; font: 14px/1.6 "Segoe UI"
 .tl-stats li { display: flex; align-items: center; gap: 6px; }
 .tl-stats b { margin-left: auto; }
 .tl-kdot { width: 9px; height: 9px; border-radius: 50%; background: var(--k, #8a9aa5); display: inline-block; }
-.tl .k-perfect { --k: #ecd099; } .tl .k-success { --k: #6fd08a; } .tl .k-fail { --k: #f0707a; } .tl .k-neutral, .tl .k-none { --k: #8a9aa5; }
+.tl-lab .k-perfect { --k: #ecd099; } .tl-lab .k-success { --k: #6fd08a; } .tl-lab .k-fail { --k: #f0707a; } .tl-lab .k-neutral, .tl-lab .k-none { --k: #8a9aa5; }
 .tl-table { border-collapse: collapse; width: 100%; font-size: 12px; }
 .tl-table th, .tl-table td { text-align: left; padding: 2px 6px; border-bottom: 1px solid #2b3d49; }
 .tl-foot { margin-top: 18px; font-size: 11px; color: #8a9aa5; }
-.tl .tm-log-body { max-height: 300px; }
+.tl-lab .tm-log-body { max-height: 300px; }
 @media (max-width: 960px) {
   .tl-main { grid-template-columns: minmax(0, 1fr); }
   .tl-left { position: static; max-height: none; }
@@ -83,6 +90,7 @@ body { margin: 0; background: #0b141b; color: #edf3f4; font: 14px/1.6 "Segoe UI"
 }
 @media (max-width: 480px) {
   .tl { padding: 10px 12px 32px; }
-  .tl h1 { font-size: 19px; }
+  .tl-head h1 { font-size: 19px; }
+  .tl-tab { flex: 1 1 0; padding: 6px 8px; }
   .tl-key { flex: 1 1 28%; }
 }

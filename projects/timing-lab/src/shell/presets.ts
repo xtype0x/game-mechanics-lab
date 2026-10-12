@@ -1,7 +1,7 @@
 import { Timing, c } from "@gml/core";
 import { relocalizeTimingConfig, timingPresets } from "@gml/ui";
 import { getLocale, type Locale } from "@gml/ui/i18n";
-import { textFor } from "../i18n";
+import { textFor } from "./i18n";
 
 type Cfg = Timing.TimingConfig;
 

@@ -4,7 +4,7 @@ import {
   BULLET_KINDS, CEIL_Y, CHEST_Y, DIRECTOR, GUNNER_X, PATTERNS, createDirector, createSession, createWorld,
   compressOffsets, directorSeconds, speedMultAt, directorStep, hudOf, intervalAt, pressInteraction, spawnBullet, stepWorld, tickSession, unlockedPatterns,
   bulletParryDefault, buildKeyMap, scoreOf, type BulletKindId, type GameEvent, type World,
-} from "../src/game";
+} from "../src/play/game";
 
 const quiet = (w: World) => { w.director.nextPatternAt = Number.POSITIVE_INFINITY; return w; };
 const fresh = (over: Partial<{ seed: number; difficulty: number }> = {}) => quiet(createWorld(bulletParryDefault(), over));

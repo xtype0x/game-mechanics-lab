@@ -3,7 +3,7 @@ export * from "./director";
 export * from "./hud";
 export * from "./judge";
 export * from "./keys";
-export * from "./preset";
+export * from "../../shell/presets";
 export * from "./rules";
 export * from "./session";
 export * from "./util";

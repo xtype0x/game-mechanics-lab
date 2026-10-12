@@ -1,25 +1,25 @@
-import type { ProjectHost } from "@gml/ui";
-import { LanguageSwitch, localize, useLocale } from "@gml/ui/i18n";
+import { Timing } from "@gml/core";
+import { LanguageSwitch } from "@gml/ui/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AssetPanel, PackSwitch } from "./AssetPanel";
 import { AssetStore } from "./assets/store";
 import { JudgePanel } from "./JudgePanel";
 import { soundsForEvents } from "./audio/events";
 import {
-  BULLET_KINDS, bulletKindName, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, relocalizeGameConfig, scoreOf, shouldSaveBest,
+  BULLET_KINDS, bulletKindName, buildKeyMap, createSession, hudOf, keyHint, keyLabel, playableConfig, pressInteraction, scoreOf, shouldSaveBest,
   startBlocker, tickSession, type Hud, type Session,
 } from "./game";
 import { useText } from "./i18n";
 import { createRenderer, type Renderer } from "./render/renderer";
 import { SettingsPanel } from "./SettingsPanel";
 import { loadBest, loadSettings, saveBest, saveSettings, type GameSettings } from "./storage";
+import "./play.css";
 
 type Screen = "title" | "playing" | "over";
 type Panel = null | "settings" | "how" | "assets";
 
 interface Result { score: number; seconds: number; perfects: number; hits: number; newBest: boolean; practice: boolean }
 
-/** Session for the current settings; rules with errors fall back to the default so the backdrop still runs. */
 /** Copies `name`/`description` strings from `src` into the same-shaped `dst` (a relocalized copy of the same rules). */
 function copyText(dst: unknown, src: unknown): void {
   if (!dst || !src || typeof dst !== "object" || typeof src !== "object") return;
@@ -30,14 +30,21 @@ function copyText(dst: unknown, src: unknown): void {
   }
 }
 
-const sessionFor = (s: GameSettings, seed?: number): Session =>
-  createSession(playableConfig(s.config), { difficulty: s.difficulty, practice: s.practice, ...(seed !== undefined ? { seed } : {}) });
+/** Session for the current rules and settings; rules with errors fall back to the default so the backdrop still runs. */
+const sessionFor = (config: Timing.TimingConfig, s: GameSettings, seed?: number): Session =>
+  createSession(playableConfig(config), { difficulty: s.difficulty, practice: s.practice, ...(seed !== undefined ? { seed } : {}) });
 
 const STEP_MS = 1000 / 60;
 const GAME_OVER_DELAY_TICKS = 50;
 
-export function App({ host }: { host?: ProjectHost }) {
-  const [locale] = useLocale();
+interface PlayModeProps {
+  /** The timing rules, shared with the frame lab (owned by the shell). */
+  config: Timing.TimingConfig;
+  onConfigChange: (config: Timing.TimingConfig) => void;
+  onSwitchMode: () => void;
+}
+
+export function PlayMode({ config, onConfigChange, onSwitchMode }: PlayModeProps) {
   const t = useText().app;
   const th = useText().how;
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
@@ -52,9 +59,9 @@ export function App({ host }: { host?: ProjectHost }) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
-  const sessionRef = useRef<Session>(sessionFor(settings));
-  const live = useRef({ screen, paused, panel, best, settings });
-  live.current = { screen, paused, panel, best, settings };
+  const sessionRef = useRef<Session>(sessionFor(config, settings));
+  const live = useRef({ screen, paused, panel, best, settings, config });
+  live.current = { screen, paused, panel, best, settings, config };
 
   useEffect(() => { void store.init(); }, [store]);
 
@@ -80,13 +87,13 @@ export function App({ host }: { host?: ProjectHost }) {
     if (new URLSearchParams(location.search).has("debug")) (window as unknown as { __bp: unknown }).__bp = { session: () => sessionRef.current, store };
   }, [store]);
 
-  const keyMap = useMemo(() => buildKeyMap(settings.config, settings.keys), [settings.config, settings.keys]);
-  const hint = useCallback((id: string) => keyHint(live.current.settings.config, id, keyLabel, live.current.settings.keys), []);
+  const keyMap = useMemo(() => buildKeyMap(config, settings.keys), [config, settings.keys]);
+  const hint = useCallback((id: string) => keyHint(live.current.config, id, keyLabel, live.current.settings.keys), []);
 
   const start = useCallback(() => {
     const s = live.current.settings;
-    if (startBlocker(s.config)) return;
-    sessionRef.current = sessionFor(s, Math.floor(Math.random() * 0x7fffffff));
+    if (startBlocker(live.current.config)) return;
+    sessionRef.current = sessionFor(live.current.config, s, Math.floor(Math.random() * 0x7fffffff));
     rendererRef.current?.reset();
     setResult(null);
     setPaused(false);
@@ -96,7 +103,7 @@ export function App({ host }: { host?: ProjectHost }) {
   }, []);
 
   const toTitle = useCallback(() => {
-    sessionRef.current = sessionFor(live.current.settings);
+    sessionRef.current = sessionFor(live.current.config, live.current.settings);
     rendererRef.current?.reset();
     setHud(hudOf(sessionRef.current.world));
     setPaused(false);
@@ -113,26 +120,26 @@ export function App({ host }: { host?: ProjectHost }) {
     setSettings(s);
     if (persist) saveSettings(s);
     if (live.current.screen === "title") {
-      sessionRef.current = sessionFor(s);
+      sessionRef.current = sessionFor(live.current.config, s);
       setHud(hudOf(sessionRef.current.world));
     }
   }, []);
 
-  // When the language changes, untouched built-in rules follow it (edited ones are the player's data and stay).
-  const lastLocale = useRef(locale);
+  // The rules are owned by the shell (shared with the frame lab); follow them when they change (a language switch
+  // relocalizing built-ins, a preset, an import, an edit in the editor). On the title screen the backdrop session is rebuilt.
+  // A game in progress keeps its world; only the display names change (same structure, so copy the text in place), and
+  // structural edits apply from the next round.
+  const lastConfig = useRef(config);
   useEffect(() => {
-    if (lastLocale.current === locale) return;
-    lastLocale.current = locale;
-    const next = relocalizeGameConfig(live.current.settings.config, locale);
-    // Not saved: loading relocalizes anyway, and saving would let an idle tab overwrite another tab's edits.
-    if (!next) return;
-    changeSettings({ ...live.current.settings, config: next }, false);
-    // A game in progress keeps its world; only the display names change (same structure, so copy the text in place).
-    if (live.current.screen !== "title") {
-      copyText(sessionRef.current.world.config, playableConfig(next));
-      setHud(hudOf(sessionRef.current.world));
+    if (lastConfig.current === config) return;
+    lastConfig.current = config;
+    if (live.current.screen === "title") {
+      sessionRef.current = sessionFor(config, live.current.settings);
+    } else {
+      copyText(sessionRef.current.world.config, playableConfig(config));
     }
-  }, [locale, changeSettings]);
+    setHud(hudOf(sessionRef.current.world));
+  }, [config]);
 
   // Main loop: fixed 60 Hz ticks, render every animation frame.
   useEffect(() => {
@@ -162,7 +169,7 @@ export function App({ host }: { host?: ProjectHost }) {
         if (acc > STEP_MS) acc = 0;
       } else acc = 0;
       renderer.render(s, {
-        best: l.best, hint: (id) => keyHint(l.settings.config, id, keyLabel, l.settings.keys),
+        best: l.best, hint: (id) => keyHint(l.config, id, keyLabel, l.settings.keys),
         screenArt: l.screen === "over" ? "screen.gameOver" : l.screen === "title" && !l.panel ? "screen.title" : null,
       });
       if (running) {
@@ -219,7 +226,6 @@ export function App({ host }: { host?: ProjectHost }) {
     return () => { document.removeEventListener("visibilitychange", vis); window.removeEventListener("blur", hide); };
   }, []);
 
-  const config = settings.config;
   const blocker = startBlocker(config);
   const keyChips = (
     <p className="bp-keychips" aria-label={t.keysLabel}>
@@ -236,14 +242,7 @@ export function App({ host }: { host?: ProjectHost }) {
 
   return (
     <div className="bp-root">
-      <header className="bp-top">
-        <div className="bp-topleft">
-          {host?.back ? <a className="bp-back" href={host.back.href}>← {localize(host.back.label, locale)}</a> : null}
-          <LanguageSwitch className="bp-lang" />
-        </div>
-        <h1>{t.topTitle}</h1>
-        <span className="bp-dim">{t.rulesLabel(config.name)}</span>
-      </header>
+      <p className="bp-rules bp-dim">{t.rulesLabel(config.name)}</p>
 
       <div className="bp-stage">
         <canvas ref={canvasRef} className="bp-canvas" />
@@ -268,6 +267,7 @@ export function App({ host }: { host?: ProjectHost }) {
               <button type="button" className="bp-btn" onClick={() => setPanel("settings")}>{t.settings}</button>
               <button type="button" className="bp-btn" onClick={() => setPanel("assets")}>{t.assets}</button>
               <button type="button" className="bp-btn" onClick={() => setPanel("how")}>{t.howToPlay}</button>
+              <button type="button" className="bp-btn" onClick={onSwitchMode}>{t.frameLab}</button>
             </div>
             <PackSwitch store={store} snap={assets} onManage={manage} />
             {keyChips}
@@ -308,7 +308,7 @@ export function App({ host }: { host?: ProjectHost }) {
 
         {panel === "settings" ? (
           <div className="bp-overlay solid">
-            <SettingsPanel settings={settings} onChange={changeSettings} store={store} assets={assets} onClose={() => setPanel(null)} inGame={screen !== "title"} />
+            <SettingsPanel settings={settings} onChange={changeSettings} config={config} onConfigChange={onConfigChange} store={store} assets={assets} onClose={() => setPanel(null)} inGame={screen !== "title"} />
           </div>
         ) : null}
 

@@ -1,10 +1,9 @@
-// Source-language (zh-Hant) UI text for the bullet-parry page. Defines the shape; en.tsx must match it.
+// Source-language (zh-Hant) UI text for the bullet-parry mode. Defines the shape; en.tsx must match it.
 // Strings with values are functions; ones with markup return JSX.
 import type { ReactNode } from "react";
 
 export const zhHant = {
   app: {
-    topTitle: "子彈格擋試玩",
     rulesLabel: (name: string) => `判定規則：${name}`,
     keysLabel: "按鍵",
     buttonFallback: "按鈕",
@@ -22,6 +21,7 @@ export const zhHant = {
     enterToStart: "Enter 開始",
     paused: "暫停中",
     resume: "繼續",
+    frameLab: "逐幀分析",
     toTitle: "回標題",
     gameOver: "遊戲結束",
     practiceOver: "練習模式・成績不計入最佳",
@@ -55,6 +55,7 @@ export const zhHant = {
     capturing: "請按下新按鍵…（Esc 取消）",
     rebind: "重設按鍵",
     rulesHeading: "判定規則",
+    sharedRules: "判定規則與逐幀分析共用。",
     loadPreset: "載入預設",
     customOption: (name: string, modified: boolean) => `${name}（${modified ? "已修改" : "自訂"}）`,
     exportConfig: "匯出判定設定",
@@ -208,10 +209,6 @@ export const zhHant = {
   },
   keys: {
     space: "空白",
-  },
-  preset: {
-    name: "子彈格擋（預設）",
-    description: "寬鬆判定窗；閃避 2 次充能、每 3 秒回 1 次；技能耗滿量表、無敵 4 秒；完美格擋會把子彈打回去。",
   },
   /** Bullet kind names, by kind id. */
   bulletKinds: {

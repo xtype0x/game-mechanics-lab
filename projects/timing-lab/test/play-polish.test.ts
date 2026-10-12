@@ -5,9 +5,9 @@ import {
   framesToImpact, gamePresets, keyConflicts, keyHint, keyLabel, matchPreset, playableConfig, pressInteraction, recordJudge,
   rulesStatus, scoreOf, shouldSaveBest, spawnBullet, startBlocker, stepWorld, tickSession, unlockedPatterns, upcomingImpacts,
   speedMultAt, type World,
-} from "../src/game";
-import { buildLogLines, buildStripModel } from "../src/judge/model";
-import { defaultSettings, parseSettings } from "../src/storage";
+} from "../src/play/game";
+import { buildLogLines, buildStripModel } from "../src/play/judge/model";
+import { defaultSettings, parseSettings } from "../src/play/storage";
 
 const quiet = (w: World) => { w.director.nextPatternAt = Number.POSITIVE_INFINITY; return w; };
 
@@ -176,7 +176,7 @@ describe("rules validation gating", () => {
 
 describe("custom interaction in game", () => {
   it("a newly added interaction is pressable, shows in the HUD and has its own sprite slot", async () => {
-    const { hudOf, listSlots } = await import("../src/game").then(async (g) => ({ hudOf: g.hudOf, listSlots: (await import("../src/render/slots")).listSlots }));
+    const { hudOf, listSlots } = await import("../src/play/game").then(async (g) => ({ hudOf: g.hudOf, listSlots: (await import("../src/play/render/slots")).listSlots }));
     const cfg = bulletParryDefault();
     const extra = structuredClone(cfg.interactions.find((i) => i.id === "dodge")!);
     extra.id = "slide";
@@ -197,16 +197,13 @@ describe("custom interaction in game", () => {
 
 describe("settings storage", () => {
   it("old saves without the new fields load with defaults", () => {
-    const d = defaultSettings();
-    const old = JSON.stringify({ config: d.config, difficulty: 1.2, showFrameBar: true, volume: 0.3 });
+    const old = JSON.stringify({ config: bulletParryDefault(), difficulty: 1.2, showFrameBar: true, volume: 0.3 });
     expect(parseSettings(old)).toMatchObject({ practice: false, judgeFreeze: true, keys: {}, showFrameBar: true, difficulty: 1.2 });
   });
-  it("keeps a config that fails validation so it can be fixed, and filters bad key remaps", () => {
+  it("ignores a stored config (the rules live in the shell) and filters bad key remaps", () => {
     const d = defaultSettings();
-    const bad = structuredClone(d.config);
-    bad.interactions[0]!.id = bad.interactions[1]!.id;
-    const s = parseSettings(JSON.stringify({ ...d, config: bad, practice: true, keys: { parry: "KeyF", dodge: "Escape" } }));
-    expect(rulesStatus(s.config).ok).toBe(false);
+    const s = parseSettings(JSON.stringify({ ...d, config: { junk: true }, practice: true, keys: { parry: "KeyF", dodge: "Escape" } }));
+    expect(s).not.toHaveProperty("config");
     expect(s.practice).toBe(true);
     expect(s.keys).toEqual({ parry: "KeyF" });
   });

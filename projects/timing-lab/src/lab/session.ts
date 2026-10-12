@@ -1,11 +1,10 @@
 // Session = attack library + queued sequence + recorded presses; persisted in this browser only.
 import { Timing } from "@gml/core";
-import { parseTimingConfig, relocalizeTimingConfig, timingPresets } from "@gml/ui";
 import type { Locale } from "@gml/ui/i18n";
 import { getLocale } from "@gml/ui/i18n";
+import { safeStorage } from "../shell/config";
 import { attackLibrary, buildSchedule, relocalizeAttacks, type SeqItem } from "./attacks";
 
-export const CONFIG_KEY = "gml.timing-lab.config.v1";
 export const SESSION_KEY = "gml.timing-lab.session.v1";
 
 export interface PressRec {
@@ -19,12 +18,6 @@ export interface Session {
   loop: boolean;
   presses: PressRec[];
 }
-
-/** The starting rules, in the current language. Once saved or imported, a config is the visitor's data and keeps its text. */
-export const defaultConfig = (): Timing.TimingConfig => {
-  const presets = timingPresets(getLocale());
-  return presets.find((p) => p.id === "souls") ?? presets[0]!;
-};
 
 export const defaultSession = (): Session => ({
   attacks: attackLibrary(getLocale()),
@@ -69,28 +62,8 @@ export function relocalizeSession(session: Session, to: Locale): Session {
   return attacks.some((a, i) => a !== session.attacks[i]) ? { ...session, attacks } : session;
 }
 
-export function loadConfig(storage: Pick<Storage, "getItem"> | null = safeStorage()): Timing.TimingConfig {
-  try {
-    const t = storage?.getItem(CONFIG_KEY);
-    if (t) {
-      const cfg = parseTimingConfig(t);
-      // An untouched built-in saved in another language is shown in the current one.
-      return relocalizeTimingConfig(cfg, getLocale()) ?? cfg;
-    }
-  } catch { /* corrupt or unavailable */ }
-  return defaultConfig();
-}
-
 export function loadSession(storage: Pick<Storage, "getItem"> | null = safeStorage()): Session {
   try { return parseSession(storage?.getItem(SESSION_KEY) ?? null); } catch { return defaultSession(); }
-}
-
-export function safeStorage(): Storage | null {
-  try { return typeof localStorage === "undefined" ? null : localStorage; } catch { return null; }
-}
-
-export function save(key: string, value: unknown): void {
-  try { safeStorage()?.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
 }
 
 /** Press list kept sorted by frame and free of exact duplicates; presses of removed interactions are dropped. */
