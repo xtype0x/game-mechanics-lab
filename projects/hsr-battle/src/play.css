@@ -11,3 +11,15 @@
 .play-result-actions { display: flex; gap: 12px; margin-top: 8px; }
 .play-result-actions button { height: 44px; padding: 0 24px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(10, 8, 20, 0.7); color: #fff; font-size: 17px; cursor: pointer; }
 .play-result-actions button:first-child { border-color: #ffd36b; background: linear-gradient(135deg, #ff9f43, #c2410c); font-weight: 700; }
+/* Landscape phones: the stage fills the height, so the back button shrinks to fit the side letterbox instead of covering the party. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .play-back { width: 40px; height: 40px; padding: 0; font-size: 18px; }
+  .play-back-text { display: none; }
+}
+/* Portrait phones: the 16:9 stage is tiny, so suggest landscape (narrow portrait viewports only). */
+.play-rotate { display: none; }
+@media (orientation: portrait) and (max-width: 700px) {
+  .play-rotate { display: flex; position: fixed; left: 8px; right: 8px; top: 8px; z-index: 130; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffd36b; background: rgba(10, 8, 20, 0.9); color: #fff; font-size: 14px; }
+  .play-rotate span { flex: 1; }
+  .play-rotate button { height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.4); background: transparent; color: #fff; cursor: pointer; }
+}

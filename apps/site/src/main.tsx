@@ -50,7 +50,7 @@ function Home() {
       <img className="launch-art" src={heroImage} alt={h.heroAlt} fetchPriority="high"/>
       <div className="launch-shade" aria-hidden="true"/>
       <p className="hero-image-credit">{h.imageCredit}</p>
-      <div className="hero-coordinate" aria-hidden="true">GGT / PARAMETER WORLD <span>REWRITE THE RULES</span></div>
+      <div className="hero-coordinate" aria-hidden="true">GML / PARAMETER WORLD <span>REWRITE THE RULES</span></div>
       <div className="launch-copy">
         <div className="eyebrow launch-eyebrow"><span/> {h.eyebrow}</div>
         <p className="launch-prelude">{h.prelude}</p>

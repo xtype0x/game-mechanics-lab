@@ -22,7 +22,7 @@ export function GameGrid() {
 export function CrossToolRow() {
   const t = useSiteText();
   return <div className="cross-row">{crossTools.map(tool => <a className="cross-card" key={tool.id} href={toolHref(tool.href!)}>
-    <span className="category">{t.gamesPage.crossCategory}</span><strong>{toolText(t, null, tool).title}</strong><span>{toolText(t, null, tool).summary}</span><span className="card-action">{t.gamesPage.open} <Arrow/></span>
+    <span className="category">{t.gamesPage.crossCategory}</span>{tool.zhOnly && t.gamesPage.toolZhOnly ? <span className="pill lang-note">{t.gamesPage.toolZhOnly}</span> : null}<strong>{toolText(t, null, tool).title}</strong><span>{toolText(t, null, tool).summary}</span><span className="card-action">{t.gamesPage.open} <Arrow/></span>
   </a>)}</div>;
 }
 
@@ -38,7 +38,7 @@ export function GamesIndex() {
 export function ToolCard({ tool, gameId }: { tool: GameTool; gameId: GameId | null }) {
   const t = useSiteText();
   const text = toolText(t, gameId, tool);
-  const body = <><span className={`pill ${tool.status === 'available' ? 'available' : ''}`}>{tool.status === 'available' ? t.gamesPage.toolAvailable : t.gamesPage.toolPlanned}</span><h3>{text.title}</h3><p>{text.summary}</p></>;
+  const body = <><span className={`pill ${tool.status === 'available' ? 'available' : ''}`}>{tool.status === 'available' ? t.gamesPage.toolAvailable : t.gamesPage.toolPlanned}</span>{tool.zhOnly && t.gamesPage.toolZhOnly ? <span className="pill lang-note">{t.gamesPage.toolZhOnly}</span> : null}<h3>{text.title}</h3><p>{text.summary}</p></>;
   return tool.status === 'available' && tool.href
     ? <a className="tool-card" href={toolHref(tool.href)}>{body}<span className="card-action">{t.gamesPage.toolOpen} <Arrow/></span></a>
     : <div className="tool-card planned" aria-disabled="true">{body}<span className="card-action muted">{t.gamesPage.toolPlannedAction} <span aria-hidden="true">◷</span></span></div>;

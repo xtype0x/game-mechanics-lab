@@ -67,6 +67,7 @@ export const en: SiteText = {
     indexFoot: <>More games are being worked on and will be added over time. The gacha simulator already includes banners from several games; find it in <a href="#/tools">Cross-game tools</a>.</>,
     toolAvailable: 'Ready to play',
     toolPlanned: 'In research',
+    toolZhOnly: 'Chinese UI for now',
     toolOpen: 'Open',
     toolPlannedAction: 'In the works, coming soon',
     hubNotFoundTitle: 'This game isn\'t covered yet!',

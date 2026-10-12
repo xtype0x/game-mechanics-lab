@@ -20,6 +20,17 @@ describe("site pages", () => {
     }
   });
 
+  it("a tool opened from a game hub with ?game= goes back to that hub", () => {
+    for (const g of games) {
+      for (const t of g.tools) {
+        const m = t.href?.match(/^([^?#]+)\?game=([a-z0-9-]+)/);
+        if (!m) continue;
+        const p = listProjects().find((x) => `${x.path}/index.html` === m[1]);
+        expect(p?.backByGame?.[m[2]]?.route, `${g.id}/${t.id}: backByGame.${m[2]}`).toBe(`#/games/${g.id}`);
+      }
+    }
+  });
+
   it("every tool link on a game hub points at an existing page", () => {
     const pages = new Set(Object.values(allPages()));
     for (const g of games) {

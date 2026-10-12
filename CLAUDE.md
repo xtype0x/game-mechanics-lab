@@ -36,7 +36,7 @@ apps/console ───────────────► packages/ui ──
 ## 新增小專案（檢查清單）
 1. 建立 `projects/<id>/`（`<id>` 用小寫英文加 `-`，資料夾名＝id＝套件名尾碼）：
    - `package.json`：`"name": "@gml/<id>"`、`"exports": { ".": "./src/index.tsx", "./project.json": "./project.json" }`、`dependencies` 列出用到的 `@gml/*`、`peerDependencies` 列 `react`／`react-dom`。
-   - `project.json`：`id`、`title`、`description`、`path`（網址路徑，例如 `hsr/toughness-rpg`）、`back`（`{ route: "#/games/hsr", label: "…" }`）、`en`（`{ title, description, backLabel }`，英文版；有 `back` 就要有 `backLabel`）。
+   - `project.json`：`id`、`title`、`description`、`path`（網址路徑，例如 `hsr/toughness-rpg`）、`back`（`{ route: "#/games/hsr", label: "…" }`）、`en`（`{ title, description, backLabel }`，英文版；有 `back` 就要有 `backLabel`）；選填 `backByGame`（`{ "<遊戲id>": { route, label, backLabel } }`，從遊戲頁以 `?game=<id>` 進入時改回該遊戲頁）。
    - `tsconfig.json`：`{ "extends": "../../tsconfig.web.json", "include": ["src"] }`。
    - `src/index.tsx`：`export const mount: MountProject = (el, host) => …`。返回連結用 `host.back`（文字用 `localize(host.back.label, locale)`），不要寫死網站路徑。
    - `README.md`（做什麼、資料來源、瀏覽器儲存鍵）與 `test/`。

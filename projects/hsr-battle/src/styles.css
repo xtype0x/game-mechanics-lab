@@ -388,8 +388,14 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .section .table { max-width: 100%; }
 .results-head h3 { font-size: 15px; }
 
+.play-quick { display: none; }
 @media (max-width: 1000px) {
   .lab-grid { grid-template-columns: minmax(0, 1fr); }
+  .play-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--panel); }
+  .play-quick > span { flex: 1 1 200px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+  .play-quick .btn { min-height: 40px; padding: 0 18px; }
+  .play-quick small { flex-basis: 100%; }
+  .play-quick-error { color: var(--warn); }
 }
 @media (max-width: 640px) {
   .lab { padding: 14px 16px 36px; }

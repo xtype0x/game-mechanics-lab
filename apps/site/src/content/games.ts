@@ -18,6 +18,8 @@ export interface GameTool<Id extends string = string> {
   /** Omitted while the tool is only planned. */
   href?: string;
   status: 'available' | 'planned';
+  /** The tool's own interface is still Chinese only (English site shows a notice). Remove once it is translated. */
+  zhOnly?: true;
 }
 
 export interface Game {
@@ -27,10 +29,10 @@ export interface Game {
   tools: GameTool[];
 }
 
-const gachaTool = (id: GameId): GameTool<'gacha'> => ({ id: 'gacha', status: 'available', href: `gacha/index.html?game=${id}` });
+const gachaTool = (id: GameId): GameTool<'gacha'> => ({ id: 'gacha', status: 'available', href: `gacha/index.html?game=${id}`, zhOnly: true });
 
 const hsrTools: GameTool<GameToolId<'hsr'>>[] = [
-  { id: 'battle', status: 'available', href: 'hsr/battle/index.html' },
+  { id: 'battle', status: 'available', href: 'hsr/battle/index.html', zhOnly: true },
   gachaTool('hsr'),
   { id: 'coverage', status: 'available', href: '#/games/hsr/coverage' },
   { id: 'conditional', status: 'planned' },
@@ -45,9 +47,9 @@ export const gameById = (id: string) => games.find(g => g.id === id);
 
 /** Cross-game tools (not tied to one game). */
 export const crossTools: GameTool<CrossToolId>[] = [
-  { id: 'gacha', status: 'available', href: 'gacha/index.html' },
+  { id: 'gacha', status: 'available', href: 'gacha/index.html', zhOnly: true },
   { id: 'timing-lab', status: 'available', href: 'timing-lab/index.html' },
-  { id: 'bullet-parry', status: 'available', href: 'bullet-parry/index.html' },
+  { id: 'bullet-parry', status: 'available', href: 'bullet-parry/index.html', zhOnly: true },
 ];
 
 interface ToolText { title: string; summary: string }

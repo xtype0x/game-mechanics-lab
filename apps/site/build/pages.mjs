@@ -38,6 +38,10 @@ export function listProjects() {
       if (m.back && (!m.back.route || !m.back.label)) fail("back needs route and label");
       if (!m.en?.title || !m.en?.description) fail("en.title and en.description are required");
       if (m.back && !m.en.backLabel) fail("en.backLabel is required when back is present");
+      for (const [game, b] of Object.entries(m.backByGame ?? {})) {
+        if (!m.back) fail("backByGame needs a default back");
+        if (!/^[a-z0-9-]+$/.test(game) || !b?.route || !b.label || !b.backLabel) fail(`backByGame.${game} needs route, label and backLabel`);
+      }
       return { ...m, package: pkg.name };
     });
 }
@@ -47,7 +51,17 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 /** The generated HTML for one project page. */
 export function pageHtml(p) {
   const up = "../".repeat(p.path.split("/").length);
-  const host = p.back ? { back: { href: `${up}index.html${p.back.route}`, label: { "zh-Hant": p.back.label, en: p.en.backLabel } } } : {};
+  const back = (route, zh, en) => ({ href: `${up}index.html${route}`, label: { "zh-Hant": zh, en } });
+  const host = p.back ? { back: back(p.back.route, p.back.label, p.en.backLabel) } : {};
+  // Opened from a game hub with ?game=<id>: go back to that hub. Only ids listed in project.json are accepted.
+  const byGame = Object.fromEntries(Object.entries(p.backByGame ?? {}).map(([g, b]) => [g, back(b.route, b.label, b.backLabel)]));
+  const mountJs = Object.keys(byGame).length
+    ? `const host = ${JSON.stringify(host)};
+      const byGame = ${JSON.stringify(byGame)};
+      const game = new URLSearchParams(location.search).get("game");
+      if (game && Object.hasOwn(byGame, game)) host.back = byGame[game];
+      mount(document.getElementById("root"), host);`
+    : `mount(document.getElementById("root"), ${JSON.stringify(host)});`;
   const titles = { "zh-Hant": `${p.title} — 遊戲機制研究室`, en: `${p.en.title} — Game Mechanics Lab` };
   return `<!doctype html>
 ${MARKER}${p.id}/project.json by apps/site/build/pages.mjs; do not edit. -->
@@ -68,7 +82,7 @@ ${MARKER}${p.id}/project.json by apps/site/build/pages.mjs; do not edit. -->
       const setTitle = () => { document.title = titles[getLocale()]; };
       setTitle();
       subscribeLocale(setTitle);
-      mount(document.getElementById("root"), ${JSON.stringify(host)});
+      ${mountJs}
     </script>
   </body>
 </html>

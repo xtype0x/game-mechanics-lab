@@ -33,6 +33,13 @@ export function Lab({ project, update, onPlay, onReset, saved, equip }: Props) {
 
   return (
     <div className="lab-grid">
+      {/* Single-column layouts put the 開打 section far below the editors; this bar starts a battle without scrolling. */}
+      <div className="play-quick">
+        <span><b>{team.map((u) => u.name).join("・")}</b> vs {foes.map((u) => u.name).join("・")}</span>
+        <button type="button" className="btn primary" disabled={!!error} onClick={onPlay}>⚔ 開打</button>
+        {error && <small className="play-quick-error">目前無法開打，原因見下方「開打」區塊。</small>}
+        <small className="muted">手機建議橫向遊玩。</small>
+      </div>
       <div className="col">
         <Section title="隊伍與敵人">
           <div className="field">

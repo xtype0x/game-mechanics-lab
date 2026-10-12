@@ -65,6 +65,8 @@ export const zhHant = {
     indexFoot: <>更多遊戲整理中，之後會陸續加入。抽卡模擬器已內建多款遊戲的卡池，可在<a href="#/tools">跨遊戲工具</a>使用。</>,
     toolAvailable: '可以玩囉',
     toolPlanned: '研究中',
+    /** Shown on tools whose interface is not translated yet; empty = not shown. */
+    toolZhOnly: '',
     toolOpen: '打開',
     toolPlannedAction: '整理中，敬請期待',
     hubNotFoundTitle: '這款遊戲還沒收錄！',

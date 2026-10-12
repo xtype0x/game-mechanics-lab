@@ -17,7 +17,11 @@
       const setTitle = () => { document.title = titles[getLocale()]; };
       setTitle();
       subscribeLocale(setTitle);
-      mount(document.getElementById("root"), {"back":{"href":"../index.html#/tools","label":{"zh-Hant":"遊戲機制研究室・跨遊戲工具","en":"Game Mechanics Lab · Cross-game tools"}}});
+      const host = {"back":{"href":"../index.html#/tools","label":{"zh-Hant":"遊戲機制研究室・跨遊戲工具","en":"Game Mechanics Lab · Cross-game tools"}}};
+      const byGame = {"hsr":{"href":"../index.html#/games/hsr","label":{"zh-Hant":"遊戲機制研究室・星穹鐵道","en":"Game Mechanics Lab · Star Rail"}}};
+      const game = new URLSearchParams(location.search).get("game");
+      if (game && Object.hasOwn(byGame, game)) host.back = byGame[game];
+      mount(document.getElementById("root"), host);
     </script>
   </body>
 </html>
