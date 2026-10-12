@@ -3,5 +3,10 @@
   "title": "星穹鐵道戰鬥研究室",
   "description": "星穹鐵道戰鬥研究室：用星穹鐵道角色、光錐、遺器與敵人資料，拆解並模擬戰鬥機制，預覽行動順序、批量模擬勝率，並親手打一場。",
   "path": "hsr/battle",
-  "back": { "route": "#/games/hsr", "label": "遊戲機制研究室・星穹鐵道" }
+  "back": { "route": "#/games/hsr", "label": "遊戲機制研究室・星穹鐵道" },
+  "en": {
+    "title": "Star Rail Battle Lab",
+    "description": "Star Rail Battle Lab: break down and simulate combat mechanics with Honkai: Star Rail characters, Light Cones, Relics and enemies. Preview turn order, batch-simulate win rates, and play a battle yourself.",
+    "backLabel": "Game Mechanics Lab · Star Rail"
+  }
 }

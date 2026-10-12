@@ -3,9 +3,11 @@ import { Lab } from "./Lab";
 import { Play } from "./Play";
 import { clearSaved, freshProject, loadSaved, saveProject } from "./state";
 import type { ProjectHost, Updater } from "@gml/ui";
+import { localize, useLocale } from "@gml/ui/i18n";
 import { useEquip } from "./useEquip";
 
 export function App({ host = {} }: { host?: ProjectHost }) {
+  const [locale] = useLocale();
   const [project, setProject] = useState(loadSaved);
   const [view, setView] = useState<"lab" | "play">("lab");
   const [saved, setSaved] = useState(true);
@@ -32,7 +34,7 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   return (
     <div className="lab">
       <header className="top">
-        {host.back && <a className="back-link" href={host.back.href}>← {host.back.label}</a>}
+        {host.back && <a className="back-link" href={host.back.href}>← {localize(host.back.label, locale)}</a>}
         <h1>星穹鐵道戰鬥研究室</h1>
         <p className="tagline">把星穹鐵道的角色、光錐、遺器與敵人拆成可調整的機制：換隊伍、改配裝，看看誰先出手、勝率多少，最後親手打一場。星穹鐵道資料為未核實的社群整理，僅供模擬；另附原創範本角色。</p>
       </header>

@@ -3,5 +3,10 @@
   "title": "格擋閃避判定研究室",
   "description": "精準格擋、精準閃避的逐幀判定模擬：自訂互動、判定窗、結果與效果，配合幀數條與判定紀錄拆解每一次按鍵。",
   "path": "timing-lab",
-  "back": { "route": "#/tools", "label": "遊戲機制研究室・跨遊戲工具" }
+  "back": { "route": "#/tools", "label": "遊戲機制研究室・跨遊戲工具" },
+  "en": {
+    "title": "Parry & dodge timing lab",
+    "description": "Frame-by-frame simulation of perfect parry and perfect dodge timing: customize interactions, timing windows, outcomes and effects, and inspect every input with a frame bar and judgement log.",
+    "backLabel": "Game Mechanics Lab · Cross-game tools"
+  }
 }

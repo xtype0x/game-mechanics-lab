@@ -11,8 +11,13 @@
   <body>
     <div id="root"></div>
     <script type="module">
+      import { getLocale, subscribeLocale } from "@gml/ui/i18n";
       import { mount } from "@gml/timing-lab";
-      mount(document.getElementById("root"), {"back":{"href":"../index.html#/tools","label":"遊戲機制研究室・跨遊戲工具"}});
+      const titles = {"zh-Hant":"格擋閃避判定研究室 — 遊戲機制研究室","en":"Parry & dodge timing lab — Game Mechanics Lab"};
+      const setTitle = () => { document.title = titles[getLocale()]; };
+      setTitle();
+      subscribeLocale(setTitle);
+      mount(document.getElementById("root"), {"back":{"href":"../index.html#/tools","label":{"zh-Hant":"遊戲機制研究室・跨遊戲工具","en":"Game Mechanics Lab · Cross-game tools"}}});
     </script>
   </body>
 </html>

@@ -1,4 +1,5 @@
 import type { ProjectHost } from "@gml/ui";
+import { localize, useLocale } from "@gml/ui/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AssetPanel, PackSwitch } from "./AssetPanel";
 import { AssetStore } from "./assets/store";
@@ -25,6 +26,7 @@ const STEP_MS = 1000 / 60;
 const GAME_OVER_DELAY_TICKS = 50;
 
 export function App({ host }: { host?: ProjectHost }) {
+  const [locale] = useLocale();
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [store] = useState(() => new AssetStore({ activeId: settings.packActive, lastId: settings.packLast, volume: settings.volume, muted: settings.muted }));
   const assets = useSyncExternalStore(store.subscribe, store.getSnapshot);
@@ -206,7 +208,7 @@ export function App({ host }: { host?: ProjectHost }) {
   return (
     <div className="bp-root">
       <header className="bp-top">
-        {host?.back ? <a className="bp-back" href={host.back.href}>← {host.back.label}</a> : <span />}
+        {host?.back ? <a className="bp-back" href={host.back.href}>← {localize(host.back.label, locale)}</a> : <span />}
         <h1>子彈格擋試玩</h1>
         <span className="bp-dim">判定規則：{config.name}</span>
       </header>

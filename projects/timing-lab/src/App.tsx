@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Timing } from "@gml/core";
 import { FrameBar, Segmented, TimingEditor, TimingLog, TimingPresetMenu, exportTimingConfig, parseTimingConfig, pct, type ProjectHost } from "@gml/ui";
+import { localize, useLocale } from "@gml/ui/i18n";
 import { attackPhaseAt } from "./attacks";
 import { Scene } from "./Scene";
 import { ScriptPanel } from "./ScriptPanel";
@@ -22,6 +23,7 @@ function download(name: string, text: string) {
 }
 
 export function App({ host = {} }: { host?: ProjectHost }) {
+  const [locale] = useLocale();
   const [config, setConfig] = useState(loadConfig);
   const [session, setSession] = useState(loadSession);
   const [mode, setMode] = useState<Mode>("live");
@@ -96,7 +98,7 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   return (
     <div className="tl">
       <header className="tl-top">
-        {host.back && <a className="tl-back" href={host.back.href}>← {host.back.label}</a>}
+        {host.back && <a className="tl-back" href={host.back.href}>← {localize(host.back.label, locale)}</a>}
         <h1>格擋閃避判定研究室</h1>
         <p className="tm-muted">格擋和閃避只是兩筆互動資料：可以改判定窗、結果與效果，也能新增自己的互動，再用攻擊序列和按鍵腳本逐幀拆解。</p>
       </header>

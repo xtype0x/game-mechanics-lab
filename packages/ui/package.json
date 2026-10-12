@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./i18n": "./src/i18n/index.ts",
     "./scene.css": "./src/scene/scene.css",
     "./demo.css": "./src/scene/demo.css",
     "./timing.css": "./src/timing/timing.css"

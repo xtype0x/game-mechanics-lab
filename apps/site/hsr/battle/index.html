@@ -11,8 +11,13 @@
   <body>
     <div id="root"></div>
     <script type="module">
+      import { getLocale, subscribeLocale } from "@gml/ui/i18n";
       import { mount } from "@gml/hsr-battle";
-      mount(document.getElementById("root"), {"back":{"href":"../../index.html#/games/hsr","label":"遊戲機制研究室・星穹鐵道"}});
+      const titles = {"zh-Hant":"星穹鐵道戰鬥研究室 — 遊戲機制研究室","en":"Star Rail Battle Lab — Game Mechanics Lab"};
+      const setTitle = () => { document.title = titles[getLocale()]; };
+      setTitle();
+      subscribeLocale(setTitle);
+      mount(document.getElementById("root"), {"back":{"href":"../../index.html#/games/hsr","label":{"zh-Hant":"遊戲機制研究室・星穹鐵道","en":"Game Mechanics Lab · Star Rail"}}});
     </script>
   </body>
 </html>

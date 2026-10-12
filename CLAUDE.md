@@ -36,9 +36,9 @@ apps/console ───────────────► packages/ui ──
 ## 新增小專案（檢查清單）
 1. 建立 `projects/<id>/`（`<id>` 用小寫英文加 `-`，資料夾名＝id＝套件名尾碼）：
    - `package.json`：`"name": "@gml/<id>"`、`"exports": { ".": "./src/index.tsx", "./project.json": "./project.json" }`、`dependencies` 列出用到的 `@gml/*`、`peerDependencies` 列 `react`／`react-dom`。
-   - `project.json`：`id`、`title`、`description`、`path`（網址路徑，例如 `hsr/toughness-rpg`）、`back`（`{ route: "#/games/hsr", label: "…" }`）。
+   - `project.json`：`id`、`title`、`description`、`path`（網址路徑，例如 `hsr/toughness-rpg`）、`back`（`{ route: "#/games/hsr", label: "…" }`）、`en`（`{ title, description, backLabel }`，英文版；有 `back` 就要有 `backLabel`）。
    - `tsconfig.json`：`{ "extends": "../../tsconfig.web.json", "include": ["src"] }`。
-   - `src/index.tsx`：`export const mount: MountProject = (el, host) => …`。返回連結用 `host.back`，不要寫死網站路徑。
+   - `src/index.tsx`：`export const mount: MountProject = (el, host) => …`。返回連結用 `host.back`（文字用 `localize(host.back.label, locale)`），不要寫死網站路徑。
    - `README.md`（做什麼、資料來源、瀏覽器儲存鍵）與 `test/`。
 2. 在根目錄執行 `npm install`，把新套件連結進 workspace。
 3. 把 `"@gml/<id>": "*"` 加進 `apps/site/package.json`，再執行 `npm run pages -w @gml/site` 產生頁面，並把產生的 `index.html` 提交進 git。`dev`／`build` 前也會自動重新產生。

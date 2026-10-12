@@ -1,14 +1,17 @@
-import { crossTools, gameById, games, statusLabel, type Game, type GameTool } from '../content/games';
+import { crossTools, gameById, gameText, games, statusLabel, toolText, type Game, type GameId, type GameTool } from '../content/games';
+import { useSiteText } from '../i18n';
 import { Arrow, PageIntro, toolHref } from './shared';
 
 function GameCard({ game, index }: { game: Game; index: number }) {
+  const t = useSiteText();
+  const text = gameText(t, game);
   const deep = game.status === 'researching';
   return <a className={`game-card acc-${game.accent}${deep ? ' deepest' : ''}`} href={`#/games/${game.id}`}>
-    <div className="card-meta"><span>GAME {String(index + 1).padStart(2, '0')}</span><span className={`pill ${deep ? 'available' : ''}`}>{statusLabel[game.status]}</span></div>
-    <h3>{game.name}</h3>
-    <p>{game.blurb}</p>
-    <ul className="tag-row" aria-label="可用的研究工具">{game.tags.map(tag => <li key={tag}>{tag}</li>)}</ul>
-    <span className="card-action">{deep ? '進入研究基地' : '看看有什麼'} <Arrow/></span>
+    <div className="card-meta"><span>{t.gamesPage.cardMeta(String(index + 1).padStart(2, '0'))}</span><span className={`pill ${deep ? 'available' : ''}`}>{statusLabel(t, game.status)}</span></div>
+    <h3>{text.name}</h3>
+    <p>{text.blurb}</p>
+    <ul className="tag-row" aria-label={t.gamesPage.tagsLabel}>{text.tags.map(tag => <li key={tag}>{tag}</li>)}</ul>
+    <span className="card-action">{deep ? t.gamesPage.enterDeep : t.gamesPage.enterOther} <Arrow/></span>
   </a>;
 }
 
@@ -17,34 +20,40 @@ export function GameGrid() {
 }
 
 export function CrossToolRow() {
+  const t = useSiteText();
   return <div className="cross-row">{crossTools.map(tool => <a className="cross-card" key={tool.id} href={toolHref(tool.href!)}>
-    <span className="category">跨遊戲工具</span><strong>{tool.title}</strong><span>{tool.summary}</span><span className="card-action">開啟 <Arrow/></span>
+    <span className="category">{t.gamesPage.crossCategory}</span><strong>{toolText(t, null, tool).title}</strong><span>{toolText(t, null, tool).summary}</span><span className="card-action">{t.gamesPage.open} <Arrow/></span>
   </a>)}</div>;
 }
 
 export function GamesIndex() {
+  const t = useSiteText();
   return <>
-    <PageIntro eyebrow="ALL GAMES / 遊戲一覽" title="選一款遊戲開始研究。" text="每款遊戲都會拆解戰鬥、配裝與抽卡規則，做成能調整、能模擬的工具。"/>
+    <PageIntro eyebrow={t.gamesPage.indexEyebrow} title={t.gamesPage.indexTitle} text={t.gamesPage.indexText}/>
     <GameGrid/>
-    <p className="page-foot">更多遊戲整理中，之後會陸續加入。抽卡模擬器已內建多款遊戲的卡池，可在<a href="#/tools">跨遊戲工具</a>使用。</p>
+    <p className="page-foot">{t.gamesPage.indexFoot}</p>
   </>;
 }
 
-export function ToolCard({ tool }: { tool: GameTool }) {
-  const body = <><span className={`pill ${tool.status === 'available' ? 'available' : ''}`}>{tool.status === 'available' ? '可以玩囉' : '研究中'}</span><h3>{tool.title}</h3><p>{tool.summary}</p></>;
+export function ToolCard({ tool, gameId }: { tool: GameTool; gameId: GameId | null }) {
+  const t = useSiteText();
+  const text = toolText(t, gameId, tool);
+  const body = <><span className={`pill ${tool.status === 'available' ? 'available' : ''}`}>{tool.status === 'available' ? t.gamesPage.toolAvailable : t.gamesPage.toolPlanned}</span><h3>{text.title}</h3><p>{text.summary}</p></>;
   return tool.status === 'available' && tool.href
-    ? <a className="tool-card" href={toolHref(tool.href)}>{body}<span className="card-action">打開 <Arrow/></span></a>
-    : <div className="tool-card planned" aria-disabled="true">{body}<span className="card-action muted">整理中，敬請期待 <span aria-hidden="true">◷</span></span></div>;
+    ? <a className="tool-card" href={toolHref(tool.href)}>{body}<span className="card-action">{t.gamesPage.toolOpen} <Arrow/></span></a>
+    : <div className="tool-card planned" aria-disabled="true">{body}<span className="card-action muted">{t.gamesPage.toolPlannedAction} <span aria-hidden="true">◷</span></span></div>;
 }
 
 export function GameHub({ id }: { id: string }) {
+  const t = useSiteText();
   const game = gameById(id);
-  if (!game) return <><PageIntro eyebrow="404" title="這款遊戲還沒收錄！" text="先看看目前有哪些遊戲吧。"/><a className="button primary" href="#/games">遊戲一覽 →</a></>;
-  const tools = [...game.tools.filter(t => t.status === 'available'), ...game.tools.filter(t => t.status !== 'available')];
+  if (!game) return <><PageIntro eyebrow="404" title={t.gamesPage.hubNotFoundTitle} text={t.gamesPage.hubNotFoundText}/><a className="button primary" href="#/games">{t.gamesPage.hubNotFoundLink}</a></>;
+  const text = gameText(t, game);
+  const tools = [...game.tools.filter(x => x.status === 'available'), ...game.tools.filter(x => x.status !== 'available')];
   return <div className={`hub acc-${game.accent}`}>
-    <a className="crumb" href="#/games">← 遊戲一覽</a>
-    <PageIntro eyebrow={`${statusLabel[game.status]} / ${game.shortName}`} title={game.name} text={game.blurb}/>
-    <div className="tool-grid">{tools.map(tool => <ToolCard key={tool.id} tool={tool}/>)}</div>
-    <aside className="source-note" aria-label="資料來源與免責聲明"><h2>資料來源與聲明</h2><ul>{game.notes.map(n => <li key={n}>{n}</li>)}</ul></aside>
+    <a className="crumb" href="#/games">{t.gamesPage.hubBack}</a>
+    <PageIntro eyebrow={`${statusLabel(t, game.status)} / ${text.shortName}`} title={text.name} text={text.blurb}/>
+    <div className="tool-grid">{tools.map(tool => <ToolCard key={tool.id} tool={tool} gameId={game.id}/>)}</div>
+    <aside className="source-note" aria-label={t.gamesPage.hubSourceLabel}><h2>{t.gamesPage.hubSourceTitle}</h2><ul>{text.notes.map(n => <li key={n}>{n}</li>)}</ul></aside>
   </div>;
 }

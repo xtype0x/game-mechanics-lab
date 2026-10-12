@@ -36,6 +36,8 @@ export function listProjects() {
       if (seen.has(m.path)) fail(`path "${m.path}" is already used by ${seen.get(m.path)}`);
       seen.set(m.path, d.name);
       if (m.back && (!m.back.route || !m.back.label)) fail("back needs route and label");
+      if (!m.en?.title || !m.en?.description) fail("en.title and en.description are required");
+      if (m.back && !m.en.backLabel) fail("en.backLabel is required when back is present");
       return { ...m, package: pkg.name };
     });
 }
@@ -45,7 +47,8 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 /** The generated HTML for one project page. */
 export function pageHtml(p) {
   const up = "../".repeat(p.path.split("/").length);
-  const host = p.back ? { back: { href: `${up}index.html${p.back.route}`, label: p.back.label } } : {};
+  const host = p.back ? { back: { href: `${up}index.html${p.back.route}`, label: { "zh-Hant": p.back.label, en: p.en.backLabel } } } : {};
+  const titles = { "zh-Hant": `${p.title} — 遊戲機制研究室`, en: `${p.en.title} — Game Mechanics Lab` };
   return `<!doctype html>
 ${MARKER}${p.id}/project.json by apps/site/build/pages.mjs; do not edit. -->
 <html lang="zh-Hant-TW">
@@ -59,7 +62,12 @@ ${MARKER}${p.id}/project.json by apps/site/build/pages.mjs; do not edit. -->
   <body>
     <div id="root"></div>
     <script type="module">
+      import { getLocale, subscribeLocale } from "@gml/ui/i18n";
       import { mount } from "${p.package}";
+      const titles = ${JSON.stringify(titles)};
+      const setTitle = () => { document.title = titles[getLocale()]; };
+      setTitle();
+      subscribeLocale(setTitle);
       mount(document.getElementById("root"), ${JSON.stringify(host)});
     </script>
   </body>
