@@ -50,9 +50,12 @@ apps/console ───────────────► packages/ui ──
 - 網址路徑一旦公開就視為不可改；必須改時，在 `apps/site/build/pages.mjs` 的 `STATIC_PAGES` 留一頁轉址頁（例如 `battle/`）。
 
 ## 分支與發佈（公開 repo，GitHub Pages）
-- `main` 隨時可上線：每次 push 到 `main`，`.github/workflows/pages.yml` 會跑 typecheck、測試、建置，然後發佈到 https://xtype0x.github.io/game-mechanics-lab/ 。
-- 其他工作一律開短期分支：`feat/<主題>`、`fix/<主題>`、`docs/<主題>`、`chore/<主題>`。開 PR，`ci.yml` 通過後以 squash 合併並刪除分支。不設 `develop`／`release` 分支。
-- 要標記對外版本時打 tag（`v0.1.0`）。網站的 Changelog 頁跟著 tag 更新。
+- **`dev` 是日常開發分支**：所有工作都 commit 到 `dev`（主 checkout 平常停在 `dev`）。push 到 `dev` 會由 `ci.yml` 跑 typecheck、測試、建置，但不發佈。
+- **`main` ＝線上網站**：每次 push 到 `main`，`.github/workflows/pages.yml` 檢查後發佈到 https://xtype0x.github.io/game-mechanics-lab/ 。不直接在 `main` 上 commit。
+- **上線**：確認 `dev` 最新的 CI 通過後，`git push origin dev:main`（只快轉，不用 merge commit、squash 或 rebase，讓 `main` 永遠是 `dev` 的某個歷史點）。只有使用者說要上線時才推 `main`。
+- **緊急修正**（`dev` 上有還沒準備好上線的東西時）：從 `main` 開 `hotfix/<主題>`，修好推到 `main`，再 `git merge main` 回 `dev`。
+- 兩個代理要同時改不同功能時，可從 `dev` 開短期分支 `feat/<主題>`（用 worktree 隔離），完成後合回 `dev` 並刪除；單人或單代理工作直接用 `dev`。
+- 要標記對外版本時在 `main` 打 tag（`v0.1.0`）。網站的 Changelog 頁跟著 tag 更新。
 - repo 是公開的：不要提交第三方研究資料（`data/reference/hsr/` 除 `kits/` 外都已忽略）、`agent-communication/`、密鑰或個人資訊。commit 作者 email 用 GitHub noreply。
 
 ## 指令（Windows 若找不到 node，先 `export PATH="/c/Program Files/nodejs:$PATH"`）
