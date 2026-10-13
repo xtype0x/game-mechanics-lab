@@ -18,16 +18,23 @@ footer{max-width:1440px;margin:auto;padding:35px 5vw;display:flex;justify-conten
 @media(max-width:390px){.hero-image-credit{left:20px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
+/* English display copy has its own rhythm and line lengths. */
+html:lang(en) .launch-copy h1,html:lang(en) .section-header h2,html:lang(en) .manifesto-teaser h2,html:lang(en) .page-intro h1,html:lang(en) .about-marginal strong,html:lang(en) .project-story blockquote{font-family:Georgia,"Times New Roman",serif;letter-spacing:-.025em}
+html:lang(en) .launch-copy h1{font-size:clamp(48px,5.2vw,78px);line-height:1.08}
+html:lang(en) .launch-copy h1 .headline-line{display:inline-block;white-space:nowrap;color:var(--ink)}
+html:lang(en) .launch-copy h1 .headline-accent{color:var(--gold)}
+html:lang(en) .launch-tagline{letter-spacing:0}
+@media(max-width:760px){html:lang(en) .launch-copy h1{font-size:clamp(34px,9.5vw,60px);line-height:1.12}}
+
 /* ---- games: hub, grid, coverage ---- */
 .acc-cyan{--acc:var(--cyan)}.acc-gold{--acc:var(--gold)}.acc-violet{--acc:#b9a4f2}.acc-rose{--acc:#f0a1b3}.acc-green{--acc:#9fdca6}.acc-sky{--acc:#8fc6f4}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .game-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.game-grid.single{grid-template-columns:minmax(0,560px)}
 .game-card{display:flex;flex-direction:column;gap:12px;padding:21px;border:1px solid #304751;background:linear-gradient(135deg,#152630,#0f1b24);position:relative;transition:border-color .2s,transform .2s;min-width:0}
 .game-card:before{content:"";position:absolute;width:18px;height:1px;background:var(--acc);top:-1px;left:-1px}
 .game-card:hover{border-color:var(--acc);transform:translateY(-2px)}
 .game-card h3{font-size:21px;margin:4px 0 0;color:var(--acc)}.game-card p{font-size:12px;line-height:1.9;color:var(--muted);flex:1}
-.game-card.deepest{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 28px;padding:28px;border-color:var(--acc);background:radial-gradient(ellipse at left top,#1a4a52a0,transparent 60%),#111f28}
-.game-card.deepest .card-meta{width:100%}.game-card.deepest h3{font-size:30px;flex:0 0 auto;margin:0}.game-card.deepest p{flex:1 1 300px;font-size:13px}.game-card.deepest .tag-row{flex:0 0 auto}.game-card.deepest .card-action{width:100%}
 .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}.tag-row li{font-size:10px;padding:3px 9px;border:1px solid #3f5967;color:#c3d3da;background:#142630}
 .game-card .card-action{margin-top:4px;color:var(--acc)}
 .section-sub{margin-top:44px}.cross-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px}
@@ -52,4 +59,5 @@ a.tool-card:hover{border-color:var(--acc)}.tool-card h3{font-size:19px}.tool-car
 .char-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}.char-head strong{font-size:15px}.char-sub{font-size:11px;color:var(--muted);flex:1 1 120px}
 .char-reason{font-size:12px;line-height:1.8;color:var(--muted);margin-top:6px;overflow-wrap:anywhere}
 @media(max-width:900px){.game-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.game-grid{grid-template-columns:1fr}.game-card.deepest{padding:22px;flex-direction:column;align-items:flex-start}.game-card.deepest h3{font-size:26px}.game-card.deepest p{flex:none}.search{width:100%}.search input{width:100%}.char-head strong{font-size:14px}}
+@media(max-width:760px){.game-grid{grid-template-columns:1fr}.search{width:100%}.search input{width:100%}.char-head strong{font-size:14px}}
+.changelog section{padding:26px 0 8px;border-top:1px solid var(--border)}.changelog section:first-child{border-top:0;padding-top:0}.changelog h2{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-top:0}.changelog h2 time{font:13px monospace;letter-spacing:1px;color:var(--cyan)}.changelog h3{font-size:14px;margin:18px 0 8px;color:var(--gold)}.changelog ul{margin:0 0 18px;padding-left:20px}.changelog li{font-size:14px;line-height:1.95;color:#bccbd2;margin-bottom:6px}

@@ -15,8 +15,9 @@ import './styles.css';
 const Coverage = lazy(() => import('./pages/Coverage'));
 const aboutPages: Record<string, ComponentType> = { 'zh-Hant': AboutZh, en: AboutEn };
 const privacyPages: Record<string, ComponentType> = { 'zh-Hant': PrivacyZh, en: PrivacyEn };
+const changelogPages: Record<string, ComponentType> = { 'zh-Hant': lazy(() => import('./content/pages/Changelog.zh-Hant')), en: lazy(() => import('./content/pages/Changelog.en')) };
 const pageTitle = (t: SiteText, path: string): string | undefined => ({
-  '/': t.pageTitles.home, '/games': t.pageTitles.games, '/tools': t.pageTitles.tools, '/about': t.pageTitles.about, '/privacy': t.pageTitles.privacy,
+  '/': t.pageTitles.home, '/games': t.pageTitles.games, '/tools': t.pageTitles.tools, '/about': t.pageTitles.about, '/privacy': t.pageTitles.privacy, '/changelog': t.pageTitles.changelog,
 } as Record<string, string>)[path];
 const navRoutes = ['/', '/games', '/tools', '/about'];
 /** Hash path with old aliases resolved: #/lab became #/tools when the site was reorganised by game. */
@@ -50,7 +51,7 @@ function Home() {
       <img className="launch-art" src={heroImage} alt={h.heroAlt} fetchPriority="high"/>
       <div className="launch-shade" aria-hidden="true"/>
       <p className="hero-image-credit">{h.imageCredit}</p>
-      <div className="hero-coordinate" aria-hidden="true">GML / PARAMETER WORLD <span>REWRITE THE RULES</span></div>
+      <div className="hero-coordinate" aria-hidden="true">GML / MECHANICS NOTES <span>OBSERVE · EXPLORE · UNDERSTAND</span></div>
       <div className="launch-copy">
         <div className="eyebrow launch-eyebrow"><span/> {h.eyebrow}</div>
         <p className="launch-prelude">{h.prelude}</p>
@@ -84,6 +85,7 @@ function App() {
   useEffect(() => { document.title = `${titleOf(t, path)}${t.site.titleSuffix}`; }, [t, path, locale]);
   const About = aboutPages[locale];
   const Privacy = privacyPages[locale];
-  return <><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); main.current?.focus(); }}>{t.site.skipLink}</a><header className="header"><Logo/><nav aria-label={t.header.navLabel}>{navRoutes.map(route => <a key={route} href={`#${route}`} aria-current={path === route || (route === '/games' && path.startsWith('/games/')) ? 'page' : undefined}>{pageTitle(t, route)}</a>)}</nav><LanguageSwitch className="header-lang"/><a className="header-cta" href="#/games/hsr">{t.header.cta} <Arrow/></a></header><main id="main-content" ref={main} tabIndex={-1} className={path === '/' ? 'home-main' : undefined}>{path === '/' ? <Home/> : path === '/games' ? <GamesIndex/> : path === '/games/hsr/coverage' ? <Suspense fallback={<p className="loading" role="status">{t.site.loading}</p>}><Coverage/></Suspense> : hubId(path) ? <GameHub id={hubId(path)!}/> : path === '/tools' ? <><PageIntro eyebrow="CROSS-GAME TOOLS" title={t.gamesPage.toolsPageTitle} text={t.gamesPage.toolsPageText}/><ToolList/></> : path === '/about' ? <About/> : path === '/privacy' ? <Privacy/> : <><PageIntro eyebrow="404" title={t.notFound.title} text={t.notFound.text}/><a className="button primary" href="#/">{t.notFound.link}</a></>}</main><footer><div><Logo/><p>{t.footer.tagline}</p><p className="footer-homage">{t.footer.homage}</p></div><div className="footer-links"><a href="#/about">{t.footer.about}</a><a href="#/privacy">{t.footer.privacy}</a><span>{t.footer.dev}</span></div></footer></>;
+  const Changelog = changelogPages[locale];
+  return <><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); main.current?.focus(); }}>{t.site.skipLink}</a><header className="header"><Logo/><nav aria-label={t.header.navLabel}>{navRoutes.map(route => <a key={route} href={`#${route}`} aria-current={path === route || (route === '/games' && path.startsWith('/games/')) ? 'page' : undefined}>{pageTitle(t, route)}</a>)}</nav><LanguageSwitch className="header-lang"/><a className="header-cta" href="#/games/hsr">{t.header.cta} <Arrow/></a></header><main id="main-content" ref={main} tabIndex={-1} className={path === '/' ? 'home-main' : undefined}>{path === '/' ? <Home/> : path === '/games' ? <GamesIndex/> : path === '/games/hsr/coverage' ? <Suspense fallback={<p className="loading" role="status">{t.site.loading}</p>}><Coverage/></Suspense> : hubId(path) ? <GameHub id={hubId(path)!}/> : path === '/tools' ? <><PageIntro eyebrow={t.gamesPage.toolsPageEyebrow} title={t.gamesPage.toolsPageTitle} text={t.gamesPage.toolsPageText}/><ToolList/></> : path === '/about' ? <About/> : path === '/privacy' ? <Privacy/> : path === '/changelog' ? <Suspense fallback={<p className="loading" role="status">{t.site.loading}</p>}><Changelog/></Suspense> : <><PageIntro eyebrow="404" title={t.notFound.title} text={t.notFound.text}/><a className="button primary" href="#/">{t.notFound.link}</a></>}</main><footer><div><Logo/><p>{t.footer.tagline}</p><p className="footer-homage">{t.footer.homage}</p></div><div className="footer-links"><a href="#/about">{t.footer.about}</a><a href="#/privacy">{t.footer.privacy}</a><a href="#/changelog">{t.footer.changelog}</a><span>{t.footer.dev}</span></div></footer></>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);

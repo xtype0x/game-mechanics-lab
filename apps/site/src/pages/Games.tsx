@@ -6,7 +6,7 @@ function GameCard({ game, index }: { game: Game; index: number }) {
   const t = useSiteText();
   const text = gameText(t, game);
   const deep = game.status === 'researching';
-  return <a className={`game-card acc-${game.accent}${deep ? ' deepest' : ''}`} href={`#/games/${game.id}`}>
+  return <a className={`game-card acc-${game.accent}`} href={`#/games/${game.id}`}>
     <div className="card-meta"><span>{t.gamesPage.cardMeta(String(index + 1).padStart(2, '0'))}</span><span className={`pill ${deep ? 'available' : ''}`}>{statusLabel(t, game.status)}</span></div>
     <h3>{text.name}</h3>
     <p>{text.blurb}</p>
@@ -16,7 +16,7 @@ function GameCard({ game, index }: { game: Game; index: number }) {
 }
 
 export function GameGrid() {
-  return <div className="game-grid">{games.map((game, index) => <GameCard key={game.id} game={game} index={index}/>)}</div>;
+  return <div className={`game-grid${games.length === 1 ? ' single' : ''}`}>{games.map((game, index) => <GameCard key={game.id} game={game} index={index}/>)}</div>;
 }
 
 export function CrossToolRow() {

@@ -29,7 +29,7 @@ export interface Game {
   tools: GameTool[];
 }
 
-const gachaTool = (id: GameId): GameTool<'gacha'> => ({ id: 'gacha', status: 'available', href: `gacha/index.html?game=${id}`, zhOnly: true });
+const gachaTool = (id: GameId): GameTool<'gacha'> => ({ id: 'gacha', status: 'available', href: `gacha/index.html?game=${id}` });
 
 const hsrTools: GameTool<GameToolId<'hsr'>>[] = [
   { id: 'battle', status: 'available', href: 'hsr/battle/index.html', zhOnly: true },
@@ -47,7 +47,7 @@ export const gameById = (id: string) => games.find(g => g.id === id);
 
 /** Cross-game tools (not tied to one game). */
 export const crossTools: GameTool<CrossToolId>[] = [
-  { id: 'gacha', status: 'available', href: 'gacha/index.html', zhOnly: true },
+  { id: 'gacha', status: 'available', href: 'gacha/index.html' },
   { id: 'timing-lab', status: 'available', href: 'timing-lab/index.html' },
 ];
 

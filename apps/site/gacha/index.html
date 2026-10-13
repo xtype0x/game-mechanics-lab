@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
-    <meta name="description" content="可調整規則的抽卡模擬器：保底、限定、天井與累計保底，精確計算抽數分布與花費。" />
+    <meta name="description" content="使用通用物品名稱的抽卡模擬器，可調整保底、限定、天井與累計保底，計算抽數分布與花費。" />
     <title>抽卡模擬器 — 遊戲機制研究室</title>
   </head>
   <body>
@@ -17,7 +17,7 @@
       const setTitle = () => { document.title = titles[getLocale()]; };
       setTitle();
       subscribeLocale(setTitle);
-      const host = {"back":{"href":"../index.html#/tools","label":{"zh-Hant":"遊戲機制研究室・跨遊戲工具","en":"Game Mechanics Lab · Cross-game tools"}}};
+      const host = {"back":{"href":"../index.html#/tools","label":{"zh-Hant":"遊戲機制研究室・機制實驗","en":"Game Mechanics Lab · Experiments"}}};
       const byGame = {"hsr":{"href":"../index.html#/games/hsr","label":{"zh-Hant":"遊戲機制研究室・星穹鐵道","en":"Game Mechanics Lab · Star Rail"}}};
       const game = new URLSearchParams(location.search).get("game");
       if (game && Object.hasOwn(byGame, game)) host.back = byGame[game];
