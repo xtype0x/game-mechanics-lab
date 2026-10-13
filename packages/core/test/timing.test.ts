@@ -235,6 +235,74 @@ describe("spam penalty", () => {
   });
 });
 
+describe("spam.forgiveCaught", () => {
+  const base = { withinFrames: 30, scope: "all" as const, shrinkPerPress: 3, maxShrink: 3, lockoutAfter: 0, lockoutFrames: 0 };
+  type Accept = Extract<Ev, { type: "accept" }>;
+  const accepts = (events: Ev[]) => of(events, "accept") as Accept[];
+
+  it("a caught press no longer counts toward the next press's shrink", () => {
+    // Press 0: accepted, perfect window [2,5). Attack at 3 is caught (perfect), maxCatches 1 → activeEnd 4, recovery 4+8 = 12.
+    // Press 22: history (−8, 22] holds {0} unless forgiven. Forgiven → n = 0 → shrink 0; otherwise min(1×3, 3) = 3.
+    const s = script(40, [press(0), press(22)], [bullet(3)]);
+    const forgiven = accepts(runTiming(cfg([parry({ spam: { ...base, forgiveCaught: true } })]), s).events);
+    expect(forgiven[1]).toMatchObject({ frame: 22, shrink: 0, windows: [{ id: "perfect", from: 24, to: 27 }, { id: "normal", from: 27, to: 33 }] });
+    for (const spam of [base, { ...base, forgiveCaught: false }]) {
+      const plain = accepts(runTiming(cfg([parry({ spam })]), s).events);
+      expect(plain[1]).toMatchObject({ frame: 22, shrink: 3, windows: [{ id: "perfect", from: 24, to: 24 }, { id: "normal", from: 24, to: 33 }] });
+    }
+  });
+
+  it("a whiffed press is not forgiven", () => {
+    // Press 0, no attack: activeEnd 11, whiff recovery 20 → idle at 31. Press 32: {0} is in (2, 32]? No — withinFrames 40 → (−8, 32] → n = 1 → shrink 3.
+    const config = cfg([parry({ spam: { ...base, withinFrames: 40, forgiveCaught: true } })]);
+    const { events } = runTiming(config, script(50, [press(0), press(32)]));
+    expect(accepts(events)[1]).toMatchObject({ frame: 32, shrink: 3 });
+  });
+
+  it("a buffered action that catches removes its buffered press frame", () => {
+    // Press 0 whiffs (activeEnd 11, recoveryEnd 31). Press 28 is busy → buffered. At 31 it is accepted without strict windows:
+    // perfect [33,33), normal [33,42). Attack at 35 is caught by normal → the entry (28, parry) is removed; (0, parry) stays.
+    const config = cfg([parry({ buffer: 6, spam: { ...base, withinFrames: 40, scope: "self", forgiveCaught: true } })]);
+    const run = runTiming(config, script(36, [press(0), press(28)], [bullet(35)]));
+    expect(accepts(run.events)[1]).toMatchObject({ frame: 31, buffered: true, pressFrame: 28 });
+    expect(run.final.action).toMatchObject({ pressFrame: 28, catches: 1 });
+    expect(run.final.presses).toEqual([[0, "parry"]]);
+    // Without forgiveCaught both entries stay.
+    const off = runTiming(cfg([parry({ buffer: 6, spam: { ...base, withinFrames: 40, scope: "self" } })]), script(36, [press(0), press(28)], [bullet(35)]));
+    expect(off.final.presses).toEqual([[0, "parry"], [28, "parry"]]);
+  });
+
+  it("removes only one of several identical entries, and only on the first catch", () => {
+    // maxCatches 0: two attacks in the active window; the single entry (0, parry) is removed at the first catch and the second finds nothing.
+    const config = cfg([parry({ maxCatches: 0, spam: { ...base, forgiveCaught: true } })]);
+    const run = runTiming(config, script(10, [press(0)], [bullet(3, "a"), bullet(4, "b")]));
+    expect(run.final.presses).toEqual([]);
+    expect(run.final.action?.catches).toBe(2);
+  });
+
+  it("rebaseTimingState shifts action.pressFrame", () => {
+    const config = cfg([parry({ buffer: 6, spam: { ...base, withinFrames: 40, forgiveCaught: true } })]);
+    const mid = runTiming(config, script(36, [press(0), press(28)], [bullet(35)])).final;
+    expect(Timing.rebaseTimingState(mid, 10).action!.pressFrame).toBe(18);
+    expect(mid.action!.pressFrame).toBe(28);
+  });
+
+  it("validates forgiveCaught as a boolean", () => {
+    const bad = cfg([parry({ spam: { ...base, forgiveCaught: "yes" as unknown as boolean } })]);
+    expect(validateTiming(bad).filter((i) => i.level === "error").map((i) => i.path)).toEqual(["interactions[0].spam.forgiveCaught"]);
+  });
+});
+
+describe("hitTelegraph", () => {
+  const def = { id: "m", name: "m", windup: 10, telegraph: 12, recovery: 5, hits: [{ offset: 0, tags: ["bullet"] }, { offset: 6, tags: ["bullet"], telegraph: 0 }, { offset: 12, tags: ["bullet"], telegraph: 4 }] };
+  it("falls back to the move's telegraph and lets a hit override it (0 = no tell)", () => {
+    expect([0, 1, 2].map((i) => Timing.hitTelegraph(def, i))).toEqual([12, 0, 4]);
+  });
+  it("does not change expandAttack", () => {
+    expect(expandAttack(def, 0).map((e) => e.frame)).toEqual([10, 16, 22]);
+  });
+});
+
 // ---- same-frame conflicts -------------------------------------------------------------------------------------------
 
 describe("same-frame conflicts", () => {
@@ -608,7 +676,7 @@ describe("rebaseTimingState and initial", () => {
     statuses: { invulnerable: 130, counter: 90 },
     stunUntil: 110,
     action: {
-      interaction: "parry", start: 98, buffered: false, shrink: 1, catches: 1,
+      interaction: "parry", start: 98, pressFrame: 96, buffered: false, shrink: 1, catches: 1,
       windows: [{ id: "perfect", name: "perfect", from: 100, to: 102 } as unknown as Timing.WindowSpan, { id: "normal", from: 102, to: 110 }],
       activeEnd: 110, recoveryEnd: 118,
     },
@@ -630,7 +698,7 @@ describe("rebaseTimingState and initial", () => {
       statuses: { invulnerable: 30, counter: -10 },
       stunUntil: 10,
       action: {
-        interaction: "parry", start: -2, buffered: false, shrink: 1, catches: 1,
+        interaction: "parry", start: -2, pressFrame: -4, buffered: false, shrink: 1, catches: 1,
         windows: [{ ...w[0]!, from: 0, to: 2 }, { id: "normal", from: 2, to: 10 }],
         activeEnd: 10, recoveryEnd: 18,
       },

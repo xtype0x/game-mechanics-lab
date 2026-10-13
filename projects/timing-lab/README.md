@@ -13,7 +13,7 @@ npm run site:dev   # http://127.0.0.1:5180/timing-lab/   （#play 為試玩；�
 
 ## 結構
 - `src/shell/`：頁首、模式分頁與**共用規則**。`Shell.tsx` 持有 `config` 狀態（300 ms 防抖存檔、語言切換時內建規則跟著換語言但不存檔）；`config.ts` 是儲存與載入（`loadSharedConfig`）；`presets.ts` 是遊戲預設 `bullet-parry-default` 與預設清單（`gamePresets`、`relocalizeGameConfig`）；`i18n/` 是殼的文字。
-- `src/lab/`：逐幀分析。招式庫與序列排程（`attacks.ts`）、場景（`Scene.tsx`）、播放與頓幀／慢動作（`usePlayback.ts`）、統計（`stats.ts`）、按鍵腳本與儲存（`session.ts`）、`LabMode.tsx`。
+- `src/lab/`：逐幀分析。招式庫與序列排程（`attacks.ts`）、反應分析（`reaction.ts`）、場景視覺常數（`visuals.ts`）、場景（`Scene.tsx`）、播放與頓幀／慢動作（`usePlayback.ts`）、統計（`stats.ts`）、按鍵腳本與儲存（`session.ts`）、`LabMode.tsx`。
 - `src/play/`：實戰試玩。見下方「實戰試玩」。`PlayMode.tsx` 與 `play.css`（隨動態載入的區塊一起載入）。
 - 兩個模式都收到 `config`、`onConfigChange`、`onSwitchMode` 三個 props，不自己讀寫規則或碰網址；模式之間不互相 import，共同的東西放 `shell/`。
 
@@ -27,7 +27,7 @@ npm run site:dev   # http://127.0.0.1:5180/timing-lab/   （#play 為試玩；�
 ## 瀏覽器儲存鍵
 - 介面語言跟隨網站語言設定（`gml.site.locale.v1`），頁首有中文／English 切換；文字在 `src/shell/i18n/`、`src/lab/i18n/`、`src/play/i18n/`，規則編輯器等共用元件的文字在 `packages/ui/src/timing/i18n/`。
 - `gml.timing-lab.config.v1`：共用判定規則，`{ format: "gml-timing-config", version: 1, config }`。壞掉的存檔會退回預設。
-- `gml.timing-lab.session.v1`：逐幀分析的招式庫、序列、按鍵腳本，以及（選填）最近一次的實戰回放 `replay` 與來源 `source`。
+- `gml.timing-lab.session.v1`：逐幀分析的招式庫、序列、`loop`、`hitTells`（每段命中都顯示預兆，布林，預設 true；缺少或不是布林時視為 true，所以沒有升版）、按鍵腳本，以及（選填）最近一次的實戰回放 `replay` 與來源 `source`。
 - **以下三個保留舊專案名稱 `bullet-parry`，刻意不改名**（遊戲原本是獨立專案，訪客的存檔與上傳的素材包都在這些名稱下）：
   - `gml.bullet-parry.best.v1`：最佳分數。
   - `gml.bullet-parry.settings.v1`：`{ difficulty, showFrameBar, packActive, packLast, volume, muted, practice, judgeFreeze, keys }`（`keys` 是 `{ 互動 id: KeyboardEvent.code }`；後面幾個欄位是後來加的，舊存檔缺少時用預設，所以沒有升版）。舊版這裡還有 `config`，現在讀取時忽略（只在共用鍵不存在時遷移一次），儲存時不再寫入。
@@ -37,6 +37,12 @@ npm run site:dev   # http://127.0.0.1:5180/timing-lab/   （#play 為試玩；�
 - **規則來源**：`Timing.TIMING_PRESETS` 與遊戲預設；格擋、閃避只是互動資料，可以新增自己的互動。
 - **即時模式**：按下互動的 `key` 提示鍵（例如 KeyJ）或畫面按鈕，按鍵記錄在「下一幀」；**回放模式**以腳本重現同一個情境。「全部重設」把規則重設為遊戲預設並清空招式庫、序列與腳本。
 - 共用元件：`TimingEditor`、`FrameBar`、`TimingLog`（樣式 `@gml/ui/timing.css`）。
+
+### 敵方招式、每段預兆與反應分析
+- **內建招式**（`attacks.ts` 的 `ATTACK_BASE`）：預兆都拉長（單發斬擊 20、突刺 16、掃腿 18、不可格擋重擊 28、延遲斬 30、能量彈 18、子彈連射 12 幀）。「三連擊」改成好學的版本：前搖 24、預兆 18、命中相隔 22 幀，後兩段各有 14 幀預兆。較難的版本是「快速三連擊」（`fastCombo`，緊接在三連擊後）：命中相隔 16 幀、預兆 10／9／9 幀，等級「嚴苛」但仍可反應。內建招式在所有內建規則下都不會出現「只能靠預判」（`test/reaction.test.ts` 檢查）；想要舊的 14 幀、無後段預兆版本，可在敵方招式自行調整。多段招式可用「段間隔（統一）」一次設定所有間隔，或用每段的「距前一段」調整單一間隔（後面各段跟著移動）。預設序列不變（單發斬擊、突刺、三連擊）。因為數值變了，之前存下的三連擊會被視為「已編輯」而不再跟著語言切換（網站尚未公開，不做遷移）。
+- **每段預兆**：`AttackDef.hits[i].telegraph`（缺少時用招式的預兆），純視覺。session 的 `hitTells`（預設開）關閉時只有第一段有預兆（舊行為）。場景的閃光／星芒／「!」由 `tellAt(items, frame, hitTells)` 決定（每段命中各有一個預兆窗 `[max(開始, 命中幀−預兆), 命中幀)`），幀數條用 `FrameBar` 的 `hitTells`。場景的視覺線索常數（近戰衝刺 `DASH` = 6 幀、彈體可見 `TRAVEL` = 18 幀、`isRanged`）放在 `visuals.ts`，反應分析用同一組數字。
+- **反應分析**（`reaction.ts`，純函式，測試在 `test/reaction.test.ts`）：對一招的每一段命中、每個有判定窗且結果表會攔截該段標籤的互動，用 `Timing.runTiming` 在隔離情境模擬（命中結果的效果清空，被打不會硬直；招式從第 150 幀開始，按鍵掃描範圍為命中前 120 幀到命中後 `inputOffset` 幀，且必須晚於前一次命中）。前幾段假設用同一互動在「最晚的完美時機」（沒有完美就最晚的成功時機）處理。輸出每個（命中，互動）的可按幀數、完美幀數、最早／最晚有效按鍵（相對命中幀）、是否被前一次按鍵涵蓋（例如閃避窗橫跨多段）、提示線索幀 `-max(此段預兆, 近戰 DASH 或彈體 TRAVEL)`、反應時間 = 最晚有效按鍵 − 線索（幀與 ms）。分級（ms）：≥350 友善、≥250 普通、≥180 有挑戰、≥100 嚴苛、其餘「不太可能反應，只能靠預判」；沒有任何有效按鍵為「接不上」。理論最小 100 ms（人類簡單視覺反應下限，一般人約 200–250 ms）；沒計入裝置顯示與輸入延遲。每段取反應時間最長的互動，整招取各段中最短的（最難的一段）。
+- **介面**：「招式序列」卡（佇列、加入招式、循環；每個排隊的招式帶最難一段的分級標籤）和獨立的「敵方招式」卡（選招、前搖、預設預兆、「每段命中都顯示預兆」、每段命中的偏移／預兆／傷害／標籤與各互動的反應分析、還原此招、複製為新招）。實戰回放來源下序列停用，但敵方招式卡仍可編輯（分析針對招式序列的設定）。
 
 ### 逐幀檢視實戰（回放）
 暫停或結束畫面的「逐幀檢視最後 6 秒」把這一局最後約 330–360 幀（再加 40 幀尾巴讓晚到的結算看得到）交給逐幀分析：同樣的子彈、同樣的按鍵，可以逐幀看、改按鍵、改規則（例如判定窗加寬 2 幀）後重跑。

@@ -75,6 +75,7 @@
 .tm-list-row > input { flex: 1 1 110px; }
 .tm-toggle { border: 1px solid var(--tm-line); border-radius: 6px; padding: 4px 10px 8px; margin: 0; display: grid; gap: 6px; align-content: start; }
 .tm-toggle legend { padding: 0 4px; font-size: 12px; }
+.tm-check { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .tm-addrow { margin-top: 6px; }
 
 /* result matrix */

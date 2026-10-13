@@ -87,6 +87,8 @@ export interface SpamDef {
   /** When count ≥ lockoutAfter (> 0), the press is dropped and the player is stunned for lockoutFrames. 0 = off. */
   lockoutAfter: number;
   lockoutFrames: number;
+  /** When an action of this interaction catches an attack, the press that started it is removed from the press history (spec §4.4). Missing = false. */
+  forgiveCaught?: boolean;
 }
 
 export interface InteractionDef {
@@ -154,7 +156,7 @@ export interface AttackDef {
   /** Frames before the first hit at which the tell (flash / glint) appears; visual only. */
   telegraph: number;
   recovery: number;
-  hits: { offset: number; damage?: number; tags: string[] }[];
+  hits: { offset: number; damage?: number; tags: string[]; /** Overrides `telegraph` for this hit; 0 = no tell. Visual only. */ telegraph?: number }[];
 }
 
 export interface WindowSpan {
@@ -167,6 +169,8 @@ export interface WindowSpan {
 export interface ActionState {
   interaction: string;
   start: number;
+  /** Frame of the raw press that started this action (the buffered press frame for a buffered action, else the accept frame). */
+  pressFrame: number;
   buffered: boolean;
   shrink: number;
   windows: WindowSpan[];

@@ -111,6 +111,8 @@ export const timingEn: TimingText = {
       lockAfter: "Lockout threshold",
       lockAfterTip: "0 = no lockout",
       lockFrames: "Lockout time",
+      forgiveCaught: "Successful catches don't count as spam",
+      forgiveCaughtTip: "A press that caught an attack is not counted toward spam",
     },
     matrix: {
       noCatch: "No catch",

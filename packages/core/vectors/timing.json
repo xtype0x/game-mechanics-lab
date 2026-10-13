@@ -309,7 +309,7 @@
               "frames": 14
             }
           ],
-          "successRecovery": 8,
+          "successRecovery": 4,
           "whiffRecovery": 20,
           "maxCatches": 1,
           "table": [
@@ -697,7 +697,7 @@
               "frames": 8
             }
           ],
-          "successRecovery": 10,
+          "successRecovery": 6,
           "whiffRecovery": 28,
           "maxCatches": 1,
           "table": [
@@ -725,7 +725,8 @@
             "shrinkPerPress": 2,
             "maxShrink": 4,
             "lockoutAfter": 3,
-            "lockoutFrames": 30
+            "lockoutFrames": 30,
+            "forgiveCaught": true
           }
         },
         {
@@ -1079,7 +1080,7 @@
               "frames": 6
             }
           ],
-          "successRecovery": 6,
+          "successRecovery": 4,
           "whiffRecovery": 24,
           "maxCatches": 1,
           "table": [
@@ -1107,7 +1108,8 @@
             "shrinkPerPress": 3,
             "maxShrink": 3,
             "lockoutAfter": 3,
-            "lockoutFrames": 40
+            "lockoutFrames": 40,
+            "forgiveCaught": true
           }
         },
         {
@@ -1479,7 +1481,7 @@
               "frames": 6
             }
           ],
-          "successRecovery": 10,
+          "successRecovery": 6,
           "whiffRecovery": 30,
           "maxCatches": 1,
           "table": [
@@ -1507,7 +1509,8 @@
             "shrinkPerPress": 1,
             "maxShrink": 2,
             "lockoutAfter": 4,
-            "lockoutFrames": 30
+            "lockoutFrames": 30,
+            "forgiveCaught": true
           }
         },
         {
@@ -1944,7 +1947,7 @@
               "frames": 8
             }
           ],
-          "successRecovery": 10,
+          "successRecovery": 6,
           "whiffRecovery": 28,
           "maxCatches": 1,
           "table": [
@@ -1972,7 +1975,8 @@
             "shrinkPerPress": 2,
             "maxShrink": 4,
             "lockoutAfter": 3,
-            "lockoutFrames": 30
+            "lockoutFrames": 30,
+            "forgiveCaught": true
           }
         },
         {
@@ -2452,7 +2456,7 @@
                 "frames": 8
               }
             ],
-            "successRecovery": 10,
+            "successRecovery": 6,
             "whiffRecovery": 28,
             "maxCatches": 1,
             "table": [
@@ -2480,7 +2484,8 @@
               "shrinkPerPress": 2,
               "maxShrink": 4,
               "lockoutAfter": 3,
-              "lockoutFrames": 30
+              "lockoutFrames": 30,
+              "forgiveCaught": true
             }
           },
           {
@@ -2639,7 +2644,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 14,
+            "frame": 10,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -2709,7 +2714,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 59,
+            "frame": 55,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -3156,7 +3161,7 @@
                 "frames": 8
               }
             ],
-            "successRecovery": 10,
+            "successRecovery": 6,
             "whiffRecovery": 28,
             "maxCatches": 1,
             "table": [
@@ -3184,7 +3189,8 @@
               "shrinkPerPress": 2,
               "maxShrink": 4,
               "lockoutAfter": 3,
-              "lockoutFrames": 30
+              "lockoutFrames": 30,
+              "forgiveCaught": true
             }
           },
           {
@@ -3750,7 +3756,7 @@
                 "frames": 8
               }
             ],
-            "successRecovery": 10,
+            "successRecovery": 6,
             "whiffRecovery": 28,
             "maxCatches": 1,
             "table": [
@@ -3778,7 +3784,8 @@
               "shrinkPerPress": 2,
               "maxShrink": 4,
               "lockoutAfter": 3,
-              "lockoutFrames": 30
+              "lockoutFrames": 30,
+              "forgiveCaught": true
             }
           },
           {
@@ -4089,7 +4096,7 @@
             "reason": "bufferExpired"
           },
           {
-            "frame": 94,
+            "frame": 90,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -4432,7 +4439,7 @@
                 "frames": 6
               }
             ],
-            "successRecovery": 6,
+            "successRecovery": 4,
             "whiffRecovery": 24,
             "maxCatches": 1,
             "table": [
@@ -4460,7 +4467,8 @@
               "shrinkPerPress": 3,
               "maxShrink": 3,
               "lockoutAfter": 3,
-              "lockoutFrames": 40
+              "lockoutFrames": 40,
+              "forgiveCaught": true
             }
           },
           {
@@ -4748,6 +4756,1183 @@
             "skill": 0,
             "parry": 0,
             "dodge": 56
+          },
+          "buffered": null,
+          "presses": [],
+          "pending": [],
+          "defeated": false
+        }
+      }
+    },
+    {
+      "id": "sekiro/forgive-caught",
+      "config": {
+        "version": 1,
+        "id": "sekiro",
+        "name": "隻狼風",
+        "description": "完美格擋極短（3 幀），連打懲罰很重；以格擋為核心。",
+        "fps": 60,
+        "inputOffset": 0,
+        "tags": [
+          {
+            "id": "bullet",
+            "name": "子彈",
+            "color": "#f59e0b"
+          },
+          {
+            "id": "unblockable",
+            "name": "不可格擋",
+            "color": "#ef4444"
+          },
+          {
+            "id": "thrust",
+            "name": "突刺",
+            "color": "#a855f7"
+          },
+          {
+            "id": "sweep",
+            "name": "掃腿",
+            "color": "#0ea5e9"
+          },
+          {
+            "id": "energy",
+            "name": "能量彈",
+            "color": "#22c55e"
+          }
+        ],
+        "resources": [
+          {
+            "id": "hp",
+            "name": "生命",
+            "max": 3,
+            "initial": 3
+          },
+          {
+            "id": "gauge",
+            "name": "技能量表",
+            "max": 100,
+            "initial": 0
+          }
+        ],
+        "statuses": [
+          {
+            "id": "counter",
+            "name": "反擊窗"
+          }
+        ],
+        "outcomes": [
+          {
+            "id": "hit",
+            "name": "受傷",
+            "kind": "fail",
+            "effects": [
+              {
+                "type": "damage",
+                "amount": {
+                  "ref": "attack.damage"
+                }
+              },
+              {
+                "type": "invulnerable",
+                "frames": {
+                  "const": 60
+                }
+              },
+              {
+                "type": "stun",
+                "frames": {
+                  "const": 20
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "anim:hurt"
+              }
+            ]
+          },
+          {
+            "id": "perfectParry",
+            "name": "完美格擋",
+            "kind": "perfect",
+            "effects": [
+              {
+                "type": "addResource",
+                "resource": "gauge",
+                "amount": {
+                  "const": 25
+                }
+              },
+              {
+                "type": "hitstop",
+                "frames": {
+                  "const": 6
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "reflect"
+              },
+              {
+                "type": "cue",
+                "cue": "attackerStagger"
+              }
+            ]
+          },
+          {
+            "id": "parry",
+            "name": "格擋",
+            "kind": "success",
+            "effects": [
+              {
+                "type": "addResource",
+                "resource": "gauge",
+                "amount": {
+                  "const": 5
+                }
+              },
+              {
+                "type": "hitstop",
+                "frames": {
+                  "const": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "guardBroken",
+            "name": "破防",
+            "kind": "fail",
+            "effects": [
+              {
+                "type": "damage",
+                "amount": {
+                  "ref": "attack.damage"
+                }
+              },
+              {
+                "type": "invulnerable",
+                "frames": {
+                  "const": 60
+                }
+              },
+              {
+                "type": "stun",
+                "frames": {
+                  "const": 20
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "anim:guardBroken"
+              }
+            ]
+          },
+          {
+            "id": "whiffParry",
+            "name": "格擋落空",
+            "kind": "fail",
+            "effects": [
+              {
+                "type": "cue",
+                "cue": "anim:whiff"
+              }
+            ]
+          },
+          {
+            "id": "perfectDodge",
+            "name": "完美閃避",
+            "kind": "perfect",
+            "effects": [
+              {
+                "type": "addResource",
+                "resource": "gauge",
+                "amount": {
+                  "const": 20
+                },
+                "when": {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "catch.index"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "timeScale",
+                "scale": {
+                  "const": 0.6
+                },
+                "frames": {
+                  "const": 10
+                },
+                "when": {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "catch.index"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "vfx:perfectDodge",
+                "when": {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "catch.index"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "pass"
+              }
+            ]
+          },
+          {
+            "id": "dodge",
+            "name": "閃避",
+            "kind": "success",
+            "effects": [
+              {
+                "type": "cue",
+                "cue": "vfx:dodge"
+              },
+              {
+                "type": "cue",
+                "cue": "pass"
+              }
+            ]
+          },
+          {
+            "id": "skillOn",
+            "name": "技能發動",
+            "kind": "success",
+            "effects": [
+              {
+                "type": "invulnerable",
+                "frames": {
+                  "const": 240
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "vfx:skill"
+              }
+            ]
+          }
+        ],
+        "interactions": [
+          {
+            "id": "skill",
+            "name": "技能",
+            "key": "KeyL",
+            "priority": 0,
+            "startup": 0,
+            "windows": [],
+            "successRecovery": 10,
+            "whiffRecovery": 0,
+            "maxCatches": 0,
+            "table": [],
+            "onAccept": "skillOn",
+            "cooldown": 0,
+            "cost": {
+              "resource": "gauge",
+              "amount": 100
+            },
+            "buffer": 0
+          },
+          {
+            "id": "parry",
+            "name": "格擋",
+            "key": "KeyJ",
+            "priority": 1,
+            "startup": 2,
+            "windows": [
+              {
+                "id": "perfect",
+                "name": "完美",
+                "frames": 3,
+                "strict": true
+              },
+              {
+                "id": "normal",
+                "name": "普通",
+                "frames": 6
+              }
+            ],
+            "successRecovery": 4,
+            "whiffRecovery": 24,
+            "maxCatches": 1,
+            "table": [
+              {
+                "tag": "unblockable",
+                "cells": {
+                  "perfect": "guardBroken",
+                  "normal": "guardBroken"
+                }
+              },
+              {
+                "tag": null,
+                "cells": {
+                  "perfect": "perfectParry",
+                  "normal": "parry"
+                }
+              }
+            ],
+            "whiffOutcome": "whiffParry",
+            "cooldown": 0,
+            "buffer": 2,
+            "spam": {
+              "withinFrames": 30,
+              "scope": "all",
+              "shrinkPerPress": 3,
+              "maxShrink": 3,
+              "lockoutAfter": 3,
+              "lockoutFrames": 40,
+              "forgiveCaught": true
+            }
+          },
+          {
+            "id": "dodge",
+            "name": "閃避",
+            "key": "KeyK",
+            "priority": 2,
+            "startup": 2,
+            "windows": [
+              {
+                "id": "perfect",
+                "name": "完美",
+                "frames": 3,
+                "strict": true
+              },
+              {
+                "id": "normal",
+                "name": "普通",
+                "frames": 10
+              }
+            ],
+            "successRecovery": 12,
+            "whiffRecovery": 12,
+            "maxCatches": 0,
+            "table": [
+              {
+                "tag": null,
+                "cells": {
+                  "perfect": "perfectDodge",
+                  "normal": "dodge"
+                }
+              }
+            ],
+            "cooldown": 0,
+            "charges": {
+              "max": 2,
+              "recharge": 150,
+              "mode": "sequential"
+            },
+            "buffer": 2
+          }
+        ],
+        "hitOutcome": "hit",
+        "healthResource": "hp"
+      },
+      "script": {
+        "frames": 60,
+        "presses": [
+          {
+            "frame": 0,
+            "interaction": "parry"
+          },
+          {
+            "frame": 22,
+            "interaction": "parry"
+          }
+        ],
+        "attacks": [
+          {
+            "id": "f1",
+            "frame": 3,
+            "tags": [
+              "bullet"
+            ]
+          },
+          {
+            "id": "f2",
+            "frame": 25,
+            "tags": [
+              "bullet"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "events": [
+          {
+            "frame": 0,
+            "type": "press",
+            "interaction": "parry"
+          },
+          {
+            "frame": 0,
+            "type": "accept",
+            "interaction": "parry",
+            "pressFrame": 0,
+            "buffered": false,
+            "shrink": 0,
+            "windows": [
+              {
+                "id": "perfect",
+                "from": 2,
+                "to": 5
+              },
+              {
+                "id": "normal",
+                "from": 5,
+                "to": 11
+              }
+            ]
+          },
+          {
+            "frame": 3,
+            "type": "resolve",
+            "attack": "f1",
+            "impactFrame": 3,
+            "via": "interaction",
+            "interaction": "parry",
+            "window": "perfect",
+            "outcome": "perfectParry"
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "addResource",
+            "target": "gauge",
+            "value": 25
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "hitstop",
+            "frames": 6
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "reflect"
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "attackerStagger"
+          },
+          {
+            "frame": 4,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "recovery"
+          },
+          {
+            "frame": 8,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "idle"
+          },
+          {
+            "frame": 22,
+            "type": "press",
+            "interaction": "parry"
+          },
+          {
+            "frame": 22,
+            "type": "accept",
+            "interaction": "parry",
+            "pressFrame": 22,
+            "buffered": false,
+            "shrink": 0,
+            "windows": [
+              {
+                "id": "perfect",
+                "from": 24,
+                "to": 27
+              },
+              {
+                "id": "normal",
+                "from": 27,
+                "to": 33
+              }
+            ]
+          },
+          {
+            "frame": 25,
+            "type": "resolve",
+            "attack": "f2",
+            "impactFrame": 25,
+            "via": "interaction",
+            "interaction": "parry",
+            "window": "perfect",
+            "outcome": "perfectParry"
+          },
+          {
+            "frame": 25,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "addResource",
+            "target": "gauge",
+            "value": 25
+          },
+          {
+            "frame": 25,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "hitstop",
+            "frames": 6
+          },
+          {
+            "frame": 25,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "reflect"
+          },
+          {
+            "frame": 25,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "attackerStagger"
+          },
+          {
+            "frame": 26,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "recovery"
+          },
+          {
+            "frame": 30,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "idle"
+          }
+        ],
+        "final": {
+          "frame": 60,
+          "resources": {
+            "hp": 3,
+            "gauge": 50
+          },
+          "statuses": {},
+          "stunUntil": 0,
+          "action": null,
+          "charges": {
+            "dodge": {
+              "count": 2,
+              "pending": []
+            }
+          },
+          "readyAt": {
+            "skill": 0,
+            "parry": 22,
+            "dodge": 0
+          },
+          "buffered": null,
+          "presses": [],
+          "pending": [],
+          "defeated": false
+        }
+      }
+    },
+    {
+      "id": "sekiro/no-forgive",
+      "config": {
+        "version": 1,
+        "id": "sekiro-noforgive",
+        "name": "隻狼風",
+        "description": "完美格擋極短（3 幀），連打懲罰很重；以格擋為核心。",
+        "fps": 60,
+        "inputOffset": 0,
+        "tags": [
+          {
+            "id": "bullet",
+            "name": "子彈",
+            "color": "#f59e0b"
+          },
+          {
+            "id": "unblockable",
+            "name": "不可格擋",
+            "color": "#ef4444"
+          },
+          {
+            "id": "thrust",
+            "name": "突刺",
+            "color": "#a855f7"
+          },
+          {
+            "id": "sweep",
+            "name": "掃腿",
+            "color": "#0ea5e9"
+          },
+          {
+            "id": "energy",
+            "name": "能量彈",
+            "color": "#22c55e"
+          }
+        ],
+        "resources": [
+          {
+            "id": "hp",
+            "name": "生命",
+            "max": 3,
+            "initial": 3
+          },
+          {
+            "id": "gauge",
+            "name": "技能量表",
+            "max": 100,
+            "initial": 0
+          }
+        ],
+        "statuses": [
+          {
+            "id": "counter",
+            "name": "反擊窗"
+          }
+        ],
+        "outcomes": [
+          {
+            "id": "hit",
+            "name": "受傷",
+            "kind": "fail",
+            "effects": [
+              {
+                "type": "damage",
+                "amount": {
+                  "ref": "attack.damage"
+                }
+              },
+              {
+                "type": "invulnerable",
+                "frames": {
+                  "const": 60
+                }
+              },
+              {
+                "type": "stun",
+                "frames": {
+                  "const": 20
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "anim:hurt"
+              }
+            ]
+          },
+          {
+            "id": "perfectParry",
+            "name": "完美格擋",
+            "kind": "perfect",
+            "effects": [
+              {
+                "type": "addResource",
+                "resource": "gauge",
+                "amount": {
+                  "const": 25
+                }
+              },
+              {
+                "type": "hitstop",
+                "frames": {
+                  "const": 6
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "reflect"
+              },
+              {
+                "type": "cue",
+                "cue": "attackerStagger"
+              }
+            ]
+          },
+          {
+            "id": "parry",
+            "name": "格擋",
+            "kind": "success",
+            "effects": [
+              {
+                "type": "addResource",
+                "resource": "gauge",
+                "amount": {
+                  "const": 5
+                }
+              },
+              {
+                "type": "hitstop",
+                "frames": {
+                  "const": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "guardBroken",
+            "name": "破防",
+            "kind": "fail",
+            "effects": [
+              {
+                "type": "damage",
+                "amount": {
+                  "ref": "attack.damage"
+                }
+              },
+              {
+                "type": "invulnerable",
+                "frames": {
+                  "const": 60
+                }
+              },
+              {
+                "type": "stun",
+                "frames": {
+                  "const": 20
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "anim:guardBroken"
+              }
+            ]
+          },
+          {
+            "id": "whiffParry",
+            "name": "格擋落空",
+            "kind": "fail",
+            "effects": [
+              {
+                "type": "cue",
+                "cue": "anim:whiff"
+              }
+            ]
+          },
+          {
+            "id": "perfectDodge",
+            "name": "完美閃避",
+            "kind": "perfect",
+            "effects": [
+              {
+                "type": "addResource",
+                "resource": "gauge",
+                "amount": {
+                  "const": 20
+                },
+                "when": {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "catch.index"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "timeScale",
+                "scale": {
+                  "const": 0.6
+                },
+                "frames": {
+                  "const": 10
+                },
+                "when": {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "catch.index"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "vfx:perfectDodge",
+                "when": {
+                  "op": "eq",
+                  "args": [
+                    {
+                      "ref": "catch.index"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "pass"
+              }
+            ]
+          },
+          {
+            "id": "dodge",
+            "name": "閃避",
+            "kind": "success",
+            "effects": [
+              {
+                "type": "cue",
+                "cue": "vfx:dodge"
+              },
+              {
+                "type": "cue",
+                "cue": "pass"
+              }
+            ]
+          },
+          {
+            "id": "skillOn",
+            "name": "技能發動",
+            "kind": "success",
+            "effects": [
+              {
+                "type": "invulnerable",
+                "frames": {
+                  "const": 240
+                }
+              },
+              {
+                "type": "cue",
+                "cue": "vfx:skill"
+              }
+            ]
+          }
+        ],
+        "interactions": [
+          {
+            "id": "skill",
+            "name": "技能",
+            "key": "KeyL",
+            "priority": 0,
+            "startup": 0,
+            "windows": [],
+            "successRecovery": 10,
+            "whiffRecovery": 0,
+            "maxCatches": 0,
+            "table": [],
+            "onAccept": "skillOn",
+            "cooldown": 0,
+            "cost": {
+              "resource": "gauge",
+              "amount": 100
+            },
+            "buffer": 0
+          },
+          {
+            "id": "parry",
+            "name": "格擋",
+            "key": "KeyJ",
+            "priority": 1,
+            "startup": 2,
+            "windows": [
+              {
+                "id": "perfect",
+                "name": "完美",
+                "frames": 3,
+                "strict": true
+              },
+              {
+                "id": "normal",
+                "name": "普通",
+                "frames": 6
+              }
+            ],
+            "successRecovery": 4,
+            "whiffRecovery": 24,
+            "maxCatches": 1,
+            "table": [
+              {
+                "tag": "unblockable",
+                "cells": {
+                  "perfect": "guardBroken",
+                  "normal": "guardBroken"
+                }
+              },
+              {
+                "tag": null,
+                "cells": {
+                  "perfect": "perfectParry",
+                  "normal": "parry"
+                }
+              }
+            ],
+            "whiffOutcome": "whiffParry",
+            "cooldown": 0,
+            "buffer": 2,
+            "spam": {
+              "withinFrames": 30,
+              "scope": "all",
+              "shrinkPerPress": 3,
+              "maxShrink": 3,
+              "lockoutAfter": 3,
+              "lockoutFrames": 40
+            }
+          },
+          {
+            "id": "dodge",
+            "name": "閃避",
+            "key": "KeyK",
+            "priority": 2,
+            "startup": 2,
+            "windows": [
+              {
+                "id": "perfect",
+                "name": "完美",
+                "frames": 3,
+                "strict": true
+              },
+              {
+                "id": "normal",
+                "name": "普通",
+                "frames": 10
+              }
+            ],
+            "successRecovery": 12,
+            "whiffRecovery": 12,
+            "maxCatches": 0,
+            "table": [
+              {
+                "tag": null,
+                "cells": {
+                  "perfect": "perfectDodge",
+                  "normal": "dodge"
+                }
+              }
+            ],
+            "cooldown": 0,
+            "charges": {
+              "max": 2,
+              "recharge": 150,
+              "mode": "sequential"
+            },
+            "buffer": 2
+          }
+        ],
+        "hitOutcome": "hit",
+        "healthResource": "hp"
+      },
+      "script": {
+        "frames": 60,
+        "presses": [
+          {
+            "frame": 0,
+            "interaction": "parry"
+          },
+          {
+            "frame": 22,
+            "interaction": "parry"
+          }
+        ],
+        "attacks": [
+          {
+            "id": "f1",
+            "frame": 3,
+            "tags": [
+              "bullet"
+            ]
+          },
+          {
+            "id": "f2",
+            "frame": 25,
+            "tags": [
+              "bullet"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "events": [
+          {
+            "frame": 0,
+            "type": "press",
+            "interaction": "parry"
+          },
+          {
+            "frame": 0,
+            "type": "accept",
+            "interaction": "parry",
+            "pressFrame": 0,
+            "buffered": false,
+            "shrink": 0,
+            "windows": [
+              {
+                "id": "perfect",
+                "from": 2,
+                "to": 5
+              },
+              {
+                "id": "normal",
+                "from": 5,
+                "to": 11
+              }
+            ]
+          },
+          {
+            "frame": 3,
+            "type": "resolve",
+            "attack": "f1",
+            "impactFrame": 3,
+            "via": "interaction",
+            "interaction": "parry",
+            "window": "perfect",
+            "outcome": "perfectParry"
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "addResource",
+            "target": "gauge",
+            "value": 25
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "hitstop",
+            "frames": 6
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "reflect"
+          },
+          {
+            "frame": 3,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "attackerStagger"
+          },
+          {
+            "frame": 4,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "recovery"
+          },
+          {
+            "frame": 8,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "idle"
+          },
+          {
+            "frame": 22,
+            "type": "press",
+            "interaction": "parry"
+          },
+          {
+            "frame": 22,
+            "type": "accept",
+            "interaction": "parry",
+            "pressFrame": 22,
+            "buffered": false,
+            "shrink": 3,
+            "windows": [
+              {
+                "id": "perfect",
+                "from": 24,
+                "to": 24
+              },
+              {
+                "id": "normal",
+                "from": 24,
+                "to": 33
+              }
+            ]
+          },
+          {
+            "frame": 25,
+            "type": "resolve",
+            "attack": "f2",
+            "impactFrame": 25,
+            "via": "interaction",
+            "interaction": "parry",
+            "window": "normal",
+            "outcome": "parry"
+          },
+          {
+            "frame": 25,
+            "type": "effect",
+            "outcome": "parry",
+            "effect": "addResource",
+            "target": "gauge",
+            "value": 5
+          },
+          {
+            "frame": 25,
+            "type": "effect",
+            "outcome": "parry",
+            "effect": "hitstop",
+            "frames": 3
+          },
+          {
+            "frame": 26,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "recovery"
+          },
+          {
+            "frame": 30,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "idle"
+          }
+        ],
+        "final": {
+          "frame": 60,
+          "resources": {
+            "hp": 3,
+            "gauge": 30
+          },
+          "statuses": {},
+          "stunUntil": 0,
+          "action": null,
+          "charges": {
+            "dodge": {
+              "count": 2,
+              "pending": []
+            }
+          },
+          "readyAt": {
+            "skill": 0,
+            "parry": 22,
+            "dodge": 0
           },
           "buffered": null,
           "presses": [],
@@ -5066,7 +6251,7 @@
                 "frames": 6
               }
             ],
-            "successRecovery": 6,
+            "successRecovery": 4,
             "whiffRecovery": 24,
             "maxCatches": 1,
             "table": [
@@ -5094,7 +6279,8 @@
               "shrinkPerPress": 3,
               "maxShrink": 3,
               "lockoutAfter": 3,
-              "lockoutFrames": 40
+              "lockoutFrames": 40,
+              "forgiveCaught": true
             }
           },
           {
@@ -5766,7 +6952,7 @@
                 "frames": 6
               }
             ],
-            "successRecovery": 10,
+            "successRecovery": 6,
             "whiffRecovery": 30,
             "maxCatches": 1,
             "table": [
@@ -5794,7 +6980,8 @@
               "shrinkPerPress": 1,
               "maxShrink": 2,
               "lockoutAfter": 4,
-              "lockoutFrames": 30
+              "lockoutFrames": 30,
+              "forgiveCaught": true
             }
           },
           {
@@ -6480,7 +7667,7 @@
                 "frames": 14
               }
             ],
-            "successRecovery": 8,
+            "successRecovery": 4,
             "whiffRecovery": 20,
             "maxCatches": 1,
             "table": [
@@ -6648,7 +7835,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 12,
+            "frame": 8,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -6710,7 +7897,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 52,
+            "frame": 48,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -7053,7 +8240,7 @@
                 "frames": 14
               }
             ],
-            "successRecovery": 8,
+            "successRecovery": 4,
             "whiffRecovery": 20,
             "maxCatches": 1,
             "table": [
@@ -7702,7 +8889,7 @@
                 "frames": 8
               }
             ],
-            "successRecovery": 10,
+            "successRecovery": 6,
             "whiffRecovery": 28,
             "maxCatches": 1,
             "table": [
@@ -7730,7 +8917,8 @@
               "shrinkPerPress": 2,
               "maxShrink": 4,
               "lockoutAfter": 3,
-              "lockoutFrames": 30
+              "lockoutFrames": 30,
+              "forgiveCaught": true
             }
           },
           {
@@ -8669,7 +9857,7 @@
                 "frames": 8
               }
             ],
-            "successRecovery": 10,
+            "successRecovery": 6,
             "whiffRecovery": 28,
             "maxCatches": 1,
             "table": [
@@ -8697,7 +9885,8 @@
               "shrinkPerPress": 2,
               "maxShrink": 4,
               "lockoutAfter": 3,
-              "lockoutFrames": 30
+              "lockoutFrames": 30,
+              "forgiveCaught": true
             }
           },
           {
@@ -8874,6 +10063,7 @@
         "action": {
           "interaction": "parry",
           "start": 0,
+          "pressFrame": 0,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -8904,12 +10094,7 @@
           "dodge": 0
         },
         "buffered": null,
-        "presses": [
-          [
-            0,
-            "parry"
-          ]
-        ],
+        "presses": [],
         "pending": [],
         "defeated": false
       },
@@ -8924,6 +10109,7 @@
         "action": {
           "interaction": "parry",
           "start": -4,
+          "pressFrame": -4,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -8954,12 +10140,7 @@
           "dodge": -4
         },
         "buffered": null,
-        "presses": [
-          [
-            -4,
-            "parry"
-          ]
-        ],
+        "presses": [],
         "pending": [],
         "defeated": false
       },
@@ -9001,7 +10182,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 10,
+            "frame": 6,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -9071,7 +10252,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 55,
+            "frame": 51,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -9209,6 +10390,7 @@
         "action": {
           "interaction": "parry",
           "start": 40,
+          "pressFrame": 40,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -9259,6 +10441,7 @@
         "action": {
           "interaction": "parry",
           "start": -4,
+          "pressFrame": -4,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -9365,7 +10548,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 15,
+            "frame": 11,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -9684,6 +10867,7 @@
         "action": {
           "interaction": "parry",
           "start": 0,
+          "pressFrame": 0,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -9750,6 +10934,7 @@
         "action": {
           "interaction": "parry",
           "start": -15,
+          "pressFrame": -15,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -9969,7 +11154,7 @@
             "reason": "bufferExpired"
           },
           {
-            "frame": 79,
+            "frame": 75,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -10017,6 +11202,7 @@
         "action": {
           "interaction": "parry",
           "start": 0,
+          "pressFrame": 0,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -10071,6 +11257,7 @@
         "action": {
           "interaction": "parry",
           "start": -31,
+          "pressFrame": -31,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -10947,6 +12134,7 @@
         "action": {
           "interaction": "parry",
           "start": 30,
+          "pressFrame": 30,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -11000,6 +12188,7 @@
         "action": {
           "interaction": "parry",
           "start": -11,
+          "pressFrame": -11,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -11081,7 +12270,7 @@
             "phase": "recovery"
           },
           {
-            "frame": 11,
+            "frame": 7,
             "type": "phase",
             "interaction": "parry",
             "phase": "idle"
@@ -11310,6 +12499,7 @@
         "action": {
           "interaction": "absorb",
           "start": 100,
+          "pressFrame": 100,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -11363,6 +12553,7 @@
         "action": {
           "interaction": "absorb",
           "start": -4,
+          "pressFrame": -4,
           "buffered": false,
           "shrink": 0,
           "windows": [
@@ -11757,6 +12948,232 @@
           "defeated": true
         }
       }
+    },
+    {
+      "id": "sekiro/forgive-caught@5",
+      "from": "sekiro/forgive-caught",
+      "cut": 5,
+      "mid": {
+        "frame": 5,
+        "resources": {
+          "hp": 3,
+          "gauge": 25
+        },
+        "statuses": {},
+        "stunUntil": 0,
+        "action": {
+          "interaction": "parry",
+          "start": 0,
+          "pressFrame": 0,
+          "buffered": false,
+          "shrink": 0,
+          "windows": [
+            {
+              "id": "perfect",
+              "from": 2,
+              "to": 5
+            },
+            {
+              "id": "normal",
+              "from": 5,
+              "to": 11
+            }
+          ],
+          "activeEnd": 4,
+          "recoveryEnd": 8,
+          "catches": 1
+        },
+        "charges": {
+          "dodge": {
+            "count": 2,
+            "pending": []
+          }
+        },
+        "readyAt": {
+          "skill": 0,
+          "parry": 0,
+          "dodge": 0
+        },
+        "buffered": null,
+        "presses": [],
+        "pending": [],
+        "defeated": false
+      },
+      "initial": {
+        "frame": 0,
+        "resources": {
+          "hp": 3,
+          "gauge": 25
+        },
+        "statuses": {},
+        "stunUntil": -5,
+        "action": {
+          "interaction": "parry",
+          "start": -5,
+          "pressFrame": -5,
+          "buffered": false,
+          "shrink": 0,
+          "windows": [
+            {
+              "id": "perfect",
+              "from": -3,
+              "to": 0
+            },
+            {
+              "id": "normal",
+              "from": 0,
+              "to": 6
+            }
+          ],
+          "activeEnd": -1,
+          "recoveryEnd": 3,
+          "catches": 1
+        },
+        "charges": {
+          "dodge": {
+            "count": 2,
+            "pending": []
+          }
+        },
+        "readyAt": {
+          "skill": -5,
+          "parry": -5,
+          "dodge": -5
+        },
+        "buffered": null,
+        "presses": [],
+        "pending": [],
+        "defeated": false
+      },
+      "script": {
+        "frames": 55,
+        "presses": [
+          {
+            "frame": 17,
+            "interaction": "parry"
+          }
+        ],
+        "attacks": [
+          {
+            "id": "f2",
+            "frame": 20,
+            "tags": [
+              "bullet"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "events": [
+          {
+            "frame": 3,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "idle"
+          },
+          {
+            "frame": 17,
+            "type": "press",
+            "interaction": "parry"
+          },
+          {
+            "frame": 17,
+            "type": "accept",
+            "interaction": "parry",
+            "pressFrame": 17,
+            "buffered": false,
+            "shrink": 0,
+            "windows": [
+              {
+                "id": "perfect",
+                "from": 19,
+                "to": 22
+              },
+              {
+                "id": "normal",
+                "from": 22,
+                "to": 28
+              }
+            ]
+          },
+          {
+            "frame": 20,
+            "type": "resolve",
+            "attack": "f2",
+            "impactFrame": 20,
+            "via": "interaction",
+            "interaction": "parry",
+            "window": "perfect",
+            "outcome": "perfectParry"
+          },
+          {
+            "frame": 20,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "addResource",
+            "target": "gauge",
+            "value": 25
+          },
+          {
+            "frame": 20,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "hitstop",
+            "frames": 6
+          },
+          {
+            "frame": 20,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "reflect"
+          },
+          {
+            "frame": 20,
+            "type": "effect",
+            "outcome": "perfectParry",
+            "effect": "cue",
+            "target": "attackerStagger"
+          },
+          {
+            "frame": 21,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "recovery"
+          },
+          {
+            "frame": 25,
+            "type": "phase",
+            "interaction": "parry",
+            "phase": "idle"
+          }
+        ],
+        "final": {
+          "frame": 55,
+          "resources": {
+            "hp": 3,
+            "gauge": 50
+          },
+          "statuses": {},
+          "stunUntil": -5,
+          "action": null,
+          "charges": {
+            "dodge": {
+              "count": 2,
+              "pending": []
+            }
+          },
+          "readyAt": {
+            "skill": -5,
+            "parry": 17,
+            "dodge": -5
+          },
+          "buffered": null,
+          "presses": [],
+          "pending": [],
+          "defeated": false
+        }
+      }
     }
   ],
   "conversions": {
@@ -11854,6 +13271,61 @@
           "frame": 138,
           "tags": [
             "thrust"
+          ]
+        }
+      ]
+    },
+    {
+      "def": {
+        "id": "tells",
+        "name": "tells",
+        "windup": 20,
+        "telegraph": 12,
+        "recovery": 10,
+        "hits": [
+          {
+            "offset": 0,
+            "tags": [
+              "bullet"
+            ]
+          },
+          {
+            "offset": 6,
+            "tags": [
+              "bullet"
+            ],
+            "telegraph": 0
+          },
+          {
+            "offset": 12,
+            "tags": [
+              "bullet"
+            ],
+            "telegraph": 4
+          }
+        ]
+      },
+      "start": 10,
+      "expected": [
+        {
+          "id": "tells#0",
+          "frame": 30,
+          "tags": [
+            "bullet"
+          ]
+        },
+        {
+          "id": "tells#1",
+          "frame": 36,
+          "tags": [
+            "bullet"
+          ]
+        },
+        {
+          "id": "tells#2",
+          "frame": 42,
+          "tags": [
+            "bullet"
           ]
         }
       ]

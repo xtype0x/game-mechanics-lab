@@ -10,7 +10,7 @@ const TICKS = [1, 2, 5, 10, 20, 30, 60, 120];
 const FALLBACK = ["#7c95ff", "#f59e0b", "#2dd4bf", "#c084fc", "#fb7185"];
 
 /** Horizontal frame timeline: attacks, each interaction's phases, key presses, resolutions, stun / invulnerability. */
-export function FrameBar({ config, run, attacks = [], from, to, playhead, onSeek }: {
+export function FrameBar({ config, run, attacks = [], from, to, playhead, onSeek, hitTells = true }: {
   config: Timing.TimingConfig;
   run: { events: Timing.TimingEvent[]; trace: Timing.FrameTrace[] };
   attacks?: { def: Timing.AttackDef; start: number }[];
@@ -18,6 +18,8 @@ export function FrameBar({ config, run, attacks = [], from, to, playhead, onSeek
   to: number;
   playhead: number;
   onSeek?: (frame: number) => void;
+  /** Draw a tell for every hit (default); false = only the first hit's. */
+  hitTells?: boolean;
 }) {
   const t = useTimingText().frameBar;
   const [zi, setZi] = useState(3);
@@ -33,7 +35,7 @@ export function FrameBar({ config, run, attacks = [], from, to, playhead, onSeek
   const presses = useMemo(() => pressMarks(run.events), [run.events]);
   const stun = useMemo(() => traceRanges(run.trace, (t) => t.stunned), [run.trace]);
   const invul = useMemo(() => traceRanges(run.trace, (t) => t.invulnerable), [run.trace]);
-  const atk = useMemo(() => attacks.map((a) => attackSpans(config, a.def, a.start)), [config, attacks]);
+  const atk = useMemo(() => attacks.map((a) => attackSpans(config, a.def, a.start, { hitTells })), [config, attacks, hitTells]);
   const resolves = useMemo(() => run.events.filter((e): e is Extract<Timing.TimingEvent, { type: "resolve" }> => e.type === "resolve"), [run.events]);
 
   // Keep the playhead in view while it moves.
@@ -89,7 +91,7 @@ export function FrameBar({ config, run, attacks = [], from, to, playhead, onSeek
                 {atk.map((a, i) => (
                   <div key={i}>
                     <div className="tm-seg seg-windup" style={{ ...seg(a.windup.from, a.windup.to), background: `color-mix(in srgb, ${colorOf(i, a.color)} 30%, transparent)` }} title={t.windup(a.name, a.windup.to - a.windup.from)}>{a.name}</div>
-                    {a.telegraph.to > a.telegraph.from && <div className="tm-seg seg-tell" style={seg(a.telegraph.from, a.telegraph.to)} title={t.telegraph(a.telegraph.to - a.telegraph.from)} />}
+                    {a.tells.map((tl) => tl.to > tl.from && <div key={`t${tl.hit}`} className="tm-seg seg-tell" style={seg(tl.from, tl.to)} title={t.telegraph(tl.to - tl.from)} />)}
                     {a.recovery.to > a.recovery.from && <div className="tm-seg seg-arec" style={seg(a.recovery.from, a.recovery.to)} title={t.recovery(a.recovery.to - a.recovery.from)} />}
                     {a.hits.map((h, j) => <div key={j} className="tm-mark mk-hit" style={{ left: x(h) + fw / 2, background: colorOf(i, a.color) }} title={t.attackHit(a.name, j + 1, h)} />)}
                   </div>

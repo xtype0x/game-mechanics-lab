@@ -106,6 +106,8 @@ export const timingZhHant = {
       lockAfter: "鎖定門檻",
       lockAfterTip: "0 = 不鎖定",
       lockFrames: "鎖定時間",
+      forgiveCaught: "成功攔截不算連打",
+      forgiveCaughtTip: "成功擋下或閃過攻擊的那次按鍵不計入連打次數",
     },
     matrix: {
       noCatch: "不攔截",

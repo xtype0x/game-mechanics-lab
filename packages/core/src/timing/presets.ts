@@ -141,7 +141,7 @@ function preset(id: string, name: string, description: string, t: Tuning, extraO
 const lenient = preset(
   "lenient", "寬鬆", "判定窗寬、沒有連打懲罰，適合初次體驗。",
   {
-    parry: { startup: 2, perfect: 8, normal: 14, successRecovery: 8, whiffRecovery: 20, buffer: 6 },
+    parry: { startup: 2, perfect: 8, normal: 14, successRecovery: 4, whiffRecovery: 20, buffer: 6 },
     dodge: { startup: 1, perfect: 8, normal: 14, whiffRecovery: 10, buffer: 6, charges: { max: 2, recharge: 180, mode: "sequential" } },
     chip: 0, slow: { scale: 0.5, frames: 20 },
   },
@@ -151,8 +151,8 @@ const souls = preset(
   "souls", "魂系", "格擋完美窗口短，普通格擋會被削血；連打會縮短完美窗口並鎖定。",
   {
     parry: {
-      startup: 2, perfect: 4, normal: 8, successRecovery: 10, whiffRecovery: 28, buffer: 3,
-      spam: { withinFrames: 20, scope: "self", shrinkPerPress: 2, maxShrink: 4, lockoutAfter: 3, lockoutFrames: 30 },
+      startup: 2, perfect: 4, normal: 8, successRecovery: 6, whiffRecovery: 28, buffer: 3,
+      spam: { withinFrames: 20, scope: "self", shrinkPerPress: 2, maxShrink: 4, lockoutAfter: 3, lockoutFrames: 30, forgiveCaught: true },
     },
     dodge: { startup: 2, perfect: 4, normal: 12, whiffRecovery: 10, buffer: 3, charges: { max: 2, recharge: 180, mode: "sequential" } },
     chip: 0.25, slow: { scale: 0.6, frames: 12 },
@@ -163,8 +163,8 @@ const sekiro = preset(
   "sekiro", "隻狼風", "完美格擋極短（3 幀），連打懲罰很重；以格擋為核心。",
   {
     parry: {
-      startup: 2, perfect: 3, normal: 6, successRecovery: 6, whiffRecovery: 24, buffer: 2,
-      spam: { withinFrames: 30, scope: "all", shrinkPerPress: 3, maxShrink: 3, lockoutAfter: 3, lockoutFrames: 40 },
+      startup: 2, perfect: 3, normal: 6, successRecovery: 4, whiffRecovery: 24, buffer: 2,
+      spam: { withinFrames: 30, scope: "all", shrinkPerPress: 3, maxShrink: 3, lockoutAfter: 3, lockoutFrames: 40, forgiveCaught: true },
     },
     dodge: { startup: 2, perfect: 3, normal: 10, whiffRecovery: 12, buffer: 2, charges: { max: 2, recharge: 150, mode: "sequential" } },
     chip: 0, slow: { scale: 0.6, frames: 10 },
@@ -175,8 +175,8 @@ const witch = preset(
   "witch", "魔女時間", "以閃避為主：完美閃避觸發長時間慢動作並回復一次閃避充能；格擋較難。",
   {
     parry: {
-      startup: 2, perfect: 2, normal: 6, successRecovery: 10, whiffRecovery: 30, buffer: 2,
-      spam: { withinFrames: 20, scope: "self", shrinkPerPress: 1, maxShrink: 2, lockoutAfter: 4, lockoutFrames: 30 },
+      startup: 2, perfect: 2, normal: 6, successRecovery: 6, whiffRecovery: 30, buffer: 2,
+      spam: { withinFrames: 20, scope: "self", shrinkPerPress: 1, maxShrink: 2, lockoutAfter: 4, lockoutFrames: 30, forgiveCaught: true },
     },
     dodge: { startup: 1, perfect: 6, normal: 14, whiffRecovery: 10, buffer: 4, charges: { max: 3, recharge: 120, mode: "parallel" } },
     chip: 0, slow: { scale: 0.3, frames: 45 }, refundCharge: true,
@@ -188,8 +188,8 @@ function showcase(): TimingConfig {
     "showcase", "互動展示", "示範自訂互動：看破（只對突刺）、跳躍（只對掃腿）、吸收（只對能量彈）。",
     {
       parry: {
-        startup: 2, perfect: 4, normal: 8, successRecovery: 10, whiffRecovery: 28, buffer: 3,
-        spam: { withinFrames: 20, scope: "self", shrinkPerPress: 2, maxShrink: 4, lockoutAfter: 3, lockoutFrames: 30 },
+        startup: 2, perfect: 4, normal: 8, successRecovery: 6, whiffRecovery: 28, buffer: 3,
+        spam: { withinFrames: 20, scope: "self", shrinkPerPress: 2, maxShrink: 4, lockoutAfter: 3, lockoutFrames: 30, forgiveCaught: true },
       },
       dodge: { startup: 2, perfect: 4, normal: 12, whiffRecovery: 10, buffer: 3, charges: { max: 2, recharge: 180, mode: "sequential" } },
       chip: 0, slow: { scale: 0.5, frames: 20 },

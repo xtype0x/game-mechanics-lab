@@ -2,7 +2,7 @@
 
 規則版本 1.1.0。實作：`packages/core/src/timing/`（`@gml/core` 匯出為命名空間 `Timing`）。向量：`packages/core/vectors/timing.json`。型別：`timing/types.ts`。
 
-變更紀錄：1.1.0 — 新增 `runTiming` 的 `initial` 選項（§7.1）與狀態平移 `rebaseTimingState`（§7.3），可從中途狀態接續執行；既有規則與向量不變。
+變更紀錄：1.1.0 之後（未改版號，向量已更新）— 防連打新增選填 `forgiveCaught`（§4.4）、`ActionState.pressFrame`（§7.3 平移）、`AttackDef.hits[i].telegraph`（§6）；預設格擋的成功收招縮短並開啟 `forgiveCaught`（§9）。未使用新欄位的設定行為不變。1.1.0 — 新增 `runTiming` 的 `initial` 選項（§7.1）與狀態平移 `rebaseTimingState`（§7.3），可從中途狀態接續執行；既有規則與向量不變。
 
 動作遊戲裡「在特定幾幀內按下按鍵」的判定。**格擋和閃避不是寫死的規則**，只是兩筆內建的互動資料；使用者可以新增互動，定義它的判定窗、對每種攻擊標籤的結果，以及結果帶來的效果。
 
@@ -86,12 +86,13 @@
 例：完美 3 幀（strict）＋普通 6 幀，`s = 2` → 完美 1 幀、普通 8 幀。
 
 ### 4.4 防連打 `spam`
-`{withinFrames, scope, shrinkPerPress, maxShrink, lockoutAfter, lockoutFrames}`。
+`{withinFrames, scope, shrinkPerPress, maxShrink, lockoutAfter, lockoutFrames, forgiveCaught?}`。
 
 - **每一次原始按鍵**（不論最後被接受或丟棄）都記入按鍵歷史。
 - 幀 `t` 按下互動 X 時，`n` = 歷史中滿足 `t - withinFrames < 幀 ≤ t` 的其他按鍵數；`scope = "self"` 只算 X 自己，`"all"` 算全部。同一幀比它早處理的按鍵也算。
 - 若 `lockoutAfter > 0` 且 `n ≥ lockoutAfter`：丟棄（`spamLockout`），`stunUntil = max(stunUntil, t + lockoutFrames)`。這個鎖定**不會**中斷目前動作。
 - 否則縮減量 `s = min(n × shrinkPerPress, maxShrink)`。
+- `forgiveCaught`（選填，預設 false）：為 true 時，這個互動的動作攔截到攻擊（§7 步驟 4.2）後，從按鍵歷史**移除啟動該動作的那一筆按鍵**（幀號 = `action.pressFrame`、互動 id 相同；若有多筆完全相同的只移除一筆），它之後不再計入任何互動的連打次數（不論 `scope`）。只在第一次攔截時找得到該筆，之後的攔截找不到、什麼也不做。揮空的按鍵不會被免除。用途：連續格擋多段連擊時，成功的格擋不該讓下一次的完美窗縮短。缺少或 false 時行為與 1.1.0 完全相同。
 
 ### 4.5 結果表
 `table` 是有順序的列 `{tag, cells}`。攻擊在判定窗 `w` 被結算時：
@@ -118,7 +119,9 @@ UI 把它畫成矩陣：每列一個標籤（由上往下＝優先順序），�
 例：連續閃過彈幕時只有第一發給量表 → `addResource gauge 20`，`when: catch.index == 0`。
 
 ## 6. 招式輔助 `AttackDef`
-`{id, name, windup, telegraph, recovery, hits[{offset, damage?, tags}]}`。`expandAttack(def, start)` 產生攻擊事件：第 i 段命中幀 = `start + windup + hits[i].offset`，`id = "<def.id>#<i>"`。`telegraph` 與 `recovery` 只給畫面使用。
+`{id, name, windup, telegraph, recovery, hits[{offset, damage?, tags, telegraph?}]}`。`expandAttack(def, start)` 產生攻擊事件：第 i 段命中幀 = `start + windup + hits[i].offset`，`id = "<def.id>#<i>"`。`telegraph` 與 `recovery` 只給畫面使用。
+
+`def.telegraph` 是每一段命中的預設預兆提前幀數；`hits[i].telegraph` 可覆寫該段（0 = 該段沒有預兆）。`hitTelegraph(def, i) = hits[i].telegraph ?? def.telegraph`：第 i 段的預兆出現在它命中幀之前這麼多幀。仍然只給畫面使用，`expandAttack` 與判定都不受影響。
 
 ## 7. 逐幀步驟（`stepTiming`）
 狀態 `TimingState` 的 `frame` 是**下一個要處理的幀** `t`。處理完 `frame` 加 1。
@@ -143,7 +146,7 @@ UI 把它畫成矩陣：每列一個標籤（由上往下＝優先順序），�
 
 **4. 攻擊結算**：把本幀收到的攻擊依 §4.6 加入待結算清單（依結算幀排序，同幀保持加入順序），然後依序結算所有結算幀 ≤ t 的攻擊：
 1. 已 defeated → 停止，清空剩下的待結算攻擊。
-2. 若有動作、`t < activeEnd`、`t` 落在某個判定窗 `w` 內，且未達 `maxCatches` → 查結果表（§4.5）。有結果時：發出 `resolve`（via interaction），套用結果（`catch.index` = 攔截前次數），攔截次數 +1；達到 `maxCatches` 時 `activeEnd = t + 1`。結算下一發。
+2. 若有動作、`t < activeEnd`、`t` 落在某個判定窗 `w` 內，且未達 `maxCatches` → 查結果表（§4.5）。有結果時：發出 `resolve`（via interaction），套用結果（`catch.index` = 攔截前次數），攔截次數 +1；若該互動的 `spam.forgiveCaught` 為 true，緊接著依 §4.4 從按鍵歷史移除 `action.pressFrame` 那一筆；達到 `maxCatches` 時 `activeEnd = t + 1`。結算下一發。
 3. 否則若無敵中（`status.invulnerable > 0`）→ 發出 `resolve`（via invulnerable，outcome null）。
 4. 否則發出 `resolve`（via hit），套用 `hitOutcome`。
 
@@ -163,7 +166,7 @@ UI 把它畫成矩陣：每列一個標籤（由上往下＝優先順序），�
 平移的欄位（共同構成「絕對幀」的完整清單；`TimingState` 新增存放幀號的欄位時必須同步更新）：
 - `frame`、`stunUntil`
 - `statuses[*]`（結束幀）
-- `action.start`、`action.activeEnd`、`action.recoveryEnd`（不是 null 時）、`action.windows[*].from`／`to`
+- `action.start`、`action.pressFrame`、`action.activeEnd`、`action.recoveryEnd`（不是 null 時）、`action.windows[*].from`／`to`
 - `charges[*].pending[*]`（充能到期幀）
 - `readyAt[*]`
 - `buffered.frame`（`buffered.shrink` 不平移）
@@ -181,7 +184,7 @@ UI 把它畫成矩陣：每列一個標籤（由上往下＝優先順序），�
 警告：結果表中某判定窗在預設列沒有格子；互動沒有任何判定窗也沒有 `onAccept`；`maxShrink` 大於所有嚴格窗長度。
 
 ## 9. 預設設定
-`TIMING_PRESETS`：寬鬆、魂系、隻狼風、魔女時間，以及示範自訂互動的「互動展示」（看破、跳躍、吸收）。全部包含格擋 `parry`、閃避 `dodge`、技能 `skill`（量表滿才能用，給予數秒無敵），以及標籤 bullet／unblockable／thrust／sweep／energy。
+`TIMING_PRESETS`：寬鬆、魂系、隻狼風、魔女時間，以及示範自訂互動的「互動展示」（看破、跳躍、吸收）。格擋的成功收招：寬鬆 4、魂系 6、隻狼風 4、魔女時間 6、互動展示 6 幀；有防連打設定的預設（魂系、隻狼風、魔女時間、互動展示）都開啟 `forgiveCaught`。全部包含格擋 `parry`、閃避 `dodge`、技能 `skill`（量表滿才能用，給予數秒無敵），以及標籤 bullet／unblockable／thrust／sweep／energy。
 
 ## 10. 補充約定（實作與向量一致）
 - **effect 事件欄位**：`damage`／`addResource`／`restoreCharge`／`cue` 帶 `value`（`damage` 為 `max(0, amount)`；`restoreCharge` 為取整後的 n；`cue` 只在有 `value` 時）；`invulnerable`／`status`／`stun`／`hitstop` 只帶 `frames`；`timeScale` 帶 `value`（scale）與 `frames`；`target`：damage＝`healthResource`、addResource＝資源、invulnerable＝`"invulnerable"`、status＝狀態、restoreCharge＝互動、cue＝cue 名稱。`restoreCharge` 的 n 也是 `max(0, roundHalfAway(值))`。

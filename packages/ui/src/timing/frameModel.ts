@@ -1,5 +1,5 @@
 // Pure model behind <FrameBar>: turns timing events and trace into drawable spans.
-import type { Timing } from "@gml/core";
+import { Timing } from "@gml/core";
 
 export interface ActionSpans {
   interaction: string;
@@ -98,20 +98,29 @@ export interface AttackSpans {
   name: string;
   color: string | undefined;
   windup: { from: number; to: number };
-  telegraph: { from: number; to: number };
+  /** One tell per hit whose effective telegraph is > 0 (`hit` = index into `hits`). */
+  tells: { hit: number; from: number; to: number }[];
   hits: number[];
   recovery: { from: number; to: number };
 }
 
-export function attackSpans(config: Timing.TimingConfig, def: Timing.AttackDef, start: number): AttackSpans {
+/** `opts.hitTells === false` draws only hit 0's tell (the pre-per-hit behaviour). */
+export function attackSpans(config: Timing.TimingConfig, def: Timing.AttackDef, start: number, opts?: { hitTells?: boolean }): AttackSpans {
+  const hitTells = opts?.hitTells ?? true;
   const hits = def.hits.map((h) => start + def.windup + h.offset);
   const first = hits.length ? Math.min(...hits) : start + def.windup;
   const last = hits.length ? Math.max(...hits) : first;
   const tag = def.hits[0]?.tags[0];
+  const tells: AttackSpans["tells"] = [];
+  hits.forEach((at, i) => {
+    if (!hitTells && i > 0) return;
+    const tel = Timing.hitTelegraph(def, i);
+    if (tel > 0) tells.push({ hit: i, from: Math.max(start, at - tel), to: at });
+  });
   return {
     id: def.id, name: def.name, color: config.tags.find((t) => t.id === tag)?.color,
     windup: { from: start, to: first },
-    telegraph: { from: Math.max(start, first - def.telegraph), to: first },
+    tells,
     hits, recovery: { from: last + 1, to: last + 1 + def.recovery },
   };
 }

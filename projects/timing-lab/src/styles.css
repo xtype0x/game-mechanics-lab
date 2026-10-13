@@ -94,3 +94,8 @@ body { margin: 0; background: #0b141b; color: #edf3f4; font: 14px/1.6 "Segoe UI"
   .tl-tab { flex: 1 1 0; padding: 6px 8px; }
   .tl-key { flex: 1 1 28%; }
 }
+.tl-hitbox { margin: 4px 0 8px; }
+.tl-react { font-size: 12px; color: #c9d3da; margin: 1px 0 1px 12px; }
+.tl-grade { display: inline-block; padding: 0 8px; margin-left: 4px; border-radius: 999px; border: 1px solid var(--g, #8a9aa5); color: var(--g, #8a9aa5); background: color-mix(in srgb, var(--g, #8a9aa5) 14%, transparent); font-size: 11px; font-weight: 700; line-height: 18px; white-space: nowrap; }
+.tl-grade.g-friendly { --g: #6fd08a; } .tl-grade.g-normal { --g: #a8d868; } .tl-grade.g-challenging { --g: #ecd099; }
+.tl-grade.g-harsh { --g: #f0a060; } .tl-grade.g-anticipate { --g: #f0707a; } .tl-grade.g-impossible { --g: #d0506a; }

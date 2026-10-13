@@ -6,18 +6,23 @@ import { textFor } from "./i18n";
 
 type AttackDef = Timing.AttackDef;
 
-const hit = (offset: number, tags: string[], damage?: number) => ({ offset, tags, ...(damage !== undefined ? { damage } : {}) });
+const hit = (offset: number, tags: string[], damage?: number, telegraph?: number) => ({
+  offset, tags, ...(damage !== undefined ? { damage } : {}), ...(telegraph !== undefined ? { telegraph } : {}),
+});
 
 /** Built-in attacks without names; names come from the dictionary (attackNames, by id). */
 const ATTACK_BASE: Omit<AttackDef, "name">[] = [
-  { id: "slash", windup: 30, telegraph: 8, recovery: 24, hits: [hit(0, [])] },
-  { id: "thrust", windup: 24, telegraph: 6, recovery: 20, hits: [hit(0, ["thrust"])] },
-  { id: "sweep", windup: 28, telegraph: 8, recovery: 24, hits: [hit(0, ["sweep"])] },
-  { id: "heavy", windup: 40, telegraph: 14, recovery: 36, hits: [hit(0, ["unblockable"])] },
-  { id: "combo", windup: 24, telegraph: 6, recovery: 30, hits: [hit(0, []), hit(14, []), hit(28, [])] },
+  { id: "slash", windup: 30, telegraph: 20, recovery: 24, hits: [hit(0, [])] },
+  { id: "thrust", windup: 24, telegraph: 16, recovery: 20, hits: [hit(0, ["thrust"])] },
+  { id: "sweep", windup: 28, telegraph: 18, recovery: 24, hits: [hit(0, ["sweep"])] },
+  { id: "heavy", windup: 40, telegraph: 28, recovery: 36, hits: [hit(0, ["unblockable"])] },
+  // Readable combo: 22 frames between hits and a tell before each follow-up.
+  { id: "combo", windup: 24, telegraph: 18, recovery: 30, hits: [hit(0, []), hit(22, [], undefined, 14), hit(44, [], undefined, 14)] },
+  // The hard combo: hits 16 frames apart with short tells, still reactable (harsh, not anticipation-only).
+  { id: "fastCombo", windup: 24, telegraph: 10, recovery: 30, hits: [hit(0, []), hit(16, [], undefined, 9), hit(32, [], undefined, 9)] },
   { id: "delayed", windup: 72, telegraph: 30, recovery: 28, hits: [hit(0, [])] },
-  { id: "orb", windup: 36, telegraph: 10, recovery: 20, hits: [hit(0, ["energy"])] },
-  { id: "volley", windup: 20, telegraph: 6, recovery: 20, hits: [0, 10, 20, 30, 40].map((o) => hit(o, ["bullet"])) },
+  { id: "orb", windup: 36, telegraph: 18, recovery: 20, hits: [hit(0, ["energy"])] },
+  { id: "volley", windup: 20, telegraph: 12, recovery: 20, hits: [0, 10, 20, 30, 40].map((o) => hit(o, ["bullet"])) },
 ];
 
 /** The built-in attack library with names in the given language (fresh objects each call). */
@@ -64,6 +69,31 @@ export const attackLength = (d: AttackDef): number => {
   return d.windup + last + 1 + d.recovery;
 };
 
+/** Frames between hit i and the hit before it (hits in list order); null for the first hit. */
+export const hitGap = (d: AttackDef, i: number): number | null => (i > 0 && d.hits[i] && d.hits[i - 1] ? d.hits[i]!.offset - d.hits[i - 1]!.offset : null);
+
+/** The common gap when every hit follows the previous one by the same number of frames; null otherwise (or < 2 hits). */
+export function uniformGap(d: AttackDef): number | null {
+  if (d.hits.length < 2) return null;
+  const g = hitGap(d, 1)!;
+  return d.hits.every((_, i) => i === 0 || hitGap(d, i) === g) ? g : null;
+}
+
+/** Sets the gap before hit i (i ≥ 1) and shifts the later hits by the same amount, so their own gaps stay. Mutates `d`. */
+export function setHitGap(d: AttackDef, i: number, gap: number): void {
+  const cur = hitGap(d, i);
+  if (cur === null) return;
+  const delta = Math.max(0, Math.round(gap)) - cur;
+  for (let k = i; k < d.hits.length; k++) d.hits[k]!.offset = Math.max(0, d.hits[k]!.offset + delta);
+}
+
+/** Spaces every hit `gap` frames after the previous one, keeping the first hit where it is. Mutates `d`. */
+export function setUniformGap(d: AttackDef, gap: number): void {
+  const g = Math.max(0, Math.round(gap));
+  const first = d.hits[0]?.offset ?? 0;
+  d.hits.forEach((h, k) => { h.offset = first + k * g; });
+}
+
 /** Lays the queued attacks end to end and expands them to impact events with readable unique ids. */
 export function buildSchedule(seq: SeqItem[], library: AttackDef[]): { items: ScheduledAttack[]; frames: number } {
   const items: ScheduledAttack[] = [];
@@ -97,4 +127,24 @@ export function attackPhaseAt(items: ScheduledAttack[], frame: number): { phase:
     return { phase: "recovery", item: it, progress: span(last + 3, it.end) };
   }
   return { phase: "idle", progress: 0 };
+}
+
+/**
+ * The tell showing at `frame`: hit i of a scheduled move has its tell window [max(start, hitFrame - tel), hitFrame).
+ * With `hitTells` off only hit 0 has one. When several overlap, the one whose hit is nearest wins.
+ */
+export function tellAt(items: ScheduledAttack[], frame: number, hitTells: boolean): { item: ScheduledAttack; hit: number; progress: number } | null {
+  let best: { item: ScheduledAttack; hit: number; progress: number } | null = null;
+  let bestAt = Infinity;
+  for (const it of items) {
+    for (let i = 0; i < it.def.hits.length; i++) {
+      const tel = hitTells || i === 0 ? Timing.hitTelegraph(it.def, i) : 0;
+      const at = it.start + it.def.windup + it.def.hits[i]!.offset;
+      const from = Math.max(it.start, at - tel);
+      if (tel <= 0 || frame < from || frame >= at || at >= bestAt) continue;
+      bestAt = at;
+      best = { item: it, hit: i, progress: at > from ? (frame - from) / (at - from) : 1 };
+    }
+  }
+  return best;
 }

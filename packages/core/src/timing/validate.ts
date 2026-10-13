@@ -125,6 +125,7 @@ export function validateTiming(config: TimingConfig): ValidationIssue[] {
       frameField(`${p}.spam.maxShrink`, "縮減上限", sp.maxShrink);
       frameField(`${p}.spam.lockoutAfter`, "鎖定門檻", sp.lockoutAfter);
       frameField(`${p}.spam.lockoutFrames`, "鎖定幀數", sp.lockoutFrames);
+      if (sp.forgiveCaught !== undefined && typeof sp.forgiveCaught !== "boolean") err(`${p}.spam.forgiveCaught`, "成功攔截不算連打必須是 true 或 false");
       const strictMax = Math.max(0, ...it.windows.filter((w) => w.strict).map((w) => w.frames));
       if (sp.maxShrink > strictMax) warn(`${p}.spam.maxShrink`, `縮減上限 ${sp.maxShrink} 大於所有嚴格判定窗的長度（最長 ${strictMax}），多出的部分沒有作用`);
     }

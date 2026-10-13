@@ -8,7 +8,7 @@ import { attackPhaseAt } from "./attacks";
 import { useText } from "./i18n";
 import { Scene } from "./Scene";
 import { ScriptPanel } from "./ScriptPanel";
-import { SequencePanel } from "./SequencePanel";
+import { MovesPanel, SequencePanel } from "./SequencePanel";
 import { replayText, type ReplayData } from "../shell/replay";
 import { ReplayMismatch, SESSION_KEY, activePresses, assertReplayFits, buildScript, defaultSession, loadSession, normalizePresses, relocalizeSession, type PressRec, type Session } from "./session";
 import { computeStats } from "./stats";
@@ -180,7 +180,7 @@ export function LabMode({ config, onConfigChange, onSwitchMode, incomingReplay =
               <button type="button" className="tm-btn" onClick={toReplaySource}>{T.replay.toReplay}</button>
             </div>
           )}
-          <Scene config={config} frame={pb.frame} trace={trace} events={shown} items={items} fx={pb.fx} />
+          <Scene config={config} frame={pb.frame} trace={trace} events={shown} items={items} fx={pb.fx} hitTells={session.hitTells} />
 
           <div className="tl-transport">
             <Segmented<Mode> value={mode} onChange={(m) => { setMode(m); pb.pause(); }} options={[{ value: "live", label: t.modeLive }, { value: "replay", label: t.modeReplay }]} />
@@ -216,7 +216,7 @@ export function LabMode({ config, onConfigChange, onSwitchMode, incomingReplay =
             <span className="tm-muted tl-keyhint">{mode === "live" ? (pb.playing ? t.keyHintPlaying : t.keyHintIdle) : t.keyHintReplay}</span>
           </div>
 
-          <FrameBar config={config} run={barRun} attacks={items.map((i) => ({ def: i.def, start: i.start }))} from={0} to={script.frames} playhead={pb.frame}
+          <FrameBar config={config} run={barRun} attacks={items.map((i) => ({ def: i.def, start: i.start }))} from={0} to={script.frames} playhead={pb.frame} hitTells={session.hitTells}
             onSeek={(f) => { if (mode === "replay") pb.pause(); pb.seek(f); }} />
 
           <div className="tl-cols">
@@ -252,10 +252,14 @@ export function LabMode({ config, onConfigChange, onSwitchMode, incomingReplay =
               {replaying ? (
                 <p className="tm-muted tm-note">{T.replay.sequenceOff}</p>
               ) : (
-                <SequencePanel session={session} onChange={editSession} config={config} phase={{ phase: phase.phase, ...(phase.item ? { name: phase.item.def.name } : {}) }} />
+                <SequencePanel session={session} onChange={editSession} config={config} />
               )}
             </section>
           </div>
+
+          <section className="tl-card">
+            <MovesPanel session={session} onChange={editSession} config={config} replaying={replaying} phase={{ phase: phase.phase, ...(phase.item ? { name: phase.item.def.name } : {}) }} />
+          </section>
         </div>
       </div>
       <footer className="tl-foot">{t.footer}</footer>

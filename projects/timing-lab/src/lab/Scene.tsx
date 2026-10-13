@@ -1,8 +1,9 @@
 import type { Timing } from "@gml/core";
 import { outcomeKind } from "@gml/ui";
-import { attackPhaseAt, type ScheduledAttack } from "./attacks";
+import { attackPhaseAt, tellAt, type ScheduledAttack } from "./attacks";
 import { useText } from "./i18n";
 import type { PlaybackFx } from "./usePlayback";
+import { DASH, TRAVEL, isRanged } from "./visuals";
 
 const GROUND = 205;
 const DEF_X = 150;
@@ -17,9 +18,6 @@ const rad = (d: number) => (d * Math.PI) / 180;
 const BODY_X = DEF_X + 4;
 const REACH = 66; // shoulder → blade tip
 const SHOULDER_Y = GROUND - 62;
-const DASH = 6; // frames the attacker needs to close in before a melee hit
-const TRAVEL = 18; // frames a projectile is visible before impact
-const isRanged = (tags: string[]) => tags.includes("bullet") || tags.includes("energy");
 /** Blade angle at contact (0 = down, 90 = forward): sweeps go for the legs, everything else for the chest. */
 const contactAngle = (tags: string[]) => (tags.includes("sweep") ? 42 : 90);
 const contactY = (tags: string[]) => SHOULDER_Y + Math.cos(rad(contactAngle(tags))) * REACH;
@@ -34,13 +32,15 @@ function Arm({ sx, sy, angle, len, color, facing }: { sx: number; sy: number; an
 }
 
 /** Procedural stick-figure scene: attacker animation follows the attack frame ranges, defender pose follows the trace. */
-export function Scene({ config, frame, trace, events, items, fx }: {
+export function Scene({ config, frame, trace, events, items, fx, hitTells = true }: {
   config: Timing.TimingConfig;
   frame: number;
   trace: Timing.FrameTrace | undefined;
   events: Timing.TimingEvent[];
   items: ScheduledAttack[];
   fx: PlaybackFx;
+  /** Whether every hit gets its own tell (off: only the first hit of a move). */
+  hitTells?: boolean;
 }) {
   const T = useText();
   const t = T.scene;
@@ -65,9 +65,12 @@ export function Scene({ config, frame, trace, events, items, fx }: {
   // Attacker pose. Melee hits: dash in during the last DASH frames, blade lands on the body on the impact frame.
   let atkArm = 40, tell = 0, atkLean = 0, atkX = ATK_X;
   if (ap.phase === "windup") atkArm = lerp(40, 150, ap.progress);
-  else if (ap.phase === "telegraph") { atkArm = 155; tell = 1 - Math.abs(ap.progress * 2 - 1) * 0.3; atkLean = 4; }
+  else if (ap.phase === "telegraph") { atkArm = 155; atkLean = 4; }
   else if (ap.phase === "strike") atkArm = 60;
   else if (ap.phase === "recovery") atkArm = lerp(60, 40, ap.progress);
+  // The tell flash / glint / "!" follows each hit's own tell window (a combo can flash again before a follow-up).
+  const tl = tellAt(items, frame, hitTells);
+  if (tl) tell = 1 - Math.abs(tl.progress * 2 - 1) * 0.3;
   if (ap.item) {
     const melee = ap.item.events.filter((e) => !isRanged(e.tags));
     const next = melee.find((e) => e.frame >= frame);

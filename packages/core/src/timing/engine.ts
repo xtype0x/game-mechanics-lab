@@ -34,6 +34,9 @@ export function expandAttack(def: AttackDef, start: number): AttackEvent[] {
   });
 }
 
+/** spec §6: effective tell lead time of hit `i` (the hit's own `telegraph`, else the move's). Visual only. */
+export const hitTelegraph = (def: AttackDef, i: number): number => def.hits[i]?.telegraph ?? def.telegraph;
+
 export function cloneTimingState(s: TimingState): TimingState {
   const charges: TimingState["charges"] = {};
   for (const k of Object.keys(s.charges)) charges[k] = { count: s.charges[k]!.count, pending: s.charges[k]!.pending.slice() };
@@ -343,7 +346,7 @@ export function stepTiming(config: TimingConfig, prev: TimingState, input: Frame
       const windows = buildWindows(def, t + def.startup, chosen.buffered ? Infinity : chosen.shrink);
       const activeEnd = windows.length ? windows[windows.length - 1]!.to : t + def.startup;
       const action: ActionState = {
-        interaction: def.id, start: t, buffered: chosen.buffered, shrink: chosen.buffered ? -1 : chosen.shrink,
+        interaction: def.id, start: t, pressFrame: chosen.pressFrame, buffered: chosen.buffered, shrink: chosen.buffered ? -1 : chosen.shrink,
         windows, activeEnd, recoveryEnd: null, catches: 0,
       };
       s.action = action;
@@ -375,6 +378,11 @@ export function stepTiming(config: TimingConfig, prev: TimingState, input: Frame
           applyOutcome(out, dmg);
           if (s.action === act) {
             act.catches += 1;
+            if (def.spam?.forgiveCaught) {
+              // only the first catch finds an entry to remove; later catches find none
+              const at = s.presses.findIndex((p) => p[0] === act.pressFrame && p[1] === def.id);
+              if (at >= 0) s.presses.splice(at, 1);
+            }
             if (def.maxCatches > 0 && act.catches >= def.maxCatches) act.activeEnd = t + 1;
           }
         }
@@ -430,6 +438,7 @@ export function rebaseTimingState(state: TimingState, origin: number): TimingSta
   s.stunUntil -= origin;
   if (s.action) {
     s.action.start -= origin;
+    s.action.pressFrame -= origin;
     s.action.activeEnd -= origin;
     if (s.action.recoveryEnd !== null) s.action.recoveryEnd -= origin;
     for (const w of s.action.windows) { w.from -= origin; w.to -= origin; }

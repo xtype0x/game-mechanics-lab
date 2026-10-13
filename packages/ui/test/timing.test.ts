@@ -34,7 +34,7 @@ describe("frame model", () => {
     expect(a!.startup).toEqual({ from: 5, to: 7 });
     // maxCatches 1: the catch on frame 10 ends the active phase at 11, so the normal window never opens.
     expect(a!.windows.map((w) => [w.id, w.from, w.to, w.strict])).toEqual([["perfect", 7, 11, true]]);
-    expect(a!.recovery).toEqual({ from: 11, to: 21 });
+    expect(a!.recovery).toEqual({ from: 11, to: 17 });
   });
   it("marks presses by what happened to them", () => {
     expect(pressMarks(run.events)).toEqual([{ frame: 5, interaction: "parry", status: "accepted" }]);
@@ -42,8 +42,18 @@ describe("frame model", () => {
   it("lays out an attack from its frame ranges", () => {
     const s = attackSpans(souls, { id: "x", name: "x", windup: 20, telegraph: 6, recovery: 10, hits: [{ offset: 0, tags: ["thrust"] }, { offset: 8, tags: [] }] }, 100);
     expect(s.hits).toEqual([120, 128]);
-    expect(s.telegraph).toEqual({ from: 114, to: 120 });
+    // both hits fall back to the move's telegraph 6: tells [114,120) and [122,128)
+    expect(s.tells).toEqual([{ hit: 0, from: 114, to: 120 }, { hit: 1, from: 122, to: 128 }]);
     expect(s.recovery).toEqual({ from: 129, to: 139 });
+  });
+  it("gives each hit its own tell, skips 0, and honours hitTells: false", () => {
+    const def: Parameters<typeof attackSpans>[1] = {
+      id: "y", name: "y", windup: 20, telegraph: 6, recovery: 10,
+      hits: [{ offset: 0, tags: [] }, { offset: 8, tags: [], telegraph: 0 }, { offset: 16, tags: [], telegraph: 30 }],
+    };
+    // hits at 120, 128, 136. Hit 1 has no tell; hit 2's 30-frame tell is clipped to the move start (100).
+    expect(attackSpans(souls, def, 100).tells).toEqual([{ hit: 0, from: 114, to: 120 }, { hit: 2, from: 106, to: 136 }]);
+    expect(attackSpans(souls, def, 100, { hitTells: false }).tells).toEqual([{ hit: 0, from: 114, to: 120 }]);
   });
 });
 

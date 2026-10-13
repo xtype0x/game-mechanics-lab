@@ -27,10 +27,11 @@ describe("attack schedule", () => {
   });
   it("reports the animation phase from the frame ranges", () => {
     const { items } = buildSchedule([{ attack: "slash", gap: 0 }], ATTACKS);
-    const s = LEAD_FRAMES; // windup 30, telegraph 8 => tell from s+22, hit at s+30
+    const s = LEAD_FRAMES; // windup 30, telegraph 20 => tell from s+10, hit at s+30
     expect(attackPhaseAt(items, s - 1).phase).toBe("idle");
     expect(attackPhaseAt(items, s).phase).toBe("windup");
-    expect(attackPhaseAt(items, s + 22).phase).toBe("telegraph");
+    expect(attackPhaseAt(items, s + 9).phase).toBe("windup");
+    expect(attackPhaseAt(items, s + 10).phase).toBe("telegraph");
     expect(attackPhaseAt(items, s + 30).phase).toBe("strike");
     expect(attackPhaseAt(items, s + 40).phase).toBe("recovery");
     expect(attackPhaseAt(items, s + 55).phase).toBe("idle");
@@ -49,6 +50,12 @@ describe("session storage", () => {
     expect(s.loop).toBe(true);
     expect(s.presses).toEqual([{ frame: 3, interaction: "parry" }]);
     expect(s.attacks.length).toBe(ATTACKS.length);
+  });
+  it("hitTells defaults to on and only an explicit false turns it off", () => {
+    expect(defaultSession().hitTells).toBe(true);
+    expect(parseSession(JSON.stringify({ loop: true })).hitTells).toBe(true);
+    expect(parseSession(JSON.stringify({ hitTells: "no" })).hitTells).toBe(true);
+    expect(parseSession(JSON.stringify({ hitTells: false })).hitTells).toBe(false);
   });
   it("sorts presses, drops duplicates and unknown interactions", () => {
     expect(normalizePresses([{ frame: 9, interaction: "dodge" }, { frame: 4, interaction: "parry" }, { frame: 4, interaction: "parry" }, { frame: 2, interaction: "zzz" }], souls))

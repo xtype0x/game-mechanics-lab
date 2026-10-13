@@ -19,6 +19,8 @@ export interface Session {
   attacks: Timing.AttackDef[];
   sequence: SeqItem[];
   loop: boolean;
+  /** Every hit of a move gets its own tell (off: only the first hit, the way the old combo worked). Missing in old saves = on. */
+  hitTells: boolean;
   presses: PressRec[];
   /** Which scenario the lab runs: the queued attack sequence, or a window recorded from the game. */
   source: Source;
@@ -34,6 +36,7 @@ export const defaultSession = (): Session => ({
     { attack: "combo", gap: 30 },
   ],
   loop: false,
+  hitTells: true,
   presses: [],
   source: "sequence",
 });
@@ -60,7 +63,7 @@ export function parseSession(text: string | null): Session {
     : [];
   const replay = parseReplay(o.replay);
   return relocalizeSession({
-    attacks: lib, sequence, loop: o.loop === true, presses,
+    attacks: lib, sequence, loop: o.loop === true, hitTells: o.hitTells !== false, presses,
     source: o.source === "replay" && replay ? "replay" : "sequence",
     ...(replay ? { replay } : {}),
   }, getLocale());

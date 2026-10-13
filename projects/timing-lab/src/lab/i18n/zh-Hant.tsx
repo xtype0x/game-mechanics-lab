@@ -1,6 +1,7 @@
 // Source-language (zh-Hant) UI text for the timing lab page. Defines the shape; en.tsx must match it.
 // Strings with values are functions; ones with markup return JSX.
 import type { ReactNode } from "react";
+import type { GradeId } from "../reaction";
 
 export type AttackPhaseKey = "idle" | "windup" | "telegraph" | "strike" | "recovery";
 
@@ -66,7 +67,7 @@ export const zhHant = {
     delete: "刪除",
   },
   sequence: {
-    title: "攻擊序列",
+    title: "招式序列",
     gap: "間隔",
     gapUnit: "幀",
     gapLabel: "間隔幀數",
@@ -77,7 +78,11 @@ export const zhHant = {
     addMoveLabel: "加入招式",
     addMoveOption: "＋ 加入招式…",
     loopPlay: "循環播放",
-    animTitle: "動畫銜接（招式幀數）",
+    worstTip: (ms: number, grade: string) => `最難的一段：反應約 ${ms} ms・${grade}`,
+  },
+  moves: {
+    title: "敵方招式",
+    intro: "選一招編輯它的前搖、預兆、每段命中與傷害；改動立即套用到序列。",
     animNote: (phase: string, name: string | null): ReactNode => <>這些幀範圍直接驅動場景裡攻擊者的動作：前搖 → 預兆閃光 → 出招 → 收招。目前階段：<b>{phase}</b>{name !== null ? `（${name}）` : ""}</>,
     selectMove: "選擇招式",
     restoreMove: "還原此招",
@@ -86,16 +91,31 @@ export const zhHant = {
     name: "名稱",
     windup: "前搖（幀）",
     windupLabel: "前搖",
-    telegraph: "預兆（幀）",
-    telegraphLabel: "預兆",
+    hitTells: "每段命中都顯示預兆",
+    telegraph: "預兆（預設）（幀）",
+    telegraphLabel: "預兆（預設）",
+    hitTell: "預兆",
+    hitTellLabel: "此段預兆（幀）",
     recovery: "收招（幀）",
     recoveryLabel: "收招",
-    lengthNote: (frames: number, ms: number) => `全長 ${frames} 幀（${ms}ms）；預兆是第一段命中前閃光的幀數。`,
+    lengthNote: (frames: number, ms: number) => `全長 ${frames} 幀（${ms}ms）；預兆（預設）是每段命中前閃光的幀數，各段可在下方個別調整。`,
     hit: (n: number) => `命中 ${n}`,
     offset: "偏移",
+    uniformGap: "段間隔（統一，幀）",
+    uniformGapLabel: "每段命中之間相隔的幀數",
+    gapsDiffer: "目前各段間隔不同；改這裡會全部統一。",
+    hitGap: "距前一段",
+    hitGapLabel: "與前一段命中相隔的幀數（後面各段跟著移動）",
     damage: "傷害",
     deleteHit: "刪除命中",
     addHit: "＋ 命中段",
+    sequenceNote: "目前顯示的是實戰回放；下方的反應分析針對招式序列的設定。",
+    reactionLine: (name: string, valid: number, perfect: number, ms: number, min: number, diff: string): string => `${name}：可按 ${valid} 幀（完美 ${perfect}）・反應 ${ms} ms（理論最小 ${min} ms，${diff} ms）・`,
+    colon: "：",
+    needsEarlier: "需提早處理前一段",
+    covered: "由前一次按鍵涵蓋",
+    reactionNote: "反應時間＝預兆（或攻擊開始可見）到最晚有效按鍵的時間；人類視覺反應理論下限約 100 ms，一般人約 200–250 ms。實際裝置還有顯示與輸入延遲（可用規則的延遲校正調整）。計算時單獨看這一招，前幾段假設都用同一個互動在最晚的完美時機處理。",
+    grade: { friendly: "友善", normal: "普通", challenging: "有挑戰", harsh: "嚴苛", anticipate: "不太可能反應，只能靠預判", impossible: "接不上" } satisfies Record<GradeId, string>,
   },
   scene: {
     label: "動作場景",
@@ -128,6 +148,7 @@ export const zhHant = {
     sweep: "掃腿",
     heavy: "不可格擋重擊",
     combo: "三連擊",
+    fastCombo: "快速三連擊",
     delayed: "延遲斬",
     orb: "能量彈",
     volley: "子彈連射",

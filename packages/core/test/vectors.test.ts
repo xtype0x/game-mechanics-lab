@@ -602,6 +602,19 @@ function timingVectors() {
     id: "sekiro/buffer", config: preset("sekiro"),
     script: { frames: 100, presses: [pr(0, "parry"), pr(30, "parry"), pr(60, "parry"), pr(55, "dodge")], attacks: [atk("b1", 36, ["bullet"]), atk("b2", 45, ["bullet"])] },
   });
+  // sekiro: a caught parry is forgiven, so the follow-up parry 22 frames later keeps its full perfect window (shrink 0).
+  raw.push({
+    id: "sekiro/forgive-caught", config: preset("sekiro"),
+    script: { frames: 60, presses: [pr(0, "parry"), pr(22, "parry")], attacks: [atk("f1", 3, ["bullet"]), atk("f2", 25, ["bullet"])] },
+  });
+  // same script with forgiveCaught off: the first press still counts, so the second perfect window shrinks by 3.
+  const noForgive = preset("sekiro");
+  noForgive.id = "sekiro-noforgive";
+  delete noForgive.interactions.find((x) => x.id === "parry")!.spam!.forgiveCaught;
+  raw.push({
+    id: "sekiro/no-forgive", config: noForgive,
+    script: { frames: 60, presses: [pr(0, "parry"), pr(22, "parry")], attacks: [atk("f1", 3, ["bullet"]), atk("f2", 25, ["bullet"])] },
+  });
   // sekiro: sequential dodge charges and recharge timeline.
   raw.push({
     id: "sekiro/dodge-charges", config: preset("sekiro"),
@@ -647,7 +660,7 @@ function timingVectors() {
   const cuts: [string, number][] = [
     ["souls/parry-windows", 4], ["souls/parry-windows", 44], ["souls/unblockable", 12], ["souls/spam", 15], ["sekiro/buffer", 31], ["sekiro/buffer", 56],
     ["sekiro/dodge-charges", 30], ["witch/dodge-barrage", 25], ["lenient/input-offset", 41], ["lenient/skill-invulnerable", 21], ["showcase/custom-interactions", 104],
-    ["souls/defeated", 10],
+    ["souls/defeated", 10], ["sekiro/forgive-caught", 5],
   ];
   const continuations = cuts.map(([from, cut]) => {
     const src = raw.find((x) => x.id === from)!;
@@ -660,6 +673,7 @@ function timingVectors() {
   const frameMs = [{ frames: 3, fps: 60 }, { frames: 1, fps: 60 }, { frames: 45, fps: 30 }, { frames: 0, fps: 60 }].map((x) => ({ ...x, ms: Timing.framesToMs(x.frames, x.fps) }));
   const defs: { def: Timing.AttackDef; start: number }[] = [
     { def: { id: "combo", name: "combo", windup: 30, telegraph: 10, recovery: 20, hits: [{ offset: 0, damage: 2, tags: ["bullet"] }, { offset: 8, tags: ["thrust"] }] }, start: 100 },
+    { def: { id: "tells", name: "tells", windup: 20, telegraph: 12, recovery: 10, hits: [{ offset: 0, tags: ["bullet"] }, { offset: 6, tags: ["bullet"], telegraph: 0 }, { offset: 12, tags: ["bullet"], telegraph: 4 }] }, start: 10 },
     { def: { id: "empty", name: "empty", windup: 5, telegraph: 5, recovery: 5, hits: [] }, start: 0 },
   ];
   return {

@@ -263,7 +263,7 @@ function InteractionBody({ config, idx, upd }: { config: Config; idx: number; up
             <Row label={f.amount}><NumberField value={it.cost.amount} min={0} width={72} onChange={(v) => ed((i) => { i.cost!.amount = Math.max(0, v); })} ariaLabel={t.costAmount} /></Row>
           </>}
         </ToggleGroup>
-        <ToggleGroup label={t.spam} on={!!it.spam} onToggle={(on) => ed((i) => { if (on) i.spam = { withinFrames: 20, scope: "self", shrinkPerPress: 2, maxShrink: 4, lockoutAfter: 0, lockoutFrames: 30 }; else delete i.spam; })}>
+        <ToggleGroup label={t.spam} on={!!it.spam} onToggle={(on) => ed((i) => { if (on) i.spam = { withinFrames: 20, scope: "self", shrinkPerPress: 2, maxShrink: 4, lockoutAfter: 0, lockoutFrames: 30, forgiveCaught: true }; else delete i.spam; })}>
           {it.spam && <>
             <FrameField label={t.spamWithin} value={it.spam.withinFrames} fps={fps} onChange={(v) => ed((i) => { i.spam!.withinFrames = v; })} />
             <Row label={t.spamScope}><Select value={it.spam.scope} options={[{ value: "self", label: t.spamSelf }, { value: "all", label: t.spamAll }]} onChange={(v) => ed((i) => { i.spam!.scope = v as "self" | "all"; })} /></Row>
@@ -271,6 +271,9 @@ function InteractionBody({ config, idx, upd }: { config: Config; idx: number; up
             <Row label={t.spamMax}><NumberField value={it.spam.maxShrink} min={0} step={1} width={72} onChange={(v) => ed((i) => { i.spam!.maxShrink = int(v); })} ariaLabel={t.spamMaxLabel} /></Row>
             <Row label={t.lockAfter} hint={t.lockAfterTip}><NumberField value={it.spam.lockoutAfter} min={0} step={1} width={72} onChange={(v) => ed((i) => { i.spam!.lockoutAfter = int(v); })} ariaLabel={t.lockAfter} /></Row>
             <FrameField label={t.lockFrames} value={it.spam.lockoutFrames} fps={fps} onChange={(v) => ed((i) => { i.spam!.lockoutFrames = v; })} />
+            <label className="tm-check" title={t.forgiveCaughtTip}>
+              <input type="checkbox" checked={!!it.spam.forgiveCaught} onChange={(e) => ed((i) => { i.spam!.forgiveCaught = e.target.checked; })} /> {t.forgiveCaught}
+            </label>
           </>}
         </ToggleGroup>
       </div>
