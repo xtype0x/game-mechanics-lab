@@ -17,8 +17,19 @@ export function App({ host = {} }: { host?: ProjectHost }) {
   // Autosave is a convenience; the page works without storage.
   useEffect(() => {
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setSaved(saveProject(project)), 400);
-    return () => window.clearTimeout(timer.current);
+    const flush = () => {
+      window.clearTimeout(timer.current);
+      setSaved(saveProject(project));
+    };
+    const onVisibility = () => { if (document.visibilityState === "hidden") flush(); };
+    timer.current = window.setTimeout(flush, 400);
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearTimeout(timer.current);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [project]);
 
   const update: Updater = useCallback((fn) => {
@@ -35,8 +46,8 @@ export function App({ host = {} }: { host?: ProjectHost }) {
     <div className="lab">
       <header className="top">
         {host.back && <a className="back-link" href={host.back.href}>← {localize(host.back.label, locale)}</a>}
-        <h1>星穹鐵道戰鬥研究室</h1>
-        <p className="tagline">把星穹鐵道的角色、光錐、遺器與敵人拆成可調整的機制：換隊伍、改配裝，看看誰先出手、勝率多少，最後親手打一場。星穹鐵道資料為未核實的社群整理，僅供模擬；另附原創範本角色。</p>
+        <div className="rail-top-title"><h1>星穹鐵道戰鬥研究室</h1><span>配好角色，試一場戰鬥。</span></div>
+        <p className="rail-data-note">鐵道資料為未核實的社群整理，僅供機制研究與模擬。</p>
       </header>
       <main>
         <Lab project={project} update={update} saved={saved} equip={equip} onPlay={() => setView("play")} onReset={() => { clearSaved(); equip.resetAll(); setProject(freshProject()); }} />

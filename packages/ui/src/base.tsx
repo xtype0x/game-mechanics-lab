@@ -16,6 +16,7 @@ export function NumberField({
   max,
   width,
   ariaLabel,
+  normalizeOnBlur = false,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -25,6 +26,8 @@ export function NumberField({
   max?: number;
   width?: number;
   ariaLabel?: string;
+  /** Restore the actual value after an edit was clamped by the caller. */
+  normalizeOnBlur?: boolean;
 }) {
   const shown = percent ? +(value * 100).toFixed(6) : value;
   const [text, setText] = useState(String(shown));
@@ -42,6 +45,7 @@ export function NumberField({
         step={step ?? (percent ? 1 : "any")}
         min={min !== undefined ? (percent ? min * 100 : min) : undefined}
         max={max !== undefined ? (percent ? max * 100 : max) : undefined}
+        onBlur={normalizeOnBlur ? () => setText(String(shown)) : undefined}
         onChange={(e) => {
           setText(e.target.value);
           const v = Number(e.target.value);

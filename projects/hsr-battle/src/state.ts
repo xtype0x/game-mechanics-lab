@@ -1,5 +1,7 @@
-import { PROJECT_TEMPLATES, loadProject, type Project, type StatusDef, type UnitDef } from "@gml/core";
+import { DEFAULT_UNITS, SHOWCASE_ALLIES, SHOWCASE_V07_ALLIES, PROJECT_TEMPLATES, loadProject, type Project, type StatusDef, type UnitDef } from "@gml/core";
 import type { Preset } from "./presets";
+import { hsrGroup } from "@gml/data-hsr/presets";
+import { TRIAL_BALANCE_VERSION, trialUnit, upgradeTrialBalance } from "./trialBalance";
 
 /** Engine limit for the ally line-up (validateBattle: 1 to 4). */
 export const MAX_ALLIES = 4;
@@ -8,12 +10,18 @@ const STORAGE_KEY = "ggt.site.battle.v1";
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 
 /** Original template content: the boss-mechanics template holds every sample ally, enemy and status. */
-export function freshProject(): Project {
+function originalProject(): Project {
   const t = PROJECT_TEMPLATES.find((x) => x.id === "boss-mechanics") ?? PROJECT_TEMPLATES[0]!;
   const p = t.create("星穹鐵道戰鬥研究室");
   const normal = p.battle.encounters.find((e) => e.id === "normal");
   p.battle.encounter = { allies: ["homura", "shimo", "raimei", "akari"], enemies: [...(normal?.enemies ?? p.battle.encounter.enemies)] };
   return p;
+}
+
+export function freshProject(): Project {
+  const project = originalProject();
+  project.battle.units = project.battle.units.map(trialUnit);
+  return project;
 }
 
 /** Drop line-up ids the project no longer has, so a stale save never breaks the page. */
@@ -32,7 +40,14 @@ function repaired(p: Project): Project {
 export function loadSaved(): Project {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return repaired(loadProject(JSON.parse(raw)));
+    if (raw) {
+      const stored = JSON.parse(raw);
+      const project = loadProject(stored);
+      if (stored.hsrTrialBalanceVersion !== TRIAL_BALANCE_VERSION) {
+        upgradeTrialBalance(project, [...originalProject().battle.units, ...DEFAULT_UNITS, ...SHOWCASE_ALLIES, ...SHOWCASE_V07_ALLIES]);
+      }
+      return repaired(project);
+    }
   } catch {
     /* storage unavailable or corrupt: start from the template */
   }
@@ -41,7 +56,7 @@ export function loadSaved(): Project {
 
 export function saveProject(p: Project): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...p, hsrTrialBalanceVersion: TRIAL_BALANCE_VERSION }));
     return true;
   } catch {
     return false;
@@ -75,4 +90,22 @@ export function applyPreset(draft: Project, slotUnitId: string, preset: Preset):
   if (at >= 0) draft.battle.units[at] = unit; else draft.battle.units.push(unit);
   team[slot] = unit.id;
   return unit.id;
+}
+
+export const HSR_TRIAL_PRESET_IDS = ["hsr-1003", "hsr-1002", "hsr-1103", "hsr-1104"] as const;
+
+/** Four implemented kits and the balanced normal encounter, ready to play without gear. */
+export function applyTrialSetup(draft: Project): string[] {
+  const presets = HSR_TRIAL_PRESET_IDS.map((id) => hsrGroup.presets.find((p) => p.id === id));
+  if (presets.some((p) => !p?.available || !p.apply)) return [];
+  const trial = freshProject();
+  draft.battle.encounter.allies = [...trial.battle.encounter.allies];
+  const ids = presets.map((p, i) => applyPreset(draft, trial.battle.encounter.allies[i]!, p!)!);
+  draft.battle.encounter.enemies = [...trial.battle.encounter.enemies];
+  for (const id of new Set(trial.battle.encounter.enemies)) {
+    const unit = trial.battle.units.find((u) => u.id === id)!;
+    const at = draft.battle.units.findIndex((u) => u.id === id);
+    if (at >= 0) draft.battle.units[at] = unit; else draft.battle.units.push(unit);
+  }
+  return ids;
 }

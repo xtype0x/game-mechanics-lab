@@ -10,6 +10,11 @@ export function useEquip(project: Project) {
   const compiled = useMemo(() => compileProject(project, store), [project, store]);
   const setSel = useCallback((unitId: string, sel: LoadoutSel) => setStore((s) => ({ ...s, [unitId]: sel })), []);
   const resetAll = useCallback(() => { clearStore(); setStore({}); }, []);
-  return { store, compiled, setSel, resetAll };
+  const resetUnits = useCallback((ids: string[]) => setStore((s) => {
+    const next = { ...s };
+    for (const id of ids) delete next[id];
+    return next;
+  }), []);
+  return { store, compiled, setSel, resetAll, resetUnits };
 }
 export type EquipApi = ReturnType<typeof useEquip>;

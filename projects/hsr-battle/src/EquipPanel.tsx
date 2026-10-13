@@ -11,10 +11,10 @@ import { NumberField, elementLabel, fmt } from "@gml/ui";
 const showValue = (key: string, op: "flat" | "pct", v: number) => (op === "pct" || PERCENT_KEYS.has(key) ? `${fmt(v * 100, 2)}%` : fmt(v, 1));
 const showStat = (key: string, v: number) => (PERCENT_KEYS.has(key) ? `${fmt(v * 100, 2)}%` : fmt(v, 1));
 
-interface Props { unit: UnitDef; sel: LoadoutSel; compiled: CompiledUnit; onChange: (s: LoadoutSel) => void }
+interface Props { unit: UnitDef; sel: LoadoutSel; compiled: CompiledUnit; onChange: (s: LoadoutSel) => void; mode?: "all" | "cone" | "relics" | "traces" }
 
 /** Equipment editor for one ally: light cone, six relics, traces, set bonuses and the resulting stats. */
-export function EquipPanel({ unit, sel, compiled, onChange }: Props) {
+export function EquipPanel({ unit, sel, compiled, onChange, mode = "all" }: Props) {
   const edit = (fn: (s: LoadoutSel) => void) => { const next = structuredClone(sel); fn(next); onChange(next); };
   const info = hsrInfo(unit);
   const counts = compiled.notes.counts;
@@ -22,23 +22,23 @@ export function EquipPanel({ unit, sel, compiled, onChange }: Props) {
 
   return (
     <div className="equip">
-      <p className="muted small">裝備資料為社群整理（未核實）。這裡只套用<strong>無條件的數值加成</strong>；帶觸發條件的效果會列出但尚未模擬。光錐固定 Lv80、遺器為 5★ +15。</p>
-      <div className="equip-bar">
+      {mode !== "traces" && <p className="muted small">光錐固定 Lv80、遺器為 5★ +15。選取裝備後，數值會同步到角色詳情。</p>}
+      {(mode === "all" || mode === "relics") && <div className="equip-bar">
         <span className="small muted">一鍵配裝（通用範本，非特定角色推薦）：</span>
         {(Object.keys(TEMPLATE_LABEL) as TemplateId[]).map((t) => (
           <button key={t} type="button" className="btn small" onClick={() => onChange(applyTemplate(unit, sel, t))}>{TEMPLATE_LABEL[t]}</button>
         ))}
         <button type="button" className="btn small" onClick={() => onChange({ ...defaultSel(unit), traces: sel.traces })}>清除配裝</button>
-      </div>
+      </div>}
 
-      <LightConeBlock unit={unit} sel={sel} edit={edit} path={info?.path ?? null} />
+      {(mode === "all" || mode === "cone") && <LightConeBlock unit={unit} sel={sel} edit={edit} path={info?.path ?? null} />}
 
-      <div className="equip-block">
+      {(mode === "all" || mode === "relics") && <div className="equip-block">
         <h4>遺器</h4>
         {SLOTS.map((slot) => <RelicBlock key={slot} slot={slot} sel={sel} edit={edit} />)}
-      </div>
+      </div>}
 
-      <div className="equip-block">
+      {(mode === "all" || mode === "relics") && <div className="equip-block">
         <h4>套裝效果</h4>
         {usedSets.length === 0 && <p className="muted small">還沒選套裝。</p>}
         {usedSets.map((s) => {
@@ -56,9 +56,9 @@ export function EquipPanel({ unit, sel, compiled, onChange }: Props) {
             </div>
           );
         })}
-      </div>
+      </div>}
 
-      <div className="equip-block">
+      {(mode === "all" || mode === "traces") && <div className="equip-block">
         <h4>行跡</h4>
         {info?.traces ? (
           <>
@@ -72,7 +72,7 @@ export function EquipPanel({ unit, sel, compiled, onChange }: Props) {
         ) : (
           <p className="muted small">這個角色沒有行跡資料（只有「星穹鐵道」預設角色才有）。</p>
         )}
-      </div>
+      </div>}
 
       {compiled.notes.ignored.length > 0 && (
         <div className="equip-note">已略過（屬性與「{unit.element}」不符，不會折進增傷）：{compiled.notes.ignored.join("；")}</div>
@@ -80,7 +80,7 @@ export function EquipPanel({ unit, sel, compiled, onChange }: Props) {
       {compiled.errors.map((m, i) => <div key={i} className="issue err">✕ {m}</div>)}
       {compiled.warnings.map((m, i) => <div key={i} className="issue warn">! {m}</div>)}
 
-      <div className="equip-block">
+      {mode !== "traces" && <div className="equip-block">
         <h4>數值總覽（基礎 → 最終）</h4>
         <table className="table equip-stats">
           <thead><tr><th>數值</th><th className="r">基礎</th><th className="r">最終</th></tr></thead>
@@ -88,12 +88,13 @@ export function EquipPanel({ unit, sel, compiled, onChange }: Props) {
             {SUMMARY_KEYS.map(({ key, label }) => {
               const a = unit.stats[key] ?? 0;
               const b = compiled.unit.stats[key] ?? 0;
-              return <tr key={key}><td>{label}</td><td className="r">{showStat(key, a)}</td><td className={`r ${b !== a ? "up" : ""}`}>{showStat(key, b)}</td></tr>;
+              const offset = key === "energyRegen" ? 1 : 0;
+              return <tr key={key}><td>{label}</td><td className="r">{showStat(key, a + offset)}</td><td className={`r ${b !== a ? "up" : ""}`}>{showStat(key, b + offset)}</td></tr>;
             })}
           </tbody>
         </table>
-        <p className="muted small">最終 = 基礎 ×（1 + 百分比加成）+ 固定加成，不取整（規格 loadout.md）。</p>
-      </div>
+        <details className="muted small"><summary>配裝計算方式與限制</summary><p>最終 = 基礎 ×（1 + 百分比加成）+ 固定加成。裝備資料為未核實的社群資料；目前只套用無條件加成，觸發效果尚未完整模擬。能量恢復效率以 100% 為起點。</p></details>
+      </div>}
     </div>
   );
 }
@@ -119,6 +120,7 @@ function LightConeBlock({ unit, sel, edit, path }: { unit: UnitDef; sel: Loadout
         <input type="search" aria-label="搜尋光錐" placeholder="搜尋光錐名稱" value={q} onChange={(e) => setQ(e.target.value)} style={{ flex: "1 1 120px" }} />
         {path !== null && <label className="check small"><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />全部命途</label>}
       </div>
+      <div className="rail-cone-quick"><span className="small muted">快速選取：</span>{list.slice(0, 3).map((x) => <button type="button" key={x.id} className="chip-btn" onClick={() => edit((s) => { s.lc = x.id; })}>{x.name}</button>)}</div>
       <div className="equip-row">
         <select aria-label="光錐" value={sel.lc ?? ""} onChange={(e) => edit((s) => { s.lc = e.target.value || null; })}>
           <option value="">（不裝備光錐）</option>
@@ -128,12 +130,14 @@ function LightConeBlock({ unit, sel, edit, path }: { unit: UnitDef; sel: Loadout
           {[1, 2, 3, 4, 5].map((r) => <option key={r} value={r}>疊影 {r}</option>)}
         </select>
       </div>
+      {lc && <div className="rail-quick-values" aria-label="疊影快速設定">{[1, 3, 5].map((rank) => <button type="button" key={rank} onClick={() => edit((s) => { s.rank = rank; })}>疊影 {rank}</button>)}<button type="button" onClick={() => edit((s) => { s.lc = null; })}>卸下光錐</button></div>}
       <p className="muted small">{filtered ? `目前只列出「${PATH_NAME[path!] ?? path}」命途（${unit.name}）。` : path === null ? "這個角色沒有命途資料，列出全部光錐。" : "列出全部命途。"}共 {list.length} 個。</p>
       {lc && rank && (
         <>
           <div className="small">基礎：生命 {fmt(lc.base.hp, 1)}・攻擊 {fmt(lc.base.atk, 1)}・防禦 {fmt(lc.base.def, 1)}
             {rank.bonuses.length > 0 && <>；無條件加成：{rank.bonuses.map((b) => `${labelOf(b.key, b.op, b.element)} ${showValue(b.key, b.op, b.value)}`).join("、")}</>}
           </div>
+          <p className="muted small">疊影會改變此光錐的被動；只有上方列出的無條件加成會影響面板，條件效果尚未模擬。</p>
           <div className="equip-desc">{rank.desc}</div>
           {lc.conditional && <div className="equip-note">條件效果尚未模擬：被動只有上方「無條件加成」會套用（沒列出就是沒有）。</div>}
         </>
@@ -156,6 +160,9 @@ function RelicBlock({ slot, sel, edit }: { slot: RelicSlot; sel: LoadoutSel; edi
         {SLOT_LABEL[slot]}：{findSet(r.setId)?.name ?? "未選套裝"}・{main ? `${statLabel(main)} ${showValue(main.key, main.op, main.value)}` : "未選主詞條"}
         {r.subs.length > 0 && `・副詞條 ${total}/${MAX_SUB_ROLLS_TOTAL}`}
       </summary>
+      <div className="rail-mainstat-quick" aria-label={`${SLOT_LABEL[slot]}主詞條快速設定`}>
+        {mains.map((m) => <button type="button" key={m.property} className="chip-btn" onClick={() => set((x) => { x.main = m.property; x.subs = x.subs.filter((s) => s.property !== m.property); })}>{statLabel(m)}</button>)}
+      </div>
       <div className="equip-row" style={{ marginTop: 6 }}>
         <select aria-label={`${SLOT_LABEL[slot]}套裝`} value={r.setId ?? ""} onChange={(e) => set((x) => { x.setId = e.target.value || null; })}>
           <option value="">（無套裝）</option>

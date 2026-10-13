@@ -22,7 +22,7 @@ export function PresetMenu({ groups = presetGroups, targetName, onPick }: { grou
 
 function GroupView({ group: g, canApply, last, onPick }: { group: PresetGroup; canApply: boolean; last: string | null; onPick: (p: Preset) => void }) {
   const [query, setQuery] = useState("");
-  const [onlyUsable, setOnlyUsable] = useState(false);
+  const [onlyUsable, setOnlyUsable] = useState(true);
   const [facetSel, setFacetSel] = useState<Record<string, string>>({});
   const big = g.presets.length >= FILTER_FROM;
 
@@ -55,7 +55,7 @@ function GroupView({ group: g, canApply, last, onPick }: { group: PresetGroup; c
         {g.note && <span className="pill warn">{g.note}</span>}
         <span className="muted small">{g.presets.length ? (big ? `${g.presets.length} 位（可用 ${usable}）` : `${g.presets.length} 位`) : ""}</span>
       </summary>
-      {g.source && <p className="muted small preset-source">資料來源：{g.source}</p>}
+      {g.source && <details className="small preset-source"><summary>資料來源與限制</summary><p className="muted">{g.source}</p></details>}
       {g.presets.length === 0 ? (
         <p className="muted small">{g.note ?? "目前沒有內容"}。</p>
       ) : (

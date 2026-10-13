@@ -50,7 +50,7 @@ export function EnemyPicker({ project, update }: { project: Project; update: Upd
     <>
       <Field label="敵方">
         <select value={value} onChange={(e) => pick(e.target.value)}>
-          <optgroup label="範本敵人">
+          <optgroup label="範本敵人（裸裝試玩數值）">
             {encounters.map((p) => <option key={p.id} value={`t:${p.id}`}>{p.name}：{p.enemies.map(nameOf).join("、")}</option>)}
           </optgroup>
           <optgroup label="星穹鐵道敵人（社群資料・佔位技能）">
@@ -61,6 +61,7 @@ export function EnemyPicker({ project, update }: { project: Project; update: Upd
           {value === "custom" && <option value="custom">自訂：{encounter.enemies.map(nameOf).join("、")}</option>}
         </select>
       </Field>
+      {!hsr && template && <p className="muted small">範本敵人已調整為裸裝試玩難度，可先換上鐵道角色直接開打；首領與機制戰適合帶防護或治療角色。</p>}
       <Field label="星穹鐵道敵人等級" hint="只影響「星穹鐵道敵人」。切換後會用新等級重新套用目前的星穹鐵道敵人（你對它們的修改會被覆蓋）。">
         <select value={shownLevel} onChange={(e) => changeLevel(Number(e.target.value))} aria-label="星穹鐵道敵人等級">
           {hsrLevels.map((n) => <option key={n} value={n}>Lv {n}{n === hsrDefaultLevel ? "（預設）" : ""}</option>)}

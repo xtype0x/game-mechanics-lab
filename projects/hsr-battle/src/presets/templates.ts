@@ -3,6 +3,7 @@ import {
   type StatusDef, type UnitDef,
 } from "@gml/core";
 import type { Preset, PresetGroup } from "@gml/data-hsr/presets";
+import { trialUnit } from "../trialBalance";
 
 const statusPool: StatusDef[] = [...DEFAULT_STATUSES, ...SHOWCASE_STATUSES, ...SHOWCASE_V07_STATUSES];
 
@@ -19,7 +20,7 @@ const toPreset = (u: UnitDef): Preset => ({
   name: u.name,
   subtitle: [u.role, u.description?.split("。")[0]].filter(Boolean).join("・"),
   available: true,
-  apply: clone(u),
+  apply: trialUnit(u),
   statuses: clone(neededStatuses(u)),
 });
 
@@ -27,5 +28,6 @@ export const templateGroup: PresetGroup = {
   id: "templates",
   title: "範本角色",
   source: "本工具的原創範例角色",
+  note: "Lv80 裸裝基準，方便與鐵道預設角色混隊試玩。技能為原創機制。",
   presets: [...DEFAULT_UNITS, ...SHOWCASE_ALLIES, ...SHOWCASE_V07_ALLIES].filter((u) => u.team === "ally").map(toPreset),
 };
