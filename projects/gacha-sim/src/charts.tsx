@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 /**
  * Small SVG charts. Axes are labelled in text below the plot so they stay readable at any width.
  */
@@ -14,14 +15,14 @@ export function LineChart({ series, yMax = 1, marker, markerLabel, xLabel, yForm
   const mx = marker !== undefined ? Math.min(100, (marker / n) * 100) : undefined;
   return (
     <figure className="chart" style={{ height }}>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={series.map((s) => s.label).join("、")}>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={series.map((s) => s.label).join(tr("gachaStage17"))}>
         {[0.25, 0.5, 0.75].map((f) => <line key={f} x1={0} x2={100} y1={100 - f * 100} y2={100 - f * 100} className="grid" vectorEffect="non-scaling-stroke" />)}
         {series.map((s) => <path key={s.label} d={path(s.points)} className={`line ${s.className ?? ""}`} fill="none" vectorEffect="non-scaling-stroke" />)}
         {mx !== undefined && <line x1={mx} x2={mx} y1={0} y2={100} className="marker" vectorEffect="non-scaling-stroke" />}
       </svg>
       <figcaption>
         <span>0</span>
-        <span className="axis-mid">{xLabel}{marker !== undefined && markerLabel ? `・虛線：${markerLabel}` : ""}・縱軸最高 {yFormat(yMax)}</span>
+        <span className="axis-mid">{xLabel}{marker !== undefined && markerLabel ? tr("charts1", markerLabel) : ""}{tr("charts2")}{yFormat(yMax)}</span>
         <span>{fmt(n, 0)}</span>
       </figcaption>
       {series.length > 1 && <div className="legend">{series.map((s) => <span key={s.label} className={`key ${s.className ?? ""}`}>{s.label}</span>)}</div>}
@@ -43,14 +44,14 @@ export function PmfBars({ pmf, bins = 40, height = 160 }: { pmf: number[]; bins?
   const w = 100 / Math.max(1, groups.length);
   return (
     <figure className="chart" style={{ height }}>
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="抽數分布">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={tr("charts3")}>
         {groups.map((g, i) => (
           <rect key={i} x={i * w + w * 0.1} width={w * 0.8} y={100 - (g.p / max) * 100} height={(g.p / max) * 100} className="bar">
-            <title>{`第 ${g.from}${g.to > g.from ? `–${g.to}` : ""} 抽完成：${pct(g.p, 2)}`}</title>
+            <title>{tr("charts4", g.from, g.to > g.from ? `–${g.to}` : "", pct(g.p, 2))}</title>
           </rect>
         ))}
       </svg>
-      <figcaption><span>1</span><span className="axis-mid">每格 {width} 抽・高度＝在這幾抽完成的機率（最高 {pct(max, 1)}）</span><span>{last}</span></figcaption>
+      <figcaption><span>1</span><span className="axis-mid">{tr("charts5")}{width}{tr("charts6")}{pct(max, 1)}{tr("gachaStage30")}</span><span>{last}</span></figcaption>
     </figure>
   );
 }

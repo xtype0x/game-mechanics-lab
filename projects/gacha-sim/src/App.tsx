@@ -1,9 +1,9 @@
+import { tr, displayText } from "./i18n";
 import { Gacha } from "@gml/core";
 import type { ProjectHost } from "@gml/ui";
-import { localize, useLocale } from "@gml/ui/i18n";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { LanguageSwitch, localize, useLocale } from "@gml/ui/i18n";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { GAMES } from "./catalog/games";
-import { useLiveBanners } from "./catalog/useLive";
 import { Compare } from "./Compare";
 import { GachaStage } from "./GachaStage";
 import { GameMenu, type CatalogPick } from "./GameMenu";
@@ -19,35 +19,22 @@ type View = "gacha" | "lab";
 
 export function App({ host = {} }: { host?: ProjectHost }) {
   const [locale] = useLocale();
-  const { data: live, status, refresh } = useLiveBanners();
   const [s, setS] = useState<SimState>(() => {
     // Deep link from a game hub (?game=<id>): pre-selects that game on this load only. A shared-rules link (#rules=) wins.
     const wanted = rulesInHash() ? null : GAMES.find((g) => g.id === new URLSearchParams(window.location.search).get("game"));
     if (wanted) {
-      const now = Date.now() / 1000;
-      const kind = wanted.types[0]!.kind;
-      const b = kind === "standard" ? undefined : live.banners.find((x) => x.game === wanted.id && x.kind === kind && x.start <= now && (!x.end || x.end > now));
-      return normalize(fromCatalog({ game: wanted.id, kind, ...(b ? { bannerId: b.id } : {}) }, live, hasSavedState() ? loadState() : undefined));
+      const first = wanted.types[0]!;
+      return normalize(fromCatalog({ game: wanted.id, kind: first.kind, region: first.region }, hasSavedState() ? loadState() : undefined));
     }
     if (hasSavedState()) return normalize(loadState());
-    // First visit: the earliest current character banner of the first game.
-    const now = Date.now() / 1000;
-    const b = live.banners.find((x) => x.game === "hsr" && x.kind === "character" && x.start <= now && (!x.end || x.end > now));
-    return normalize(b ? fromCatalog({ game: "hsr", kind: "character", bannerId: b.id }, live) : loadState());
+    return normalize(loadState());
   });
   const [view, setView] = useState<View>("gacha");
+  useEffect(() => { try { localStorage.removeItem('ggt.gacha-sim.live.v1'); } catch { /* storage unavailable */ } }, []);
   useEffect(() => saveState(s), [s]);
   const set = (fn: (x: SimState) => void) => setS((prev) => { const x = structuredClone(prev); fn(x); return normalize(x); });
   const editModel = (fn: (m: Gacha.GachaModel) => void) => set((x) => { fn(x.model); x.presetId = null; });
-  const pick = (p: CatalogPick) => setS((prev) => normalize(fromCatalog(p, live, prev)));
-
-  // An unedited game pool follows fresh banner data (e.g. live data replacing the snapshot).
-  const lastLive = useRef(live);
-  useEffect(() => {
-    if (lastLive.current === live) return;
-    lastLive.current = live;
-    setS((prev) => (prev.presetId?.startsWith("game:") && prev.catalog ? normalize({ ...fromCatalog(prev.catalog, live, prev), target: prev.target, start: prev.start }) : prev));
-  }, [live]);
+  const pick = (p: CatalogPick) => setS((prev) => normalize(fromCatalog(p, prev)));
 
   // A shared link (#rules=…) asks before replacing the current rules.
   const [incoming, setIncoming] = useState<ParseResult | null>(null);
@@ -68,29 +55,30 @@ export function App({ host = {} }: { host?: ProjectHost }) {
       <header className="top">
         <div className="brand">
           {host.back && <a className="back-link" href={host.back.href}>← {localize(host.back.label, locale)}</a>}
-          <h1>抽卡模擬器</h1>
-          <p className="tagline">選一款遊戲直接抽，或到「設定與分析」調整規則、精確計算要抽幾抽與花費。</p>
+          <h1>{tr("app1")}</h1>
+          <p className="tagline">{tr("app2")}</p>
         </div>
-        <div className="view-switch" role="tablist" aria-label="畫面">
-          <button role="tab" aria-selected={view === "gacha"} className={view === "gacha" ? "on" : ""} onClick={() => setView("gacha")}>🎴 抽卡</button>
-          <button role="tab" aria-selected={view === "lab"} className={view === "lab" ? "on" : ""} onClick={() => setView("lab")}>⚙ 設定與分析</button>
+        <LanguageSwitch className="gacha-language"/>
+        <div className="view-switch" role="tablist" aria-label={tr("app3")}>
+          <button role="tab" aria-selected={view === "gacha"} className={view === "gacha" ? "on" : ""} onClick={() => setView("gacha")}>{tr("app4")}</button>
+          <button role="tab" aria-selected={view === "lab"} className={view === "lab" ? "on" : ""} onClick={() => setView("lab")}>{tr("app5")}</button>
         </div>
       </header>
       {incoming && (incoming.ok ? (
         <div className="incoming" role="alert">
-          <span>有人分享了卡池規則「<b>{incoming.rules.model.name}</b>」。載入後會取代目前的設定（抽卡進度另外保存，不受影響）。</span>
-          <div><button className="btn primary" onClick={() => { loadShared(incoming.rules); closeIncoming(); }}>載入</button><button className="btn" onClick={closeIncoming}>略過</button></div>
+          <span>{tr("app6")}<b>{displayText(incoming.rules.model.name)}</b>{tr("app7")}</span>
+          <div><button className="btn primary" onClick={() => { loadShared(incoming.rules); closeIncoming(); }}>{tr("app8")}</button><button className="btn" onClick={closeIncoming}>{tr("app9")}</button></div>
         </div>
       ) : (
-        <div className="incoming error" role="alert"><span>分享連結無法載入：{incoming.error}</span><div><button className="btn" onClick={closeIncoming}>關閉</button></div></div>
+        <div className="incoming error" role="alert"><span>{tr("app10")}{displayText(incoming.error)}</span><div><button className="btn" onClick={closeIncoming}>{tr("app11")}</button></div></div>
       ))}
-      <GameMenu live={live} status={status} current={s.presetId} onPick={pick} onPreset={(id) => setS((prev) => normalize(fromPreset(id, prev)))} onRefresh={refresh} />
+      <GameMenu current={s.presetId} onPick={pick} onPreset={(id) => setS((prev) => normalize(fromPreset(id, prev)))} />
 
       {view === "gacha" ? (
-        <GachaStage s={s} live={live} onAnalyze={() => setView("lab")} onTarget={(item) => setS((prev) => normalize(chooseEpitomized(prev, item)))} />
+        <GachaStage s={s} onAnalyze={() => setView("lab")} onTarget={(item) => setS((prev) => normalize(chooseEpitomized(prev, item)))} />
       ) : a && (
         <>
-          {s.model.source && <p className="source"><b>規則來源：</b>{s.model.source}{!s.presetId && "（已修改）"}</p>}
+          {s.model.source && <p className="source"><b>{tr("app12")}</b>{displayText(s.model.source)}{!s.presetId && tr("app13")}</p>}
           <main className="layout">
             <div className="col rules">
               <SharePanel s={s} onImport={loadShared} />
@@ -109,7 +97,7 @@ export function App({ host = {} }: { host?: ProjectHost }) {
         </>
       )}
       <footer className="foot">
-        <p>計算核心：遊戲機制研究室抽卡規則 {Gacha.RULES_VERSION}（開放規格與測試向量）。遊戲名稱與角色名稱只用來說明卡池內容，著作權屬各遊戲公司；本工具與任何遊戲公司無關。規則依公開資料整理，可能與實際遊戲有出入；儲值價格為範例。</p>
+        <p>{tr("app14")}{Gacha.RULES_VERSION}{tr("app15")}</p>
       </footer>
     </div>
   );

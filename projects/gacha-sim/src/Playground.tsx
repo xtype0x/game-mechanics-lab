@@ -1,3 +1,4 @@
+import { tr, displayText } from "./i18n";
 import { Gacha, Rng } from "@gml/core";
 import { useMemo, useState } from "react";
 import { Card, fmt } from "./ui";
@@ -13,7 +14,7 @@ export function Playground({ s }: { s: SimState }) {
   const fresh = run && run.key === key ? run : null;
   const state = fresh?.state ?? Gacha.newState(m);
   const valid = useMemo(() => !Gacha.validateModel(m).some((i) => i.level === "error"), [m]);
-  const name = (id: string) => m.items.find((x) => x.id === id)?.name ?? id;
+  const name = (id: string) => displayText(m.items.find((x) => x.id === id)?.name ?? id);
   const tierRank = (id: string) => m.tiers.findIndex((t) => t.id === id);
   const ex = m.modules.find((x): x is Extract<Gacha.RuleModule, { kind: "exchange" }> => x.kind === "exchange");
 
@@ -36,31 +37,31 @@ export function Playground({ s }: { s: SimState }) {
   const recent = log.slice(-m.pull.batchSize).reverse();
   const tops = log.filter((l) => tierRank(l.outcome.tierId) === 0);
   const spent = Gacha.currencyFor(m, state.pulls);
-  const tierName = (id: string) => m.tiers.find((t) => t.id === id)?.name ?? id;
+  const tierName = (id: string) => displayText(m.tiers.find((t) => t.id === id)?.name ?? id);
 
   return (
-    <Card title="試抽" actions={<>
-      <button className="btn" disabled={!valid} onClick={() => doPull(1)}>抽 1 次</button>
-      <button className="btn primary" disabled={!valid} onClick={() => doPull(m.pull.batchSize)}>{m.pull.batchSize} 連抽</button>
-      <button className="btn ghost" disabled={!fresh} onClick={() => setRun(null)}>重來</button>
+    <Card title={tr("playground1")} actions={<>
+      <button className="btn" disabled={!valid} onClick={() => doPull(1)}>{tr("gachaStage33")}</button>
+      <button className="btn primary" disabled={!valid} onClick={() => doPull(m.pull.batchSize)}>{m.pull.batchSize}{tr("playground2")}</button>
+      <button className="btn ghost" disabled={!fresh} onClick={() => setRun(null)}>{tr("playground3")}</button>
     </>}>
       <div className="counters">
-        <span>已抽 <b>{state.pulls}</b> 抽（{fmt(spent, 0)} {m.pull.currency}）</span>
+        <span>{tr("gachaStage19")}<b>{state.pulls}</b>{tr("playground4")}{fmt(spent, 0)} {displayText(m.pull.currency)}{tr("gachaStage30")}</span>
         {Gacha.stateVars(m).filter((v) => v !== "batch").map((v) => {
           const [kind, id] = v.split(":") as [string, string];
-          const label = kind === "since" ? `${tierName(id)} 保底` : kind === "guar" ? `${tierName(id)} 大保底` : kind === "miss" ? `${tierName(id)} 累計` : kind === "fate" ? `${tierName(id)} 定軌` : "點數";
+          const label = kind === "since" ? tr("playground5", tierName(id)) : kind === "guar" ? tr("playground6", tierName(id)) : kind === "miss" ? tr("playground7", tierName(id)) : kind === "fate" ? tr("playground8", tierName(id)) : tr("playground9");
           const val = state.vars[v] ?? 0;
-          return <span key={v}>{label} <b>{kind === "guar" ? (val ? "是" : "否") : val}</b></span>;
+          return <span key={v}>{label} <b>{kind === "guar" ? (val ? tr("gachaStage23") : tr("gachaStage24")) : val}</b></span>;
         })}
       </div>
       {ex && (state.vars.pts ?? 0) >= ex.cost && (
-        <div className="exchange">點數已達 {ex.cost}：{ex.items.map((id) => <button key={id} className="btn small" onClick={() => doExchange(id)}>兌換 {name(id)}</button>)}</div>
+        <div className="exchange">{tr("playground10")}{ex.cost}{tr("playground11")}{ex.items.map((id) => <button key={id} className="btn small" onClick={() => doExchange(id)}>{tr("gachaStage32")}{name(id)}</button>)}</div>
       )}
-      {recent.length === 0 ? <p className="hint">按「抽」開始。這裡用和計算相同的規則實際抽卡，方便直覺感受保底怎麼運作。</p> : (
+      {recent.length === 0 ? <p className="hint">{tr("playground12")}</p> : (
         <div className="pulls">
           {recent.map((l, i) => (
             <div key={log.length - i} className={`pull r${Math.min(tierRank(l.outcome.tierId), 3)} ${l.outcome.featured ? "feat" : ""}`}>
-              <small>#{l.n}{l.exchanged ? " 兌換" : l.outcome.forced ? " 保底" : ""}</small>
+              <small>#{l.n}{l.exchanged ? tr("playground13") : l.outcome.forced ? tr("playground14") : ""}</small>
               <b>{tierName(l.outcome.tierId)}</b>
               <span>{name(l.outcome.itemId)}</span>
             </div>
@@ -68,7 +69,7 @@ export function Playground({ s }: { s: SimState }) {
         </div>
       )}
       {tops.length > 0 && (
-        <p className="hint">最高稀有度出現 {tops.length} 次，其中限定 {tops.filter((l) => l.outcome.featured).length} 次；出現在第 {tops.slice(-8).map((l) => l.n).join("、")} 抽{tops.length > 8 ? "…" : ""}。</p>
+        <p className="hint">{tr("playground15")}{tops.length}{tr("playground16")}{tops.filter((l) => l.outcome.featured).length}{tr("playground17")}{tops.slice(-8).map((l) => l.n).join(tr("gachaStage17"))}{tr("gachaStage21")}{tops.length > 8 ? "…" : ""}{tr("panels45")}</p>
       )}
     </Card>
   );

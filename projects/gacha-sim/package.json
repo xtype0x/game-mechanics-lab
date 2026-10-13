@@ -7,9 +7,6 @@
     ".": "./src/index.tsx",
     "./project.json": "./project.json"
   },
-  "scripts": {
-    "snapshot": "node scripts/update-snapshot.ts"
-  },
   "dependencies": {
     "@gml/core": "*",
     "@gml/ui": "*"

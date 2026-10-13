@@ -1,15 +1,15 @@
 {
   "id": "gacha-sim",
   "title": "抽卡模擬器",
-  "description": "可調整規則的抽卡模擬器：保底、限定、天井與累計保底，精確計算抽數分布與花費。",
+  "description": "使用通用物品名稱的抽卡模擬器，可調整保底、限定、天井與累計保底，計算抽數分布與花費。",
   "path": "gacha",
-  "back": { "route": "#/tools", "label": "遊戲機制研究室・跨遊戲工具" },
+  "back": { "route": "#/tools", "label": "遊戲機制研究室・機制實驗" },
   "backByGame": {
     "hsr": { "route": "#/games/hsr", "label": "遊戲機制研究室・星穹鐵道", "backLabel": "Game Mechanics Lab · Star Rail" }
   },
   "en": {
     "title": "Gacha simulator",
-    "description": "A gacha simulator with adjustable rules: pity, limited banners, spark and carry-over pity, with exact pull-count distributions and costs.",
-    "backLabel": "Game Mechanics Lab · Cross-game tools"
+    "description": "A gacha simulator with generic items and editable rules. Compare pity, featured guarantees, spark and milestones with exact pull-count distributions and costs.",
+    "backLabel": "Game Mechanics Lab · Experiments"
   }
 }

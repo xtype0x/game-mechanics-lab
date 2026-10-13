@@ -1,3 +1,4 @@
+import { sourceText } from "./i18n";
 /**
  * Sharing rule sets: a link (#rules=… in the URL, nothing is sent to a server) and a JSON file.
  * Everything that comes in is untrusted: it is shape-checked here, then validated by Gacha.validateModel.
@@ -32,20 +33,20 @@ const MODULE_FIELDS: Record<Gacha.ModuleKind, (m: Record<string, unknown>) => bo
 
 /** Returns the reason the value is not a gacha 2 model, or null when the shape is right. */
 function shapeError(m: unknown): string | null {
-  if (!isObj(m) || m.version !== 2) return "不是抽卡規則 2.x 的模型";
-  if (!str(m.id) || !str(m.name)) return "缺少模型名稱";
-  if (m.description !== undefined && !str(m.description, LIMITS.text)) return "說明格式不正確";
-  if (m.source !== undefined && !str(m.source, LIMITS.text)) return "來源說明格式不正確";
+  if (!isObj(m) || m.version !== 2) return sourceText("share1");
+  if (!str(m.id) || !str(m.name)) return sourceText("share2");
+  if (m.description !== undefined && !str(m.description, LIMITS.text)) return sourceText("share3");
+  if (m.source !== undefined && !str(m.source, LIMITS.text)) return sourceText("share4");
   const p = m.pull;
-  if (!isObj(p) || !num(p.cost) || !str(p.currency) || !num(p.batchSize) || (p.batchCost !== undefined && !num(p.batchCost))) return "抽卡價格格式不正確";
-  if (!Array.isArray(m.tiers) || !m.tiers.length || m.tiers.length > LIMITS.tiers) return `稀有度必須有 1 到 ${LIMITS.tiers} 個`;
-  if (!m.tiers.every((t) => isObj(t) && str(t.id) && str(t.name) && num(t.rate) && strs(t.items, LIMITS.items))) return "稀有度格式不正確";
-  if (!Array.isArray(m.items) || m.items.length > LIMITS.items) return `物品最多 ${LIMITS.items} 個`;
-  if (!m.items.every((i) => isObj(i) && str(i.id) && str(i.name) && (i.kind === "unit" || i.kind === "resource"))) return "物品格式不正確";
-  if (!Array.isArray(m.modules) || m.modules.length > LIMITS.modules) return `規則最多 ${LIMITS.modules} 條`;
+  if (!isObj(p) || !num(p.cost) || !str(p.currency) || !num(p.batchSize) || (p.batchCost !== undefined && !num(p.batchCost))) return sourceText("share5");
+  if (!Array.isArray(m.tiers) || !m.tiers.length || m.tiers.length > LIMITS.tiers) return sourceText("share6", LIMITS.tiers);
+  if (!m.tiers.every((t) => isObj(t) && str(t.id) && str(t.name) && num(t.rate) && strs(t.items, LIMITS.items))) return sourceText("share7");
+  if (!Array.isArray(m.items) || m.items.length > LIMITS.items) return sourceText("share8", LIMITS.items);
+  if (!m.items.every((i) => isObj(i) && str(i.id) && str(i.name) && (i.kind === "unit" || i.kind === "resource"))) return sourceText("share9");
+  if (!Array.isArray(m.modules) || m.modules.length > LIMITS.modules) return sourceText("share10", LIMITS.modules);
   for (const [i, x] of m.modules.entries()) {
     const check = isObj(x) && typeof x.kind === "string" ? MODULE_FIELDS[x.kind as Gacha.ModuleKind] : undefined;
-    if (!check || !check(x as Record<string, unknown>)) return `第 ${i + 1} 條規則格式不正確或不認得`;
+    if (!check || !check(x as Record<string, unknown>)) return sourceText("share11", i + 1);
   }
   return null;
 }
@@ -56,15 +57,15 @@ function targetOk(t: unknown): t is Gacha.Target {
 
 /** Parses a shared payload ({format, model, target?}) or a bare model. */
 export function parseRules(text: string): ParseResult {
-  if (text.length > LIMITS.bytes) return { ok: false, error: "檔案太大" };
+  if (text.length > LIMITS.bytes) return { ok: false, error: sourceText("share12") };
   let data: unknown;
-  try { data = JSON.parse(text); } catch { return { ok: false, error: "不是有效的 JSON" }; }
+  try { data = JSON.parse(text); } catch { return { ok: false, error: sourceText("share13") }; }
   const payload = isObj(data) && data.format === SHARE_FORMAT ? data : { model: data };
   const bad = shapeError(payload.model);
   if (bad) return { ok: false, error: bad };
   const model = payload.model as Gacha.GachaModel;
   const errors = Gacha.validateModel(model).filter((i) => i.level === "error");
-  if (errors.length) return { ok: false, error: `規則有錯誤：${errors.map((e) => e.message).join("；")}` };
+  if (errors.length) return { ok: false, error: sourceText("share14", errors.map((e) => e.message).join(sourceText("share15"))) };
   return { ok: true, rules: { model, target: targetOk(payload.target) ? payload.target : undefined } };
 }
 
@@ -112,13 +113,13 @@ export async function decodeRules(code: string): Promise<ParseResult> {
     const bytes = fromB64url(code.slice(1));
     let json: Uint8Array;
     if (kind === "z") {
-      if (typeof DecompressionStream !== "function") return { ok: false, error: "這個瀏覽器無法開啟壓縮的分享連結" };
+      if (typeof DecompressionStream !== "function") return { ok: false, error: sourceText("share16") };
       json = await pipe(bytes, new DecompressionStream("deflate-raw"), LIMITS.bytes);
     } else if (kind === "j") json = bytes;
-    else return { ok: false, error: "分享連結格式不正確" };
+    else return { ok: false, error: sourceText("share17") };
     return parseRules(new TextDecoder().decode(json));
   } catch {
-    return { ok: false, error: "分享連結已損壞或不完整" };
+    return { ok: false, error: sourceText("share18") };
   }
 }
 

@@ -3,11 +3,13 @@
  * without the console's components.
  */
 import { useEffect, useId, useState, type ReactNode } from "react";
+import { getLocale } from '@gml/ui/i18n';
+import { displayText } from './i18n';
 
 export const fmt = (n: number, digits = 2) =>
-  Number.isFinite(n) ? n.toLocaleString("zh-TW", { maximumFractionDigits: digits }) : "—";
-export const pct = (n: number, digits = 1) => (Number.isFinite(n) ? `${(n * 100).toLocaleString("zh-TW", { maximumFractionDigits: digits, minimumFractionDigits: digits })}%` : "—");
-export const twd = (n: number) => (Number.isFinite(n) ? `NT$${Math.round(n).toLocaleString("zh-TW")}` : "—");
+  Number.isFinite(n) ? n.toLocaleString(getLocale(), { maximumFractionDigits: digits }) : "—";
+export const pct = (n: number, digits = 1) => (Number.isFinite(n) ? `${(n * 100).toLocaleString(getLocale(), { maximumFractionDigits: digits, minimumFractionDigits: digits })}%` : "—");
+export const twd = (n: number) => (Number.isFinite(n) ? `NT$${Math.round(n).toLocaleString(getLocale())}` : "—");
 
 /** Number input that tolerates partial text while typing. `percent` shows 0.5 as 50. */
 export function NumberInput({ value, onChange, percent, min, max, step, label, width }: {
@@ -41,7 +43,7 @@ export function NumberInput({ value, onChange, percent, min, max, step, label, w
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="field">
-      <span className="field-label">{label}{hint && <small> {hint}</small>}</span>
+      <span className="field-label">{displayText(label)}{hint && <small> {displayText(hint)}</small>}</span>
       {children}
     </label>
   );
@@ -73,7 +75,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
       {options.map((o) => (
         <label key={o.value} className={o.value === value ? "on" : ""}>
           <input type="radio" name={name} checked={o.value === value} onChange={() => onChange(o.value)} />
-          {o.label}
+          {displayText(o.label)}
         </label>
       ))}
     </div>

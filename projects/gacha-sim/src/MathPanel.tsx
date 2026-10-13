@@ -1,3 +1,4 @@
+import { tr, displayText } from "./i18n";
 import { Gacha } from "@gml/core";
 import { useState } from "react";
 import { LineChart } from "./charts";
@@ -7,7 +8,7 @@ import type { Analysis, SimState } from "./state";
 const VAR_LABEL = (m: Gacha.GachaModel, v: string) => {
   const [kind, id] = v.split(":") as [string, string];
   const t = m.tiers.find((x) => x.id === id)?.name ?? id;
-  return { since: `${t} 保底計數`, guar: `${t} 大保底旗標`, miss: `${t} 累計保底計數`, fate: `${t} 定軌點數`, pts: "兌換點數", batch: "連抽位置" }[kind] ?? v;
+  return { since: tr("mathPanel1", t), guar: tr("mathPanel2", t), miss: tr("mathPanel3", t), fate: tr("mathPanel4", t), pts: tr("modelEditor56"), batch: tr("mathPanel5") }[kind] ?? v;
 };
 
 export function MathPanel({ s, a }: { s: SimState; a: Analysis }) {
@@ -23,78 +24,78 @@ export function MathPanel({ s, a }: { s: SimState; a: Analysis }) {
   const ci = freshMc ? Gacha.wilson(within, freshMc.runs) : null;
 
   return (
-    <Card title="進階：數學與統計" className="math">
-      <p className="hint">給想深入研究的人。以下都是<b>精確計算</b>（把保底狀態寫成馬可夫鏈逐抽推算），不是抽樣；最後一項用抽樣交叉驗證。</p>
+    <Card title={tr("mathPanel6")} className="math">
+      <p className="hint">{tr("mathPanel7")}<b>{tr("mathPanel8")}</b>{tr("mathPanel9")}</p>
 
-      <Fold title="分布與動差" summary={`平均 ${fmt(sm.mean, 2)}，標準差 ${fmt(sm.sd, 2)}`}>
+      <Fold title={tr("mathPanel10")} summary={tr("mathPanel11", fmt(sm.mean, 2), fmt(sm.sd, 2))}>
         <table className="table compact">
           <tbody>
-            <tr><td>期望值 E[N] ＝ Σ n·P(N = n)</td><td className="r mono">{fmt(sm.mean, 4)}</td></tr>
-            <tr><td>變異數 Var[N] ＝ Σ (n − E[N])²·P(N = n)</td><td className="r mono">{fmt(sm.variance, 2)}</td></tr>
-            <tr><td>標準差</td><td className="r mono">{fmt(sm.sd, 3)}</td></tr>
-            <tr><td>偏態（&gt;0 表示右尾較長：少數人要抽特別多）</td><td className="r mono">{fmt(sm.skewness, 3)}</td></tr>
-            {(["p10", "p25", "p50", "p75", "p90", "p95", "p99"] as const).map((q) => <tr key={q}><td>{q.toUpperCase()}：最小的 n 使 P(N ≤ n) ≥ {q.slice(1)}%</td><td className="r mono">{sm.percentiles[q]}</td></tr>)}
-            <tr><td>保證上限（狀態圖上到完成的最長路徑）</td><td className="r mono">{a.worst ?? "無（存在不會完成的循環）"}</td></tr>
+            <tr><td>{tr("mathPanel12")}</td><td className="r mono">{fmt(sm.mean, 4)}</td></tr>
+            <tr><td>{tr("mathPanel13")}</td><td className="r mono">{fmt(sm.variance, 2)}</td></tr>
+            <tr><td>{tr("mathPanel14")}</td><td className="r mono">{fmt(sm.sd, 3)}</td></tr>
+            <tr><td>{tr("mathPanel15")}</td><td className="r mono">{fmt(sm.skewness, 3)}</td></tr>
+            {(["p10", "p25", "p50", "p75", "p90", "p95", "p99"] as const).map((q) => <tr key={q}><td>{q.toUpperCase()}{tr("mathPanel16")}{q.slice(1)}%</td><td className="r mono">{sm.percentiles[q]}</td></tr>)}
+            <tr><td>{tr("mathPanel17")}</td><td className="r mono">{a.worst ?? tr("mathPanel18")}</td></tr>
           </tbody>
         </table>
-        {dist.tail > 1e-12 && <p className="hint">計算到第 {dist.pmf.length - 1} 抽時仍有 {pct(dist.tail, 4)} 未完成（沒有保證上限時的截斷）。</p>}
+        {dist.tail > 1e-12 && <p className="hint">{tr("mathPanel19")}{dist.pmf.length - 1}{tr("mathPanel20")}{pct(dist.tail, 4)}{tr("mathPanel21")}</p>}
       </Fold>
 
-      <Fold title="條件機率（哪一抽最容易出）" summary={`最高 ${pct(Math.max(...sm.hazard), 1)}`}>
-        <p>h(n) ＝ P(N = n ∣ N ≥ n)：前面都沒完成的前提下，第 n 抽完成的機率。軟保底、硬保底、累計保底都會在這張圖上變成明顯的上升或尖峰。</p>
-        <LineChart series={[{ label: "條件機率 h(n)", points: sm.hazard }]} xLabel="抽數" />
+      <Fold title={tr("mathPanel22")} summary={tr("mathPanel23", pct(Math.max(...sm.hazard), 1))}>
+        <p>{tr("mathPanel24")}</p>
+        <LineChart series={[{ label: tr("mathPanel25"), points: sm.hazard }]} xLabel={tr("panels56")} />
       </Fold>
 
-      <Fold title="馬可夫鏈模型" summary={`${fmt(dist.states, 0)} 個狀態`}>
-        <p>每一抽的機率只取決於目前的計數器（保底計數、大保底旗標、點數…），所以整個卡池是一條有限狀態的馬可夫鏈。這個目標用到的計數器：</p>
+      <Fold title={tr("mathPanel26")} summary={tr("mathPanel27", fmt(dist.states, 0))}>
+        <p>{tr("mathPanel28")}</p>
         <ul>
-          {relevant.length ? relevant.map((v) => <li key={v}>{VAR_LABEL(m, v)}（{Gacha.varDomain(m, v)} 種值）</li>) : <li>沒有（每抽機率固定，結果是幾何分布）</li>}
+          {relevant.length ? relevant.map((v) => <li key={v}>{VAR_LABEL(m, v)}{tr("mathPanel29")}{Gacha.varDomain(m, v)}{tr("mathPanel30")}</li>) : <li>{tr("mathPanel31")}</li>}
         </ul>
-        <p>狀態數 ＝ 各計數器值的乘積 × 已拿到的份數（{s.target.copies}）。從起點的機率向量 π₀ 開始，每抽做一次 π<sub>n+1</sub> ＝ π<sub>n</sub>·P，完成的機率從向量中移出，記為 P(N = n)。計算到剩餘機率 ≤ 10⁻¹² 為止，耗時 {fmt(a.ms, 0)} 毫秒。</p>
-        <p>和目標無關的計數器（例如較低稀有度的保底）會被消去，狀態數因此變小但結果不變。</p>
+        <p>{tr("mathPanel32")}{s.target.copies}{tr("mathPanel33")}<sub>n+1</sub>{tr("mathPanel34")}<sub>n</sub>{tr("mathPanel35")}{fmt(a.ms, 0)}{tr("mathPanel36")}</p>
+        <p>{tr("mathPanel37")}</p>
       </Fold>
 
-      <Fold title="長期機率（含保底）" summary={a.longRun ? `${m.tiers[0]!.name} ${pct(a.longRun.tiers[0]!, 3)}` : "太多狀態"}>
+      <Fold title={tr("mathPanel38")} summary={a.longRun ? `${displayText(m.tiers[0]!.name)} ${pct(a.longRun.tiers[0]!, 3)}` : tr("mathPanel39")}>
         {a.longRun ? (
           <>
-            <p>一直抽下去，平均每抽落在各稀有度的比例（馬可夫鏈的穩態分布，共 {fmt(a.longRun.states, 0)} 個狀態）。這就是機率公示常見的「綜合機率」。</p>
+            <p>{tr("mathPanel40")}{fmt(a.longRun.states, 0)}{tr("mathPanel41")}</p>
             <table className="table compact">
-              <thead><tr><th>稀有度</th><th className="r">基礎機率</th><th className="r">綜合機率</th><th className="r">其中限定</th></tr></thead>
+              <thead><tr><th>{tr("modelEditor12")}</th><th className="r">{tr("modelEditor13")}</th><th className="r">{tr("mathPanel42")}</th><th className="r">{tr("mathPanel43")}</th></tr></thead>
               <tbody>
                 {m.tiers.map((t, i) => (
                   <tr key={t.id}>
-                    <td>{t.name}</td>
-                    <td className="r mono">{i === m.tiers.length - 1 ? "剩餘" : pct(t.rate, 3)}</td>
+                    <td>{displayText(t.name)}</td>
+                    <td className="r mono">{i === m.tiers.length - 1 ? tr("modelEditor16") : pct(t.rate, 3)}</td>
                     <td className="r mono">{pct(a.longRun!.tiers[i]!, 3)}</td>
                     <td className="r mono">{a.longRun!.featuredShare[i]! > 0 ? pct(a.longRun!.featuredShare[i]!, 1) : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="hint">不含點數兌換（兌換是玩家的選擇，不是抽卡結果）。有大保底時，限定的長期比例 ＝ 1 ∕ (2 − 限定機率)。</p>
+            <p className="hint">{tr("mathPanel44")}</p>
           </>
-        ) : <p className="hint">{a.longRunError}。可用下方抽樣估計。</p>}
+        ) : <p className="hint">{displayText(a.longRunError)}{tr("mathPanel45")}</p>}
       </Fold>
 
       {a.budgetCopies && (a.budgetPulls ?? 0) > 0 && (
-        <Fold title="預算內拿到幾個" summary={`至少一個 ${pct(1 - a.budgetCopies[0]!, 1)}`}>
-          <p>用同一條馬可夫鏈跑 {a.budgetPulls} 抽（不在完成時停止），計算拿到 k 個的機率：</p>
+        <Fold title={tr("mathPanel46")} summary={tr("mathPanel47", pct(1 - a.budgetCopies[0]!, 1))}>
+          <p>{tr("mathPanel48")}{a.budgetPulls}{tr("mathPanel49")}</p>
           <table className="table compact">
-            <tbody>{a.budgetCopies.map((p, k) => <tr key={k}><td>{k === a.budgetCopies!.length - 1 ? `${k} 個以上` : `${k} 個`}</td><td className="r mono">{pct(p, 2)}</td></tr>)}</tbody>
+            <tbody>{a.budgetCopies.map((p, k) => <tr key={k}><td>{k === a.budgetCopies!.length - 1 ? tr("mathPanel50", k) : tr("mathPanel51", k)}</td><td className="r mono">{pct(p, 2)}</td></tr>)}</tbody>
           </table>
         </Fold>
       )}
 
-      <Fold title="抽樣驗證（蒙地卡羅）" summary={freshMc ? `平均 ${fmt(freshMc.mean, 2)}` : "未執行"}>
-        <p>用真正的抽卡規則實際抽 5000 次（每次抽到完成為止），和上面的精確結果比對。</p>
-        <button className="btn" onClick={runMc}>抽樣 5000 次</button>
+      <Fold title={tr("mathPanel52")} summary={freshMc ? tr("mathPanel53", fmt(freshMc.mean, 2)) : tr("mathPanel54")}>
+        <p>{tr("mathPanel55")}</p>
+        <button className="btn" onClick={runMc}>{tr("mathPanel56")}</button>
         {freshMc && (
           <table className="table compact">
             <tbody>
-              <tr><td>抽樣平均抽數（95% 信賴區間）</td><td className="r mono">{fmt(freshMc.mean, 2)}（{fmt(freshMc.meanCi[0], 2)}–{fmt(freshMc.meanCi[1], 2)}）</td></tr>
-              <tr><td>精確平均</td><td className="r mono">{fmt(sm.mean, 2)}{sm.mean >= freshMc.meanCi[0] && sm.mean <= freshMc.meanCi[1] ? "（在區間內）" : "（在區間外，抽樣誤差偶爾會發生）"}</td></tr>
-              {(a.budgetPulls ?? 0) > 0 && <tr><td>抽樣預算內達成（Wilson 95% 區間）</td><td className="r mono">{pct(within / freshMc.runs, 1)}（{pct(ci![0], 1)}–{pct(ci![1], 1)}）</td></tr>}
-              {(a.budgetPulls ?? 0) > 0 && <tr><td>精確預算內達成</td><td className="r mono">{pct(a.budgetChance ?? 0, 1)}</td></tr>}
+              <tr><td>{tr("mathPanel57")}</td><td className="r mono">{fmt(freshMc.mean, 2)}{tr("mathPanel29")}{fmt(freshMc.meanCi[0], 2)}–{fmt(freshMc.meanCi[1], 2)}{tr("gachaStage30")}</td></tr>
+              <tr><td>{tr("mathPanel58")}</td><td className="r mono">{fmt(sm.mean, 2)}{sm.mean >= freshMc.meanCi[0] && sm.mean <= freshMc.meanCi[1] ? tr("mathPanel59") : tr("mathPanel60")}</td></tr>
+              {(a.budgetPulls ?? 0) > 0 && <tr><td>{tr("mathPanel61")}</td><td className="r mono">{pct(within / freshMc.runs, 1)}{tr("mathPanel29")}{pct(ci![0], 1)}–{pct(ci![1], 1)}{tr("gachaStage30")}</td></tr>}
+              {(a.budgetPulls ?? 0) > 0 && <tr><td>{tr("mathPanel62")}</td><td className="r mono">{pct(a.budgetChance ?? 0, 1)}</td></tr>}
             </tbody>
           </table>
         )}

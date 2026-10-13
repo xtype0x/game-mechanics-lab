@@ -5,7 +5,7 @@
 .view-switch button.on { background: var(--accent); color: #fff; }
 .link { border: none; background: none; color: var(--accent); cursor: pointer; padding: 0 4px; font-size: inherit; text-decoration: underline; }
 
-.game-menu { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.game-menu { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; position: relative; }
 .game-slot { position: relative; }
 .game-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-weight: 600; }
 .game-btn.on { border-color: var(--accent); background: var(--accent-soft); }
@@ -17,6 +17,8 @@
 .menu-item:hover, .menu-item:focus-visible { background: var(--accent-soft); }
 .menu-item span { font-size: 12px; }
 .menu-foot { font-size: 11px; color: var(--text-2); margin: 4px 8px 2px; }
+.game-slot:nth-last-of-type(-n + 3) .menu { left: auto; right: 0; }
+@media (max-width: 640px) { .game-slot { position: static; } .game-menu .menu { left: 0; right: auto; width: 100%; } }
 .chip-on { color: var(--ok); }
 .chip-soon { color: var(--accent); }
 .chip-ended { color: var(--text-2); }
@@ -48,6 +50,7 @@
 .rule-chips span { background: rgba(0, 0, 0, 0.28); border-radius: 999px; padding: 2px 10px; font-size: 13px; }
 .epi { display: flex; gap: 8px; align-items: center; }
 .epi select { width: auto; background: rgba(0, 0, 0, 0.3); color: #fff; border-color: rgba(255, 255, 255, 0.4); }
+@media (max-width: 640px) { .epi { flex-direction: column; align-items: stretch; } .epi select { width: 100%; min-width: 0; } }
 .banner .counters { color: rgba(255, 255, 255, 0.85); position: relative; z-index: 1; }
 .banner .counters b { color: #fff; }
 .banner .exchange { color: var(--text); position: relative; z-index: 1; }

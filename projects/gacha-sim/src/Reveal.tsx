@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 import { useEffect, useState } from "react";
 
 /** One revealed pull. `rank` 0 = top tier, 1 = second, 2 = everything below. */
@@ -40,8 +41,8 @@ export function Reveal({ cards, instant, onClose }: { cards: RevealCard[]; insta
 
   const c = spots[spot];
   return (
-    <div className={`reveal phase-${phase} best-r${best}`} role="dialog" aria-label="抽卡結果" onClick={next}>
-      {phase !== "grid" && <button className="skip" onClick={(e) => { e.stopPropagation(); setPhase("grid"); }}>略過 ⏭</button>}
+    <div className={`reveal phase-${phase} best-r${best}`} role="dialog" aria-label={tr("reveal1")} onClick={next}>
+      {phase !== "grid" && <button className="skip" onClick={(e) => { e.stopPropagation(); setPhase("grid"); }}>{tr("reveal2")}</button>}
 
       {phase === "meteor" && (
         <div className="sky" aria-hidden>
@@ -59,7 +60,7 @@ export function Reveal({ cards, instant, onClose }: { cards: RevealCard[]; insta
             <b>{c.name}</b>
             <small>{c.tag}</small>
           </div>
-          <span className="tap">{spot + 1 < spots.length ? `點擊繼續（${spot + 1}/${spots.length}）` : "點擊看全部結果"}</span>
+          <span className="tap">{spot + 1 < spots.length ? tr("reveal3", spot + 1, spots.length) : tr("reveal4")}</span>
         </div>
       )}
 
@@ -74,7 +75,7 @@ export function Reveal({ cards, instant, onClose }: { cards: RevealCard[]; insta
               </div>
             ))}
           </div>
-          <span className="tap">點任意處關閉</span>
+          <span className="tap">{tr("reveal5")}</span>
         </>
       )}
     </div>

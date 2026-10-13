@@ -15,8 +15,7 @@
     "vectors": "node scripts/update-vectors.mjs",
     "site:dev": "npm run dev -w @gml/site",
     "site:build": "npm run build -w @gml/site",
-    "site:build:offline": "npm run build:offline -w @gml/site",
-    "gacha:snapshot": "npm run snapshot -w @gml/gacha-sim"
+    "site:build:offline": "npm run build:offline -w @gml/site"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

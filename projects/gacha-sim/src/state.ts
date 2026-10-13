@@ -1,9 +1,9 @@
+import { sourceText } from "./i18n";
 /**
  * Simulator state and the derived analysis. All rules and math come from @gml/core's Gacha namespace.
  */
 import { Gacha } from "@gml/core";
-import { buildModel, gameOf } from "./catalog/games";
-import type { LiveData } from "./catalog/live";
+import { buildModel, gameOf, typeFor, GAMES } from "./catalog/games";
 import type { CatalogPick } from "./GameMenu";
 
 export type Model = Gacha.GachaModel;
@@ -21,7 +21,7 @@ export interface SimState {
   model: Model;
   /** Preset the model came from (cleared when the model is edited). Game pools: "game:<game>:<kind>…". */
   presetId: string | null;
-  /** The game pool the model was built from (kept so it can be rebuilt with fresh banner data). */
+  /** Fixed game-rule preset selected by the player. */
   catalog?: CatalogPick;
   target: Target;
   /** Current progress: pity counters, guarantee, points. */
@@ -49,18 +49,17 @@ export function fromPreset(id: string, prev?: SimState): SimState {
   };
 }
 
-/** A game pool from the catalog, filled with the live banner when one is picked. */
-export function fromCatalog(pick: CatalogPick, live: LiveData, prev?: SimState): SimState {
+/** A fixed game pool with generic items. */
+export function fromCatalog(pick: CatalogPick, prev?: SimState): SimState {
   const g = gameOf(pick.game);
   const t = g.types.find((x) => x.kind === pick.kind && (x.region === undefined || x.region === pick.region)) ?? g.types[0]!;
-  const banner = pick.bannerId ? live.banners.find((b) => b.id === pick.bannerId) : undefined;
-  const model = buildModel(g, t, banner);
+  const model = buildModel(g, t);
   const top = model.modules.find((x) => x.kind === "featured" && x.tier === "top");
   const epi = model.modules.find((x): x is Extract<Gacha.RuleModule, { kind: "epitomized" }> => x.kind === "epitomized");
   return {
     model,
-    presetId: `game:${pick.game}:${pick.kind}:${pick.region ?? ""}:${pick.bannerId ?? ""}`,
-    catalog: pick,
+    presetId: `game:${pick.game}:${pick.kind}:${pick.region ?? ""}`,
+    catalog: { game: pick.game, kind: pick.kind, ...(pick.region ? { region: pick.region } : {}) },
     // With an epitomized pick the goal is that item; otherwise any featured item of the top tier.
     target: epi ? { tier: "top", mode: "item", itemId: epi.item, copies: 1 } : { tier: "top", mode: top ? "featured" : "tier", copies: 1 },
     start: Gacha.newState(model),
@@ -95,10 +94,49 @@ export function loadState(): SimState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const s = JSON.parse(raw) as SimState;
-      if (s?.model?.version === 2 && Array.isArray(s.model.tiers) && s.target && s.start && Array.isArray(s.packs)) return s;
+      if (s?.model?.version === 2 && Array.isArray(s.model.tiers) && s.target && s.start && Array.isArray(s.packs)) return migrateCatalogState(s);
     }
   } catch { /* storage unavailable or corrupt */ }
-  return fromPreset(Gacha.PRESETS[0]!.model.id);
+  return fromCatalog({ game: "hsr", kind: "character" });
+}
+
+/** Replace obsolete named banners only on unedited catalog presets. Keep wallet, goal and counters. */
+export function migrateCatalogState(s: SimState): SimState {
+  const compare = s.compare?.map(entry => {
+    const [game, kind, region] = entry.model.id.split(':');
+    const g = GAMES.find(x => x.id === game);
+    if (!g || !typeFor(g, { kind: kind ?? '', region })) return entry;
+    const model = genericLegacyNames(entry.model, { game: g.id, kind: kind!, region });
+    return { ...entry, model, name: entry.name === entry.model.name ? model.name : entry.name };
+  }) ?? [];
+  s = { ...s, compare };
+  if (!s.catalog) return s;
+  const g = GAMES.find(x => x.id === s.catalog!.game);
+  if (!g || !typeFor(g, s.catalog)) return s;
+  if (!s.presetId?.startsWith("game:")) return { ...s, model: genericLegacyNames(s.model, s.catalog) };
+  const next = fromCatalog(s.catalog, s);
+  const oldTop = s.model.modules.find(x => x.kind === "featured" && x.tier === "top");
+  const index = oldTop?.kind === "featured" ? oldTop.items.indexOf(s.target.itemId ?? "") : -1;
+  const newTop = next.model.modules.find(x => x.kind === "featured" && x.tier === "top");
+  const itemId = index >= 0 && newTop?.kind === "featured" ? newTop.items[Math.min(index, newTop.items.length - 1)] : s.target.itemId;
+  if (itemId) for (const mod of next.model.modules) if (mod.kind === "epitomized") mod.item = itemId;
+  return { ...next, target: { ...s.target, ...(itemId ? { itemId } : {}) }, start: s.start };
+}
+
+/** Remove source-specific names from legacy items without changing edited rules or item references. */
+function genericLegacyNames(model: Model, pick: CatalogPick): Model {
+  const g = gameOf(pick.game);
+  const t = typeFor(g, pick)!;
+  const next = structuredClone(model);
+  const prefix = `${g.name}・${t.name}`;
+  if (next.name.startsWith(`${prefix}：`)) next.name = prefix; // i18n-ignore: match the title separator in legacy stored data
+  let topIndex = 0;
+  for (const item of next.items) {
+    if (item.id.startsWith('f5:') && !['f5:any', 'f5:other'].includes(item.id)) item.name = t.top.epitomized ? `${t.labels.top} ${topIndex++ === 0 ? 'A' : 'B'}` : t.labels.top;
+    if (item.id.startsWith('f4:') && item.id !== 'f4:any') item.name = `UP ${t.mid.name}`;
+  }
+  if (next.source?.includes('api.ennead.cc') || next.source?.includes('SchaleDB') || next.source?.includes('卡池內容為手動整理')) next.source = `${t.note} ${g.source}`; // i18n-ignore: identify obsolete generated source notes in legacy data
+  return next;
 }
 
 export function saveState(s: SimState) {
@@ -171,14 +209,14 @@ export function analyze(s: SimState): Analysis {
 }
 
 export const MODULE_LABELS: Record<Gacha.ModuleKind, { name: string; help: string }> = {
-  softPity: { name: "軟保底", help: "接近保底時，每抽機率逐步提高（可設上限，表示機率跳到固定值）。" },
-  hardPity: { name: "硬保底", help: "連續沒抽到時，第 N 抽必定獲得。" },
-  featured: { name: "限定（UP）", help: "抽中這個稀有度時，有一定機率是限定物品。" },
-  guarantee: { name: "大保底", help: "抽中但不是限定（歪了）之後，下一次必定是限定。" },
-  batchFloor: { name: "十連保底", help: "每組連抽的某一抽，至少是指定稀有度。" },
-  milestone: { name: "累計保底", help: "沒抽到限定時累計抽數，到門檻時強制給予（可設定限定機率）。" },
-  exchange: { name: "點數兌換（天井）", help: "每抽累積點數，點數夠了可直接換限定物品。" },
-  epitomized: { name: "定軌", help: "從限定物品中選一個；抽到不是它的次數累積到門檻後，下一次必定是它。" },
+  softPity: { name: sourceText("state1"), help: sourceText("state2") },
+  hardPity: { name: sourceText("state3"), help: sourceText("state4") },
+  featured: { name: sourceText("state5"), help: sourceText("state6") },
+  guarantee: { name: sourceText("state7"), help: sourceText("state8") },
+  batchFloor: { name: sourceText("gachaStage5"), help: sourceText("state9") },
+  milestone: { name: sourceText("state10"), help: sourceText("state11") },
+  exchange: { name: sourceText("state12"), help: sourceText("state13") },
+  epitomized: { name: sourceText("state14"), help: sourceText("state15") },
 };
 
 export function defaultModule(kind: Gacha.ModuleKind, m: Model): Gacha.RuleModule {
