@@ -1,16 +1,36 @@
 # Game Mechanics Lab（遊戲機制研究室）
 
-給台灣小型遊戲開發者的**遊戲機制模擬主控台**：瀏覽機制 → 組合 → 調整參數 → 模擬比較 → 試玩 → 匯出。
+研究熱門遊戲機制的個人網站與工具集：把抽卡保底、回合戰鬥、格擋判定等機制拆成可調整、可模擬、可驗證的模組。
 
-目前進度：**M5、M1 完成**（傷害機制、回合戰鬥模擬、內容編輯器、A/B 比較、可試玩 2D DEMO、抽卡實驗室），戰鬥規則 0.8、抽卡規則 1.0。完整路線見 [docs/PLAN.md](docs/PLAN.md)。
+**網站：https://xtype0x.github.io/game-mechanics-lab/**
 
-## 立即使用
-- 免安裝：直接用瀏覽器開啟 `apps/console/dist/index.html`（建置後產生，可離線）。
-- 開發模式：
-  ```bash
-  npm install
-  npm run dev
-  ```
+| 網站上的工具 | 網址 | 原始碼 |
+|---|---|---|
+| 抽卡模擬器 | [/gacha/](https://xtype0x.github.io/game-mechanics-lab/gacha/) | [projects/gacha-sim](projects/gacha-sim) |
+| 星穹鐵道戰鬥研究室 | [/hsr/battle/](https://xtype0x.github.io/game-mechanics-lab/hsr/battle/) | [projects/hsr-battle](projects/hsr-battle) |
+| 格擋閃避判定研究室 | [/timing-lab/](https://xtype0x.github.io/game-mechanics-lab/timing-lab/) | [projects/timing-lab](projects/timing-lab) |
+
+所有計算都在瀏覽器裡執行；設定只存在訪客自己的瀏覽器（見網站的「資料與使用說明」）。
+
+## 本機開發
+Node.js 22.12+（建議 24）。在根目錄執行：
+```bash
+npm ci
+npm run site:dev     # 網站 http://127.0.0.1:5180/
+npm run dev          # 內部主控台 http://localhost:5173
+npm test             # 全部測試
+npm run typecheck    # 型別檢查
+```
+
+`main` 的每次 push 會由 GitHub Actions 測試並發佈網站；分支與發佈規則見 [CLAUDE.md](CLAUDE.md)「分支與發佈」。
+
+## 授權與遊戲資料
+- 程式碼：[MIT](LICENSE)。
+- 遊戲內容**不在** MIT 範圍內：`packages/data-hsr/src/generated/` 與 `data/reference/hsr/kits/` 裡的崩壞：星穹鐵道角色名稱、技能描述與數值屬 HoYoverse 所有，只為非商業的模擬與研究而收錄，來源見 [packages/data-hsr/README.md](packages/data-hsr/README.md)。本專案與 HoYoverse 及其他提到的遊戲公司無關。
+- 第三方資料：部分資料檔由第三方整理成果轉換而來（StarRailRes，AGPL-3.0；KQM Star Rail Library，無授權檔案），不採 MIT。來源、固定修訂與各自的授權處理見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## 內部主控台
+`apps/console` 是給遊戲開發者用的**機制模擬主控台**（不在公開網站上）：瀏覽機制 → 組合 → 調整參數 → 模擬比較 → 試玩 → 匯出。路線見 [docs/PLAN.md](docs/PLAN.md)。`npm run build` 後可直接用瀏覽器開啟 `apps/console/dist/index.html`（可離線）。
 
 ## Repo 結構
 | 位置 | 內容 |

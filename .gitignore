@@ -4,3 +4,10 @@ dist/
 .vite/
 .claude/*
 !.claude/agents/
+
+# Local Codex / Claude handoff reports (never include in normal commits)
+/agent-communication/
+
+# Third-party HSR research data stays local (public repo). Only the hand-modelled kits are committed.
+/data/reference/hsr/*
+!/data/reference/hsr/kits/

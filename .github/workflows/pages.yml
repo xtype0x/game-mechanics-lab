@@ -1,36 +1,43 @@
-# Template written for a standalone site repo (2026-10-10); the site now lives in the monorepo at apps/site.
-# A workflow inside a subfolder never runs. To use it, move it to the repo-root .github/workflows/,
-# build with `npm run site:build`, and upload apps/site/dist.
-# Manual publication initially; enable push only after choosing GitHub Pages.
-name: Deploy website to GitHub Pages
+# Every push to main: typecheck, test, build apps/site, then publish apps/site/dist to GitHub Pages.
+# Requires Settings → Pages → Build and deployment → Source: GitHub Actions,
+# and Settings → Environments → github-pages → Deployment branches: main only.
+name: Deploy site
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# One deploy at a time; a newer push replaces a queued one but never cancels a running deploy.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
+    # A manual run can pick any branch; only main may publish.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run site:build
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          path: dist
+          path: apps/site/dist
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write

@@ -49,6 +49,12 @@ apps/console ───────────────► packages/ui ──
 - 瀏覽器儲存鍵：新專案用 `gml.<id>.<名稱>.v<版本>`；資料形狀改變時升版本號。既有的 `ggt.*` 鍵與檔案／分享格式名（`ggt-gacha-rules`、`ggt-reference-pack`）**永不改名**，否則訪客的存檔與分享連結會失效。
 - 網址路徑一旦公開就視為不可改；必須改時，在 `apps/site/build/pages.mjs` 的 `STATIC_PAGES` 留一頁轉址頁（例如 `battle/`）。
 
+## 分支與發佈（公開 repo，GitHub Pages）
+- `main` 隨時可上線：每次 push 到 `main`，`.github/workflows/pages.yml` 會跑 typecheck、測試、建置，然後發佈到 https://xtype0x.github.io/game-mechanics-lab/ 。
+- 其他工作一律開短期分支：`feat/<主題>`、`fix/<主題>`、`docs/<主題>`、`chore/<主題>`。開 PR，`ci.yml` 通過後以 squash 合併並刪除分支。不設 `develop`／`release` 分支。
+- 要標記對外版本時打 tag（`v0.1.0`）。網站的 Changelog 頁跟著 tag 更新。
+- repo 是公開的：不要提交第三方研究資料（`data/reference/hsr/` 除 `kits/` 外都已忽略）、`agent-communication/`、密鑰或個人資訊。commit 作者 email 用 GitHub noreply。
+
 ## 指令（Windows 若找不到 node，先 `export PATH="/c/Program Files/nodejs:$PATH"`）
 | 指令 | 用途 |
 |---|---|
@@ -59,7 +65,6 @@ apps/console ───────────────► packages/ui ──
 | `npm run site:dev` | 網站開發伺服器 http://127.0.0.1:5180 |
 | `npm run site:build` | 建置網站到 `apps/site/dist/` |
 | `npm run site:build:offline` | 離線單檔建置到 `apps/site/offline/` |
-| `npm run gacha:snapshot` | 更新抽卡模擬器的卡池快照 |
 | `npm run vectors` | 重新產生測試向量（核心行為**有意**改變時才用，並檢查 diff） |
 
 ## 核心可移植守則

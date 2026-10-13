@@ -30,3 +30,6 @@
 - 敵人的技能倍率、AI 與狀態數值多為標示【佔位】的估計值，韌性換算（×1/3）也未核實。
 - 尚未包含角色的實裝版本或日期。
 - 遊戲內容著作權屬於 HoYoverse，本專案與其無關。
+
+## 授權
+本套件的**程式碼**依 repo 根目錄的 MIT 授權（[LICENSE](../../LICENSE)）。`src/generated/` 裡的遊戲內容（角色名稱、技能描述、數值表等）**不在 MIT 授權範圍內**，屬 HoYoverse 所有，只為非商業的模擬與研究而收錄；權利人要求移除時會配合處理。資料整理來源：[StarRailRes](https://github.com/Mar-7th/StarRailRes)（角色、裝備；上游 AGPL-3.0，衍生檔案依該授權提供）與 [KQM SRL](https://github.com/KQM-git/SRL)（敵人；上游無授權檔案，不宣告授權）。每個 generated 檔案的來源修訂與授權處理見 [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)；更新資料時同一個變更要更新該檔。
